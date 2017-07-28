@@ -609,6 +609,10 @@ namespace TrainLibrary
     public class wagonDetails
     {
 
+        public string TrainID;
+        public DateTime trainDate;
+        public trainOperator trainOperator;
+        public trainCommodity commodity;
         public string wagonID;
         public string origin;
         public string plannedDestination;
@@ -623,6 +627,11 @@ namespace TrainLibrary
         /// <param name="wagon">Wagon structure containing the origin, destination and volume carries among other properties.</param>
         public wagonDetails(wagonDetails wagon)
         {
+            this.TrainID = wagon.TrainID;
+            this.trainDate = wagon.trainDate;
+            this.trainOperator = wagon.trainOperator;
+            this.commodity = wagon.commodity;
+            
             this.wagonID = wagon.wagonID;
             this.origin = wagon.origin;
             this.plannedDestination = wagon.plannedDestination;
@@ -643,14 +652,20 @@ namespace TrainLibrary
         /// <param name="plannedDestination">The planned destination code of the wagon.</param>
         /// <param name="destination">The destination code of the wagon.</param>
         /// <param name="netWeight">The net weight carried to the destination by the wagon.</param>
-        public wagonDetails(string wagonID, string origin, string plannedDestination, string destination, double netWeight)
+        public wagonDetails(string TrainID, DateTime trainDate, trainOperator trainOperator, trainCommodity commodity,
+            string wagonID, string origin, string plannedDestination, string destination, double netWeight)
         {
+            this.TrainID = TrainID;
+            this.trainDate = trainDate;
+            this.trainOperator = trainOperator;
+            this.commodity = commodity;
+            
             this.wagonID = wagonID;
             this.origin = origin;
             this.plannedDestination = plannedDestination;
             this.destination = destination;
-            this.attachmentTime = new DateTime(2000, 1, 1);
-            this.detachmentTime = new DateTime(2000, 1, 1);
+            this.attachmentTime = DateTime.MinValue;
+            this.detachmentTime = DateTime.MinValue;
             this.netWeight = netWeight;
 
             /* Fix the known issues with the location codes. */
@@ -667,8 +682,14 @@ namespace TrainLibrary
         /// <param name="attachmentTime">The time the wagon was attached to the Train.</param>
         /// <param name="detachmentTime">The time the wagon was detached from the Train.</param>
         /// <param name="netWeight">The net weight carried to the destination by the wagon.</param>
-        public wagonDetails(string wagonID, string origin, string plannedDestination, string destination, DateTime attachmentTime, DateTime detachmentTime, double netWeight)
+        public wagonDetails(string TrainID, DateTime trainDate, trainOperator trainOperator, trainCommodity commodity, 
+            string wagonID, string origin, string plannedDestination, string destination, DateTime attachmentTime, DateTime detachmentTime, double netWeight)
         {
+            this.TrainID = TrainID;
+            this.trainDate = trainDate;
+            this.trainOperator = trainOperator;
+            this.commodity = commodity;
+            
             this.wagonID = wagonID;
             this.origin = origin;
             this.plannedDestination = plannedDestination;

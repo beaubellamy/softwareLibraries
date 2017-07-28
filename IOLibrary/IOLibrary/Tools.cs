@@ -149,9 +149,8 @@ namespace IOLibrary
         /// <returns>True if all fields are valid.</returns>
         public static bool validateFileFormat(string[] fields)
         {
-
+            /* Initialise the validation parameters. */
             bool validWagonNumber = false;
-            bool validTrainNumber = false;
             bool validTrainDate = false;
             bool validComodity = false;
             bool validOriginCode = false;
@@ -162,8 +161,6 @@ namespace IOLibrary
             bool validTareWeight = false;
             bool validGrossWeight = false;
             bool validDistanceTravelled = false;
-            bool validWagonSequence = false;
-            bool validRecordID = false;
             bool validWagonMovementCount = false;
 
             /* Check the number of fields */
@@ -176,38 +173,23 @@ namespace IOLibrary
             {
                 /* Clean the Fields from escape characters. */
                 char[] newDelimeters = { '\'', '"' };
-                string[] seperatedFields;
-                for (int i = 0; i < fields.Count(); i++)
-                {
-                    seperatedFields = Regex.Unescape(fields[i]).Split(newDelimeters);
-                    if (seperatedFields.Count() == 3)
-                        fields[i] = seperatedFields[1];
-                }
 
                 /* Check each field and validate. */
                 double result = 0;
-                DateTime dateResult = DateTime.MinValue;
 
-                // Wagon Class
                 /* Wagon class can be a 4 character string or upto 4 numbers. */
+                /* This is covered during data extraction. */
 
-                // Wagon number
+                /* Validate Wagon Number */
                 result = 0;
-                if (double.TryParse(fields[1], out result))
+                if (double.TryParse(fields[6], out result))
                     validWagonNumber = true;
                 else
                     validWagonNumber = false;
 
-                // Train ID
-                result = 0;
-                if (double.TryParse(fields[2], out result))
-                    validTrainNumber = false;
-                else
-                    validTrainNumber = true;
-
-                // Train Date
-                dateResult = DateTime.MinValue;
-                if (DateTime.TryParse(fields[3], out dateResult))
+                /* Validate Train Date */
+                DateTime dateResult = DateTime.MinValue;
+                if (DateTime.TryParse(fields[8], out dateResult))
                 {
                     if (dateResult == DateTime.MinValue)
                         validTrainDate = false;
@@ -219,46 +201,33 @@ namespace IOLibrary
                     validTrainDate = false;
                 }
 
-                // Commodity
-                result = 0;
-                if (double.TryParse(fields[4], out result))
+                /* Validate Commodity */
+                if (fields[10].Count() != 3)
                     validComodity = false;
                 else
                     validComodity = true;
 
-                // Origin
-                result = 0;
-                if (double.TryParse(fields[5], out result))
+                /* Validate Origin code */
+                if (fields[0].Count() == 3)
+                    validOriginCode = true;
+                else
                     validOriginCode = false;
-                else
-                    if (fields[5].Count() == 3)
-                        validOriginCode = true;
-                    else
-                        validOriginCode = false;
 
-                // Planned Destination
-                result = 0;
-                if (double.TryParse(fields[6], out result))
+                /* Validate Planned Destination code */
+                if (fields[1].Count() == 3)
+                    validPlannedDestinationCode = true;
+                else
                     validPlannedDestinationCode = false;
-                else
-                    if (fields[6].Count() == 3)
-                        validPlannedDestinationCode = true;
-                    else
-                        validPlannedDestinationCode = false;
 
-                // Destination
-                result = 0;
-                if (double.TryParse(fields[7], out result))
+                /* Validate Destination code */
+                if (fields[4].Count() == 3)
+                    validActualDestinationCode = true;
+                else
                     validActualDestinationCode = false;
-                else
-                    if (fields[7].Count() == 3)
-                        validActualDestinationCode = true;
-                    else
-                        validActualDestinationCode = false;
 
-                // Attatchment time
+                /* Validate Attachment Time. */
                 dateResult = DateTime.MinValue;
-                if (DateTime.TryParse(fields[8], out dateResult))
+                if (DateTime.TryParse(fields[2], out dateResult))
                 {
                     if (dateResult == DateTime.MinValue)
                         validAttachmentTime = false;
@@ -270,9 +239,9 @@ namespace IOLibrary
                     validAttachmentTime = false;
                 }
 
-                // Detatchment time
+                /* Validate Dettachment Time */
                 dateResult = DateTime.MinValue;
-                if (DateTime.TryParse(fields[9], out dateResult))
+                if (DateTime.TryParse(fields[5], out dateResult))
                 {
                     if (dateResult == DateTime.MinValue)
                         validDetachmentTime = false;
@@ -284,44 +253,30 @@ namespace IOLibrary
                     validDetachmentTime = false;
                 }
 
-                // Tare Weight
+                /* Validate Tare Weight */
                 result = 0;
-                if (double.TryParse(fields[10], out result))
+                if (double.TryParse(fields[15], out result))
                     validTareWeight = true;
                 else
                     validTareWeight = false;
 
-                // Gross Weight
+                /* Validate Gross Weight */
                 result = 0;
-                if (double.TryParse(fields[11], out result))
+                if (double.TryParse(fields[12], out result))
                     validGrossWeight = true;
                 else
                     validGrossWeight = false;
 
-                // Distance Travelled
+                /* Validate Distance Travelled. */
                 result = 0;
-                if (double.TryParse(fields[12], out result))
+                if (double.TryParse(fields[11], out result))
                     validDistanceTravelled = true;
                 else
                     validDistanceTravelled = false;
 
-                // Wagon Sequence
+                /* Validate Wagon Movement Count */
                 result = 0;
                 if (double.TryParse(fields[13], out result))
-                    validWagonSequence = true;
-                else
-                    validWagonSequence = false;
-
-                // Record ID
-                result = 0;
-                if (double.TryParse(fields[14], out result))
-                    validRecordID = true;
-                else
-                    validRecordID = false;
-
-                // Wagon Movement Count (same as ID)
-                result = 0;
-                if (double.TryParse(fields[15], out result))
                     validWagonMovementCount = true;
                 else
                     validWagonMovementCount = false;
@@ -329,10 +284,10 @@ namespace IOLibrary
             }
 
             /* If all the fields are validated, the file format is valid.  */
-            if (validWagonNumber && validTrainNumber && validTrainDate && validComodity &&
-                validOriginCode && validPlannedDestinationCode && validActualDestinationCode &&
-                validAttachmentTime && validDetachmentTime && validTareWeight && validGrossWeight &&
-                validDistanceTravelled && validWagonSequence && validRecordID && validWagonMovementCount)
+            if (validWagonNumber && validTrainDate && validComodity && validOriginCode &&
+                validPlannedDestinationCode && validActualDestinationCode && validAttachmentTime &&
+                validDetachmentTime && validTareWeight && validGrossWeight && validDistanceTravelled &&
+                validWagonMovementCount)
                 return true;
             else
                 return false;

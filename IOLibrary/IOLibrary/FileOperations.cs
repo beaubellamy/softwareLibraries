@@ -15,7 +15,15 @@ namespace IOLibrary
 {
     public class FileOperations
     {
-            
+        /* ARTC location code file */
+        public static string geoLocationFile = @"H:\ARTC GEO Location Details - under construction.xlsx";
+        
+        /* Create a dictionary of locations:
+         * Key:     Location Code [3 letter code]
+         * Values:  Location Name, Location SA4 region Location State.
+         */
+        public static Dictionary<string, List<string>> locationDictioanry = new Dictionary<string, List<string>>();
+
         /// <summary>
         /// Read the data file and extract the neccessary information into a train record class.
         /// </summary>
@@ -32,7 +40,7 @@ namespace IOLibrary
             char[] delimeters = { '\t' };
 
             /* Seperate the fields. */
-            string[] fields = lines[0].Split(delimeters);
+            string[] fields = null; // lines[0].Split(delimeters);
             /* Minimum length of the operator string to distinguisg between them. */
             int operatorStringLength = 6;
 
@@ -335,50 +343,54 @@ namespace IOLibrary
 
         /// <summary>
         /// Read the wagon data file.
-        /// The file is assumed to be in a specific format
-        /// column  Feild
-        ///  0      Wagon Class
-        ///  1      Wagon Number
-        ///  2      Train Number
-        ///  3      Train Date
-        ///  4      Comodity
-        ///  5      Origin Code
-        ///  6      Planned Destination Code
-        ///  7      Actual Destination Code
-        ///  8      Attachment Time
-        ///  9      Detachment Time
-        ///  10     Tare Weight
-        ///  11     Gross Weight
-        ///  12     Distance Travelled
-        ///  13     Wagon Sequence
-        ///  14     Record ID
-        ///  15     Wagon Movement Count (same as ID)
-        ///  
-        /// 
+        /// The file is assumes the data has been extracted from Tableau 
+        /// and hence has a specific file format.
+        /// Column  Field
+        ///  0      Origin
+        ///  1      Planned Destination
+        ///  2      Attachment Time
+        ///  3      Class
+        ///  4      Destination
+        ///  5      Detatchment Time
+        ///  6      Class Number
+        ///  7      Train Operator
+        ///  8      Train Date
+        ///  9      Train ID
+        ///  10     Train Type (Commodity)
+        ///  11     Distance
+        ///  12     Gross Mass
+        ///  13     Move Count
+        ///  14     Power Ratio
+        ///  15     Tare Mass
         /// </summary>
         /// <param name="filename">The wagon data file.</param>
         /// <returns>The list of wagon objects.</returns>
         public static List<wagonDetails> readWagonDataFile(string filename)
         {
-
             /* Read the all lines of the text file. */
             string[] lines = System.IO.File.ReadAllLines(filename);
-            char[] delimiters = { ',' };
-            bool intermodalTraffic = false;
+            char[] delimiters = { '\t' };
+            bool header = true;
 
+            DateTime trainDate = DateTime.MinValue;
+            DateTime attachmentTime = DateTime.MinValue;
+            DateTime detachmentTime = DateTime.MinValue;
             double tareWeight = 0;
             double grossWeight = 0;
-            DateTime attachmentTime = new DateTime(2000, 1, 1);
-            DateTime detachmentTime = new DateTime(2000, 1, 1);
+            string wagonID = null;
+            string origin = null;
+            string plannedDestination = null;
+            string destination = null;
+            double netWeight = 0;
 
             /* Create the list of wagon objects. */
             List<wagonDetails> wagon = new List<wagonDetails>();
 
-            /* Validate the format of the first line of the file.
-             * NOTE: This can not be header information.
-             */
+            /* Validate the format of the first line of the file, ignoring the header information */
             bool validFormat = false;
-            string[] fields = lines[0].Split(delimiters);
+            bool validRecord = false;
+            string[] fields = lines[1].Split(delimiters);
+
             validFormat = Tools.validateFileFormat(fields);
             if (!validFormat)
             {
@@ -389,79 +401,68 @@ namespace IOLibrary
             /* Extract the wagon details from the data file. */
             foreach (string line in lines)
             {
-                string wagonID = "";
-                string origin = "";
-                string plannedDestination = "";
-                string destination = "";
-                double netWeight = 0;
-
-                /* Split the lines into the fields */
-                fields = line.Split(delimiters);
-                char[] newDelimeters = { '\'', '"' };
-
-                /* Clean the wagon ID fields. */
-                string[] field0 = Regex.Unescape(fields[0]).Split(newDelimeters);
-                string[] field1 = Regex.Unescape(fields[1]).Split(newDelimeters);
-
-                /* Wagon ID. */
-                if (field0.Count() == 3 && field1.Count() == 1)
+                if (header)
                 {
-                    intermodalTraffic = Processing.filterIntermodalTraffic(field0[1]);
-                    wagonID = field0[1] + "-" + field1[0];
+                    header = false;
                 }
                 else
                 {
-                    intermodalTraffic = false;
-                    Tools.messageBox("Wagon ID configuration has not been accounted for.", "Unknown wagon ID configuration.");
-                }
+                    /* Split the line into the fields */
+                    fields = line.Split(delimiters);
 
-                if (intermodalTraffic)
-                {
-                    /* Validate the location codes */
+                    /* Extract the train related information. */
+                    string trainID = fields[9];
+                    DateTime.TryParse(fields[8], out trainDate);
+                    trainOperator trainOperator = Processing.getWagonOperator(fields[7]);
+                    trainCommodity commodity = Processing.getWagonCommodity(fields[10]);
+
+                    /* Extract the wagon location information and validate the codes. */
+                    wagonID = fields[3] + " " + Regex.Replace(fields[6], ",", "");
+                    double wagonTest;
+                    if (double.TryParse(fields[3], out wagonTest))
+                        validRecord = false;
+                    else
+                        validRecord = true;
 
                     /* Wagon Origin. */
-                    string[] field = Regex.Unescape(fields[5]).Split(newDelimeters);
-                    if (field.Count() == 3)
-                        origin = field[1];
-                    else
-                        Tools.messageBox("Origin location code is unknown: " + origin, "Unknown location code.");
+                    origin = fields[0];
+                    if (origin.Count() != 3)
+                        Tools.messageBox("Origin location code is unknown: {0} Unknown location code.", origin);
 
                     /* Wagon planned destination. */
-                    field = Regex.Unescape(fields[6]).Split(newDelimeters);
-                    if (field.Count() == 3)
-                        plannedDestination = field[1];
-                    else
-                        Tools.messageBox("Consigned Destination location code in unknown: " + origin + " - " + field, "Unknown location code.");
+                    plannedDestination = fields[1];
+                    if (plannedDestination.Count() != 3)
+                        Tools.messageBox("Consigned Destination location code in unknown: {0} Unknown location code.", plannedDestination);
 
                     /* Wagon destination. */
-                    field = Regex.Unescape(fields[7]).Split(newDelimeters);
-                    if (field.Count() == 3)
-                        destination = field[1];
-                    else
+                    destination = fields[4];
+                    if (destination.Count() != 3)
                     {   /* If the destination field is empty, assume the wagon reaches the planned destination. */
-                        if (field[0].Equals(""))
+                        if (destination.Equals(""))
                             destination = plannedDestination;
                         else
-                            Tools.messageBox("Destination location code is unknown: " + origin + " - " + field, "Unknown location code.");
+                            Tools.messageBox("Destination location code is unknown: {0} Unknown location code.", destination);
                     }
 
-                    /* Remaining Wagon details. */
-                    DateTime.TryParse(fields[8], out attachmentTime);
-                    DateTime.TryParse(fields[9], out detachmentTime);
-                    double.TryParse(fields[10], out tareWeight);
-                    double.TryParse(fields[11], out grossWeight);
+                    /* Extract remaining wagon details. */
+                    DateTime.TryParse(fields[2], out attachmentTime);
+                    DateTime.TryParse(fields[5], out detachmentTime);
+                    double.TryParse(fields[15], out tareWeight);
+                    double.TryParse(fields[12], out grossWeight);
                     netWeight = grossWeight - tareWeight;
 
                     /* Construct the wagon object and add to the list. */
-                    wagonDetails data = new wagonDetails(wagonID, origin, plannedDestination, destination, attachmentTime, detachmentTime, netWeight);
-                    wagon.Add(data);
+                    if (validRecord)
+                    {
+                        wagonDetails data = new wagonDetails(trainID, trainDate, trainOperator, commodity, wagonID, origin, plannedDestination, destination, attachmentTime, detachmentTime, netWeight);
+                        wagon.Add(data);
+                    }
                 }
             }
-
             /* Return the completed wagon List. */
             return wagon;
         }
-
+        
         /// <summary>
         /// Read the file containing the temporary speed restriction information and 
         /// store in a manalgable list of TSR objects, which contain all neccessary 
@@ -1283,13 +1284,13 @@ namespace IOLibrary
                 }
 
                 /* Write the data to the active excel workseet. */
-                worksheet.get_Range("A" + header, "A" + (header + excelPageSize)).Value2 = ID;
-                worksheet.get_Range("B" + header, "B" + (header + excelPageSize)).Value2 = Orig;
-                worksheet.get_Range("C" + header, "C" + (header + excelPageSize)).Value2 = Planned;
-                worksheet.get_Range("D" + header, "D" + (header + excelPageSize)).Value2 = Dest;
-                worksheet.get_Range("E" + header, "E" + (header + excelPageSize)).Value2 = attatch;
-                worksheet.get_Range("F" + header, "F" + (header + excelPageSize)).Value2 = detatch;
-                worksheet.get_Range("G" + header, "G" + (header + excelPageSize)).Value2 = weight;
+                worksheet.get_Range("A" + header, "A" + (header + excelPageSize-1)).Value2 = ID;
+                worksheet.get_Range("B" + header, "B" + (header + excelPageSize - 1)).Value2 = Orig;
+                worksheet.get_Range("C" + header, "C" + (header + excelPageSize - 1)).Value2 = Planned;
+                worksheet.get_Range("D" + header, "D" + (header + excelPageSize - 1)).Value2 = Dest;
+                worksheet.get_Range("E" + header, "E" + (header + excelPageSize - 1)).Value2 = attatch;
+                worksheet.get_Range("F" + header, "F" + (header + excelPageSize - 1)).Value2 = detatch;
+                worksheet.get_Range("G" + header, "G" + (header + excelPageSize - 1)).Value2 = weight;
 
             }
 
@@ -1381,11 +1382,11 @@ namespace IOLibrary
                 }
 
                 /* Write the data to the active excel workseet. */
-                worksheet.get_Range("A" + header, "A" + (header + excelPageSize)).Value2 = ID;
-                worksheet.get_Range("B" + header, "B" + (header + excelPageSize)).Value2 = Orig;
-                worksheet.get_Range("C" + header, "C" + (header + excelPageSize)).Value2 = Via;
-                worksheet.get_Range("D" + header, "D" + (header + excelPageSize)).Value2 = Dest;
-                worksheet.get_Range("E" + header, "E" + (header + excelPageSize)).Value2 = weight;
+                worksheet.get_Range("A" + header, "A" + (header + excelPageSize - 1)).Value2 = ID;
+                worksheet.get_Range("B" + header, "B" + (header + excelPageSize - 1)).Value2 = Orig;
+                worksheet.get_Range("C" + header, "C" + (header + excelPageSize - 1)).Value2 = Via;
+                worksheet.get_Range("D" + header, "D" + (header + excelPageSize - 1)).Value2 = Dest;
+                worksheet.get_Range("E" + header, "E" + (header + excelPageSize - 1)).Value2 = weight;
 
             }
 
