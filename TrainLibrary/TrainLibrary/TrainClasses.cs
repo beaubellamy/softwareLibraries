@@ -34,7 +34,7 @@ namespace TrainLibrary
     /// </summary>
     public enum trainCommodity
     {
-        GeneralFreight, Coal, Grain, Mineral, Steel, Clinker, Intermodal, Passenger, Work, GroupRemaining, Unknown
+        GeneralFreight, Coal, Express, Grain, Mineral, Shuttle, Steel, Clinker, Intermodal, Passenger, Work, GroupRemaining, Unknown
     };
 
     /// <summary>
@@ -48,7 +48,7 @@ namespace TrainLibrary
         JohnHollandRail, LauchlanValleyRailSociety, PacificNational, QUBE, RailTransportMuseum, RailCorp, SCT, SouthernShorthaulRail,
         SydneyRailService, TheRailMotorSociety, VLinePassenger,
         /* Commodities. */
-        GeneralFreight, Coal, Grain, Mineral, Steel, Clinker, Intermodal, Passenger, Work, GroupRemaining,
+        GeneralFreight, Coal, Express, Grain, Mineral, Shuttle, Steel, Clinker, Intermodal, Passenger, Work, GroupRemaining,
         /* Power to weight catagories. */
         Underpowered, Overpowered, Alternative,
         /* Other */
@@ -530,9 +530,9 @@ namespace TrainLibrary
     public class volumeMovement
     {
         public string wagonID;
-        public string Origin;
-        public string Via;
-        public string Destination;
+        public List<string> Origin;         /* Location name, location SA4 Region, Location State */
+        public List<string> Via;            /* Location name, location SA4 Region, Location State */
+        public List<string> Destination;    /* Location name, location SA4 Region, Location State */
         public double weight;
         public DateTime attachmentTime;
         public DateTime detachmentTime;
@@ -545,9 +545,9 @@ namespace TrainLibrary
         public volumeMovement(wagonDetails volume)
         {
             this.wagonID = volume.wagonID;
-            this.Origin = volume.origin;
-            this.Via = volume.plannedDestination;
-            this.Destination = volume.destination;
+            this.Origin = new List<string> {volume.origin, null, null};
+            this.Via = new List<string> { volume.plannedDestination, null, null };
+            this.Destination = new List<string> { volume.destination, null, null };
             this.weight = volume.netWeight;
             this.attachmentTime = volume.attachmentTime;
             this.detachmentTime = volume.detachmentTime;
@@ -564,7 +564,7 @@ namespace TrainLibrary
         /// <param name="plannedDestination">Wagon planned destination.</param>
         /// <param name="Destination">Wagon actual destination.</param>
         /// <param name="weight">Net weight carried by the wagon.</param>
-        public volumeMovement(string wagonID, string Origin, string plannedDestination, string Destination, double weight, DateTime attachmentTime, DateTime detachmentTime)
+        public volumeMovement(string wagonID, List<string> Origin, List<string> plannedDestination, List<string> Destination, double weight, DateTime attachmentTime, DateTime detachmentTime)
         {
             this.wagonID = wagonID;
             this.Origin = Origin;
@@ -586,13 +586,34 @@ namespace TrainLibrary
         /// <param name="plannedDestination">Wagon planned destination.</param>
         /// <param name="Destination">Wagon actual destination.</param>
         /// <param name="weight">Net weight carried by the wagon.</param>
+        public volumeMovement(string wagonID, string Origin, string plannedDestination, string Destination, double weight, DateTime attachmentTime, DateTime detachmentTime)
+        {
+            this.wagonID = wagonID;
+            this.Origin = new List<string> { Origin, null, null };
+            this.Via = new List<string> { plannedDestination, null, null };
+            this.Destination = new List<string> { Destination, null, null };
+            this.weight = weight;
+            this.attachmentTime = attachmentTime;
+            this.detachmentTime = detachmentTime;
+
+            this.hasBeenCounted = false;
+
+        }
+        /// <summary>
+        /// VolumeMovement constructor.
+        /// </summary>
+        /// <param name="wagonID">Wagon class and number.</param>
+        /// <param name="Origin">Wagon origin.</param>
+        /// <param name="plannedDestination">Wagon planned destination.</param>
+        /// <param name="Destination">Wagon actual destination.</param>
+        /// <param name="weight">Net weight carried by the wagon.</param>
         /// <param name="hasBeenCounted">Flag indicating if the volume has been counted in the final volume movement list.</param>
         public volumeMovement(string wagonID, string Origin, string plannedDestination, string Destination, double weight, DateTime attachmentTime, DateTime detachmentTime, bool hasBeenCounted)
         {
             this.wagonID = wagonID;
-            this.Origin = Origin;
-            this.Via = plannedDestination;
-            this.Destination = Destination;
+            this.Origin = new List<string> { Origin, null, null };
+            this.Via = new List<string> { plannedDestination, null, null };
+            this.Destination = new List<string> { Destination, null, null };
             this.weight = weight;
             this.attachmentTime = attachmentTime;
             this.detachmentTime = detachmentTime;

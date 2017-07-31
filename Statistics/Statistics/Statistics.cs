@@ -29,6 +29,7 @@ namespace Statistics
         /// Calculates the statistics of the list of trains passed in.
         /// </summary>
         /// <param name="trains">A list of train objects.</param>
+        /// <returns>A statistics object containing statistical information about the trains.</returns>
         public static TrainStatistics generateStats(List<Train> trains)
         {
             TrainStatistics stats = new TrainStatistics();
@@ -102,13 +103,13 @@ namespace Statistics
             return stats;
 
         }
-
-
+        
         /// <summary>
         /// Calculates the statistics of a single train journey, 
         /// typically used for the simualtion statistics.
         /// </summary>
         /// <param name="trains">A single train object.</param>
+        /// <returns>A statistics object containing statistical information about the train.</returns>
         public static TrainStatistics generateStats(Train train)
         {
             TrainStatistics stats = new TrainStatistics();
@@ -164,7 +165,11 @@ namespace Statistics
         }
 
 
-
+        /// <summary>
+        /// Calcualtes statistical information for a list of train pairs.
+        /// </summary>
+        /// <param name="pair">A list of train pairs</param>
+        /// <returns>A statistics object containing statistical information about the train pairs.</returns>
         public static TrainPairStatistics generateStats(List<TrainPair> pair)
         {
             TrainPairStatistics stats = new TrainPairStatistics();
@@ -222,5 +227,6 @@ namespace Statistics
             return stats;
 
         }
+
     }
 }

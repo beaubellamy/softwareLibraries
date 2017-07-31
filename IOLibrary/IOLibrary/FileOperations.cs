@@ -16,11 +16,11 @@ namespace IOLibrary
     public class FileOperations
     {
         /* ARTC location code file */
-        public static string geoLocationFile = @"H:\ARTC GEO Location Details - under construction.xlsx";
+        public static string geoLocationFile = @"H:\ARTC GEO Location Details - under construction.csv";
         
         /* Create a dictionary of locations:
          * Key:     Location Code [3 letter code]
-         * Values:  Location Name, Location SA4 region Location State.
+         * Values:  Location Name, Location SA4 region, Location State.
          */
         public static Dictionary<string, List<string>> locationDictioanry = new Dictionary<string, List<string>>();
 
@@ -425,17 +425,17 @@ namespace IOLibrary
                         validRecord = true;
 
                     /* Wagon Origin. */
-                    origin = fields[0];
+                    origin = fields[0].ToUpper();
                     if (origin.Count() != 3)
                         Tools.messageBox("Origin location code is unknown: {0} Unknown location code.", origin);
 
                     /* Wagon planned destination. */
-                    plannedDestination = fields[1];
+                    plannedDestination = fields[1].ToUpper();
                     if (plannedDestination.Count() != 3)
                         Tools.messageBox("Consigned Destination location code in unknown: {0} Unknown location code.", plannedDestination);
 
                     /* Wagon destination. */
-                    destination = fields[4];
+                    destination = fields[4].ToUpper();
                     if (destination.Count() != 3)
                     {   /* If the destination field is empty, assume the wagon reaches the planned destination. */
                         if (destination.Equals(""))
@@ -1270,17 +1270,17 @@ namespace IOLibrary
                         detatch[j, 0] = wagon[checkIdx].detachmentTime;
                         weight[j, 0] = wagon[checkIdx].netWeight;
                     }
-                    else
-                    {
-                        /* The end of the data has been reached. Populate the remaining elements. */
-                        ID[j, 0] = "";
-                        Orig[j, 0] = "";
-                        Planned[j, 0] = "";
-                        Dest[j, 0] = "";
-                        attatch[j, 0] = DateTime.MinValue;
-                        detatch[j, 0] = DateTime.MinValue;
-                        weight[j, 0] = 0;
-                    }
+                    //else
+                    //{
+                    //    /* The end of the data has been reached. Populate the remaining elements. */
+                    //    ID[j, 0] = "";
+                    //    Orig[j, 0] = "";
+                    //    Planned[j, 0] = "";
+                    //    Dest[j, 0] = "";
+                    //    attatch[j, 0] = DateTime.MinValue;
+                    //    detatch[j, 0] = DateTime.MinValue;
+                    //    weight[j, 0] = 0;
+                    //}
                 }
 
                 /* Write the data to the active excel workseet. */
@@ -1329,7 +1329,11 @@ namespace IOLibrary
             workbook = (Workbook)(excel.Workbooks.Add(""));
 
             /* Create the header details. */
-            string[] headerString = { "Wagon ID", "Origin", "Via", "Destination", "Weight" };
+            string[] headerString = { "Wagon ID", 
+                                        "Origin", "Origin SA4", "Origin State", 
+                                        "Via", "Via SA4", "Via State", 
+                                        "Destination", "Destination SA4", "Destination State", 
+                                        "Weight" };
 
             /* Get the page size of the excel worksheet. */
             int header = 2;
@@ -1344,9 +1348,9 @@ namespace IOLibrary
 
             /* Deconstruct the volume details into excel columns. */
             string[,] ID = new string[excelPageSize, 1];
-            string[,] Orig = new string[excelPageSize, 1];
-            string[,] Via = new string[excelPageSize, 1];
-            string[,] Dest = new string[excelPageSize, 1];
+            string[,] Orig = new string[excelPageSize, volume[0].Origin.Count()];
+            string[,] Via = new string[excelPageSize, volume[0].Via.Count()];
+            string[,] Dest = new string[excelPageSize, volume[0].Destination.Count()];
             double[,] weight = new double[excelPageSize, 1];
 
             /* Loop through the excel pages. */
@@ -1355,7 +1359,7 @@ namespace IOLibrary
                 /* Set the active worksheet. */
                 worksheet = (Worksheet)workbook.Sheets[excelPage + 1];
                 workbook.Sheets[excelPage + 1].Activate();
-                worksheet.get_Range("A1", "E1").Value2 = headerString;
+                worksheet.get_Range("A1", "K1").Value2 = headerString;
 
                 /* Loop through the data for each excel page. */
                 for (int j = 0; j < excelPageSize; j++)
@@ -1365,28 +1369,34 @@ namespace IOLibrary
                     if (checkIdx < volume.Count())
                     {
                         ID[j, 0] = volume[checkIdx].wagonID;
-                        Orig[j, 0] = volume[checkIdx].Origin;
-                        Via[j, 0] = volume[checkIdx].Via;
-                        Dest[j, 0] = volume[checkIdx].Destination;
+                        for (int locationIdx = 0; locationIdx < volume[checkIdx].Origin.Count(); locationIdx++)
+                        {
+                            Orig[j, locationIdx] = volume[checkIdx].Origin[locationIdx];
+                            Via[j, locationIdx] = volume[checkIdx].Via[locationIdx];
+                            Dest[j, locationIdx] = volume[checkIdx].Destination[locationIdx];
+                        }
                         weight[j, 0] = volume[checkIdx].weight;
                     }
                     else
                     {
                         /* The end of the data has been reached. Populate the remaining elements. */
                         ID[j, 0] = "";
-                        Orig[j, 0] = "";
-                        Via[j, 0] = "";
-                        Dest[j, 0] = "";
+                        for (int locationIdx = 0; locationIdx < volume[checkIdx].Origin.Count(); locationIdx++)
+                        {
+                            Orig[j, locationIdx] = "";
+                            Via[j, locationIdx] = "";
+                            Dest[j, locationIdx] = "";
+                        }
                         weight[j, 0] = 0;
                     }
                 }
 
                 /* Write the data to the active excel workseet. */
                 worksheet.get_Range("A" + header, "A" + (header + excelPageSize - 1)).Value2 = ID;
-                worksheet.get_Range("B" + header, "B" + (header + excelPageSize - 1)).Value2 = Orig;
-                worksheet.get_Range("C" + header, "C" + (header + excelPageSize - 1)).Value2 = Via;
-                worksheet.get_Range("D" + header, "D" + (header + excelPageSize - 1)).Value2 = Dest;
-                worksheet.get_Range("E" + header, "E" + (header + excelPageSize - 1)).Value2 = weight;
+                worksheet.get_Range("B" + header, "D" + (header + excelPageSize - 1)).Value2 = Orig;
+                worksheet.get_Range("E" + header, "G" + (header + excelPageSize - 1)).Value2 = Via;
+                worksheet.get_Range("H" + header, "J" + (header + excelPageSize - 1)).Value2 = Dest;
+                worksheet.get_Range("K" + header, "K" + (header + excelPageSize - 1)).Value2 = weight;
 
             }
 

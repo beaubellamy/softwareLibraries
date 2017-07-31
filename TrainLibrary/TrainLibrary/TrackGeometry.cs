@@ -8,8 +8,6 @@ namespace TrainLibrary
 {
     public class TrackGeometry
     {
-        /* Create a tools Class. */
-        //Tools tool = new Tools();
         /* Create a processing Class. */
         Processing processing = new Processing();
 

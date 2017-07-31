@@ -1332,10 +1332,15 @@ namespace TrainLibrary
             return trainCategory;
         }
 
+        /// <summary>
+        /// Convert the opertor string to the trainOperator class - INCOMPLETE
+        /// </summary>
+        /// <param name="Operator">A 3 character string designation for the traqin operator.</param>
+        /// <returns>A trainOperator object.</returns>
         public static trainOperator getWagonOperator(string Operator)
         {
             /* Still to be completed. */
-            // ASR, AVA, AWR, FAL,FLK, NRC, SBR
+            // ASR, AVA, AWR, FAL,FLK, NRC, SBR - Not sure what operators these are?
             string[] ARTC = { };
             string[] Aurizon = { "QR" }; 
             string[] AustralianRailwaysHistoricalSociety = { }; 
@@ -1402,10 +1407,15 @@ namespace TrainLibrary
 
         }
 
+        /// <summary>
+        /// Convert the commodity string to the commodity object - INCOMPLETE
+        /// </summary>
+        /// <param name="commodity">A 3 character string designation for the commodity.</param>
+        /// <returns>A trainCommodity object.</returns>
         public static trainCommodity getWagonCommodity(string commodity)
         {
             /* Still to be completed. */
-            // GDS, SHT,  SUP, WRK
+            // GDS, SUP - Not sure what commodities these are.
             string[] Clinker = { "CLS" };
             string[] Coal = { "CLE" };
             string[] Freight = { "FRE", "GEN" };
@@ -1414,16 +1424,18 @@ namespace TrainLibrary
             string[] Intermodal = { "INT" };
             string[] Minerals = { "MIN" };
             string[] Passenger = { "PAS" };
+            string[] Shuttle = { "SHT" };
             string[] Steel = { "STL" };
-
+            string[] Work = { "WRk" };
+            
             if (Clinker.Contains(commodity))
                 return trainCommodity.Clinker;
             else if (Coal.Contains(commodity))
                 return trainCommodity.Coal;
             else if (Freight.Contains(commodity))
                 return trainCommodity.GeneralFreight;
-            //else if (Express.Contains(commodity))
-            //    return trainCommodity;
+            else if (Express.Contains(commodity))
+                return trainCommodity.Express;
             else if (Grain.Contains(commodity))
                 return trainCommodity.Grain;
             else if (Intermodal.Contains(commodity))
@@ -1432,8 +1444,12 @@ namespace TrainLibrary
                 return trainCommodity.Mineral;
             else if (Passenger.Contains(commodity))
                 return trainCommodity.Passenger;
+            else if (Shuttle.Contains(commodity))
+                return trainCommodity.Shuttle;
             else if (Steel.Contains(commodity))
                 return trainCommodity.Steel;
+            else if (Work.Contains(commodity))
+                return trainCommodity.Work;
             else
                 return trainCommodity.Unknown;
 
