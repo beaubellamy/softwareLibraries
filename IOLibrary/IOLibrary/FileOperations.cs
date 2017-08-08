@@ -28,19 +28,19 @@ namespace IOLibrary
         /// Read the data file and extract the neccessary information into a train record class.
         /// </summary>
         /// <param name="filename">Filename of the data file.</param>
-        /// <param name="excludeTrainList">List of trains to exclude.</param>
+        /// <param name="trainList">List of trains to exclude.</param>
+        /// <param name="excludeListOfTrains">Boolean flag to indicate if the list of trains should be excluded or exclusively included.</param>
+        /// <param name="dateRange">The dates between which to keep the data</param>
         /// <returns>List of train records describing each point in a trains journey.</returns>
         public static List<TrainRecord> readICEData(string filename, List<string> trainList, bool excludeListOfTrains, DateTime[] dateRange)
         {
-            
+
             /* Read all the lines of the data file. */
             Tools.isFileOpen(filename);
 
-            string[] lines = System.IO.File.ReadAllLines(filename);
             char[] delimeters = { '\t' };
+            string[] fields = null;
 
-            /* Seperate the fields. */
-            string[] fields = null; // lines[0].Split(delimeters);
             /* Minimum length of the operator string to distinguisg between them. */
             int operatorStringLength = 6;
 
@@ -64,7 +64,7 @@ namespace IOLibrary
             /* List of all valid train data. */
             List<TrainRecord> IceRecord = new List<TrainRecord>();
 
-            foreach (string line in lines)
+            foreach (string line in System.IO.File.ReadLines(filename))
             {
                 if (header)
                     /* Ignore the header line. */
@@ -94,12 +94,14 @@ namespace IOLibrary
                     DateTime.TryParse(fields[3], out dateTime);
                     double.TryParse(fields[7], out powerToWeight);
 
-                    /* possible TSR information as well*/
+                    /* Possible TSR information as well*/
                     /* TSR region
                      * Start km
                      * end km
                      * TSR issue Data
                      * TSR lift date
+                     * 
+                     * This would need to be added to the trainRecord class.
                      */
 
                     /* Check if the train is in the exclude list */
@@ -126,7 +128,7 @@ namespace IOLibrary
             /* Return the list of records. */
             return IceRecord;
         }
-
+        
         /// <summary>
         /// This function reads the Traxim simulation files and populates the simualtedTrain 
         /// data for comparison to the averaged ICE data.
@@ -139,12 +141,9 @@ namespace IOLibrary
             /* Read all the lines of the data file. */
             Tools.isFileOpen(filename);
 
-            string[] lines = System.IO.File.ReadAllLines(filename);
             char[] delimeters = { ',', '\t' };
-
-            /* Seperate the fields. */
-            string[] fields = lines[0].Split(delimeters);
-
+            string[] fields = null;
+            
             /* Initialise the fields of interest. */
             double kilometreage = 0;
             double latitude = 0;
@@ -161,7 +160,7 @@ namespace IOLibrary
             List<TrainJourney> simulatedJourney = new List<TrainJourney>();
 
 
-            foreach (string line in lines)
+            foreach (string line in System.IO.File.ReadLines(filename))
             {
                 /* Seperate each record into each field */
                 fields = line.Split(delimeters);
@@ -247,11 +246,10 @@ namespace IOLibrary
             bool header = true;
 
             /* Read all the lines of the file. */
-            string[] lines = System.IO.File.ReadAllLines(filename);
             char[] delimeters = { ',', '\t' };
 
             /* Seperate the fields. */
-            string[] fields = lines[0].Split(delimeters);
+            string[] fields = null;
 
             bool firstPoint = true;
 
@@ -273,7 +271,7 @@ namespace IOLibrary
             string loop;
 
             /* Add the trains to the list. */
-            foreach (string line in lines)
+            foreach (string line in System.IO.File.ReadLines(filename))
             {
                 if (header)
                     /* Ignore the header line. */
@@ -368,7 +366,6 @@ namespace IOLibrary
         public static List<wagonDetails> readWagonDataFile(string filename)
         {
             /* Read the all lines of the text file. */
-            string[] lines = System.IO.File.ReadAllLines(filename);
             char[] delimiters = { '\t' };
             bool header = true;
 
@@ -389,7 +386,7 @@ namespace IOLibrary
             /* Validate the format of the first line of the file, ignoring the header information */
             bool validFormat = false;
             bool validRecord = false;
-            string[] fields = lines[1].Split(delimiters);
+            string[] fields = null;
 
             validFormat = Tools.validateFileFormat(fields);
             if (!validFormat)
@@ -399,7 +396,7 @@ namespace IOLibrary
             }
 
             /* Extract the wagon details from the data file. */
-            foreach (string line in lines)
+            foreach (string line in System.IO.File.ReadLines(filename))
             {
                 if (header)
                 {
@@ -534,7 +531,10 @@ namespace IOLibrary
         /// This function writes each interpolated train journey to an individual column in excel.
         /// This can be used to compare against previously completed corridor analysis for validation.
         /// </summary>
-        /// <param name="trainRecords">List of trains containing the interpolated data.</param>
+        /// <param name="trainRecords">The train records containing the individual train properties.</param>
+        /// <param name="startKm">The start point of the interpolation</param>
+        /// <param name="interpoaltionInterval">The interpolation interval in m</param>
+        /// <param name="aggregatedDestination">The destination directory for the resulting file.</param>
         public static void writeTrainData(List<Train> trainRecords, double startKm, double interpoaltionInterval, string aggregatedDestination)
         {
 
@@ -652,10 +652,171 @@ namespace IOLibrary
         }
 
         /// <summary>
+        /// This function writes the train journey information (km, speed and time) to an individual column in excel. 
+        /// This is intended to visualise the raw data prio to cleaning and interpolation. To write this information 
+        /// for the interpolated data, use the writeTrainDataWithTime function.
+        /// </summary>
+        /// <param name="trainRecords">The train records containing the individual train properties.</param>
+        /// <param name="aggregatedDestination">The destination directory for the resulting file.</param>
+        public static void writeRawTrainDataWithTime(List<Train> trainRecords, string aggregatedDestination)
+        {
+
+            /* Create the microsfot excel references. */
+            _Workbook workbook;
+            _Worksheet worksheet;
+
+            /* Start Excel and get Application object. */
+            Microsoft.Office.Interop.Excel.Application excel = new Microsoft.Office.Interop.Excel.Application();
+
+            /* Get the reference to the new workbook. */
+            workbook = (Microsoft.Office.Interop.Excel._Workbook)(excel.Workbooks.Add(""));
+
+            /* Create the header details. */
+            string[,] headerString = {{ "km", "", "Trains:" },
+                                     { "", "Train ID:", "" },
+                                     { "", "Loco ID:", "" },
+                                     { "", "Date:", "" },
+                                     { "", "Power to Weight Ratio:", "" },
+                                     { "", "Commodity:", "" },
+                                     { "", "Direction:", "" }};
+
+
+            /* Pagenate the data for writing to excel. */
+            int excelPageSize = 1000000;        /* Page size of the excel worksheet. */
+            int excelPages = 1;                 /* Number of Excel pages to write. */
+
+            int headerOffset = 9;
+            int horizontalOffset = 3;
+
+            int headerRows = headerString.GetLength(0);
+            int headerColumns = headerString.GetLength(1);
+
+            int displayColumn = horizontalOffset; 
+
+            int columnOffset = 4;
+            
+            /* Adjust the excel page size or the number of pages to write. */
+            if (trainRecords.Count() < excelPageSize)
+                excelPageSize = trainRecords.Count();
+            else
+                excelPages = (int)Math.Round((double)trainRecords.Count() / excelPageSize + 0.5);
+
+            /* Deconstruct the train details into excel columns. */
+            string[,] TrainID = new string[1, trainRecords.Count() * columnOffset];
+            string[,] LocoID = new string[1, trainRecords.Count() * columnOffset];
+            double[,] powerToWeight = new double[1, trainRecords.Count() * columnOffset];
+            string[,] commodity = new string[1, trainRecords.Count() * columnOffset];
+            string[,] direction = new string[1, trainRecords.Count() * columnOffset];
+            DateTime[,] trainDate = new DateTime[1, trainRecords.Count() * columnOffset];
+
+
+            /* Loop through the excel pages. */
+            for (int excelPage = 0; excelPage < excelPages; excelPage++)
+            {
+                /* Set the active worksheet. */
+                worksheet = workbook.Sheets[excelPage + 1];
+                workbook.Sheets[excelPage + 1].Activate();
+                Range topLeft = worksheet.Cells[1, 1];
+                Range bottomRight = worksheet.Cells[headerRows, headerColumns];
+                worksheet.get_Range(topLeft, bottomRight).Value2 = headerString;
+
+                /* Loop through the data for each excel page. */
+                for (int trainIdx = 0; trainIdx < trainRecords.Count(); trainIdx++)
+                {
+
+                    int displayRow = headerOffset + trainRecords[trainIdx].journey.Count() - 1;
+                    
+                    double[,] kilometerage = new double[trainRecords[trainIdx].journey.Count(), 1];
+
+                    double[,] speed = new double[trainRecords[trainIdx].journey.Count(), 1];
+                    DateTime[,] dateTime = new DateTime[trainRecords[trainIdx].journey.Count(), 1];
+
+
+                    TrainID[0, trainIdx * columnOffset] = trainRecords[trainIdx].trainID;
+                    LocoID[0, trainIdx * columnOffset] = trainRecords[trainIdx].locoID;
+                    trainDate[0, trainIdx * columnOffset] = trainRecords[trainIdx].journey.Where(t => t.dateTime > DateTime.MinValue).ToList().Min(t => t.dateTime);
+
+                    powerToWeight[0, trainIdx * columnOffset] = trainRecords[trainIdx].powerToWeight;
+
+                    commodity[0, trainIdx * columnOffset] = trainRecords[trainIdx].commodity.ToString();
+
+                    direction[0, trainIdx * columnOffset] = trainRecords[trainIdx].trainDirection.ToString();
+
+                    TrainID[0, trainIdx * columnOffset + 1] = "";
+                    LocoID[0, trainIdx * columnOffset + 1] = "";
+                    trainDate[0, trainIdx * columnOffset + 1] = DateTime.MinValue;
+                    powerToWeight[0, trainIdx * columnOffset + 1] = 0;
+                    commodity[0, trainIdx * columnOffset + 1] = "";
+                    direction[0, trainIdx * columnOffset + 1] = "";
+
+                    TrainID[0, trainIdx * columnOffset + 2] = "";
+                    LocoID[0, trainIdx * columnOffset + 2] = "";
+                    trainDate[0, trainIdx * columnOffset + 2] = DateTime.MinValue;
+                    powerToWeight[0, trainIdx * columnOffset + 2] = 0;
+                    commodity[0, trainIdx * columnOffset + 2] = "";
+                    direction[0, trainIdx * columnOffset + 2] = "";
+
+
+                    for (int journeyIdx = 0; journeyIdx < trainRecords[trainIdx].journey.Count(); journeyIdx++)
+                    {
+                        kilometerage[journeyIdx, 0] = trainRecords[trainIdx].journey[journeyIdx].kilometreage;
+
+                        speed[journeyIdx, 0] = trainRecords[trainIdx].journey[journeyIdx].speed;
+                        dateTime[journeyIdx, 0] = trainRecords[trainIdx].journey[journeyIdx].dateTime;
+
+                    }
+                    /* Reduce memory needs
+                     * Reduce the speed and dataTiem decleration.
+                     * Write each trains journey details individually here.
+                     */
+                    worksheet.Range[worksheet.Cells[headerOffset, displayColumn], worksheet.Cells[displayRow, displayColumn]].Value2 = kilometerage;
+                    
+                    worksheet.Range[worksheet.Cells[headerOffset, displayColumn + 1], worksheet.Cells[displayRow, displayColumn + 1]].Value2 = speed;
+                    worksheet.Range[worksheet.Cells[headerOffset, displayColumn + 2], worksheet.Cells[displayRow, displayColumn + 2]].Value2 = dateTime;
+                    displayColumn = displayColumn + columnOffset;
+                    horizontalOffset = horizontalOffset + columnOffset;
+
+                }
+
+                /* Write the data to the active excel workseet. */
+                worksheet.Range[worksheet.Cells[2, 3], worksheet.Cells[2, trainRecords.Count() * columnOffset + 2]].Value2 = TrainID;
+                worksheet.Range[worksheet.Cells[3, 3], worksheet.Cells[3, trainRecords.Count() * columnOffset + 2]].Value2 = LocoID;
+                worksheet.Range[worksheet.Cells[4, 3], worksheet.Cells[4, trainRecords.Count() * columnOffset + 2]].Value2 = trainDate;
+                worksheet.Range[worksheet.Cells[5, 3], worksheet.Cells[5, trainRecords.Count() * columnOffset + 2]].Value2 = powerToWeight;
+                worksheet.Range[worksheet.Cells[6, 3], worksheet.Cells[6, trainRecords.Count() * columnOffset + 2]].Value2 = commodity;
+                worksheet.Range[worksheet.Cells[7, 3], worksheet.Cells[7, trainRecords.Count() * columnOffset + 2]].Value2 = direction;
+
+            }
+
+            /* Generate the resulting file name and location to save to. */
+            string saveFilename = aggregatedDestination + @"\TransactionTime_InterpolatedTrains" + DateTime.Now.ToString("yyyyMMdd - raw") + ".xlsx";
+
+            /* Check the file does not exist yet. */
+            if (File.Exists(saveFilename))
+            {
+                Tools.isFileOpen(saveFilename);
+                File.Delete(saveFilename);
+            }
+
+
+            /* Save the excel file. */
+            excel.UserControl = false;
+            workbook.SaveAs(saveFilename, XlFileFormat.xlWorkbookDefault, Type.Missing, Type.Missing, false, false,
+                XlSaveAsAccessMode.xlNoChange, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
+
+            workbook.Close();
+
+            return;
+        }
+
+        /// <summary>
         /// This function writes each interpolated train journey to an individual column in excel.
         /// This can be used to compare against previously completed corridor analysis for validation.
         /// </summary>
-        /// <param name="trainRecords">List of trains containing the interpolated data.</param>
+        /// <param name="trainRecords">The train records containing the individual train properties.</param>
+        /// <param name="startKm">The start point of the interpolation</param>
+        /// <param name="interpoaltionInterval">The interpolation interval in m</param>
+        /// <param name="aggregatedDestination">The destination directory for the resulting file.</param>
         public static void writeTrainDataWithTime(List<Train> trainRecords, double startKm, double interpoaltionInterval, string aggregatedDestination)
         {
 
@@ -690,7 +851,7 @@ namespace IOLibrary
             int headerColumns = headerString.GetLength(1);
 
             int displayRow = headerOffset + trainRecords[0].journey.Count() - 1;
-            int displayColumn = horizontalOffset + trainRecords.Count() - 1;
+            int displayColumn = horizontalOffset; // +trainRecords.Count() - 1;
 
             int timeOffset = 5;
             int timedataOffset = displayRow + timeOffset;
@@ -712,8 +873,11 @@ namespace IOLibrary
 
             double[,] kilometerage = new double[trainRecords[0].journey.Count(), 1];
 
-            double[,] speed = new double[trainRecords[0].journey.Count(), trainRecords.Count()];
-            DateTime[,] dateTime = new DateTime[trainRecords[0].journey.Count(), trainRecords.Count()];
+            double[,] speed = new double[trainRecords[0].journey.Count(), 1]; //trainRecords.Count()];
+            DateTime[,] dateTime = new DateTime[trainRecords[0].journey.Count(), 1]; // trainRecords.Count()];
+
+            //double[,] speed = new double[6000, 2000];
+            //DateTime[,] dateTime = new DateTime[6000,2000];
 
 
             /* Loop through the excel pages. */
@@ -741,12 +905,23 @@ namespace IOLibrary
 
                     for (int journeyIdx = 0; journeyIdx < trainRecords[trainIdx].journey.Count(); journeyIdx++)
                     {
+                        //Console.WriteLine("{0}:: {1}",trainIdx,journeyIdx);
+
                         kilometerage[journeyIdx, 0] = startKm + interpoaltionInterval * Processing.metresToKilometers * journeyIdx;
 
-                        speed[journeyIdx, trainIdx] = trainRecords[trainIdx].journey[journeyIdx].speed;
-                        dateTime[journeyIdx, trainIdx] = trainRecords[trainIdx].journey[journeyIdx].dateTime;
+                        speed[journeyIdx, 0] = trainRecords[trainIdx].journey[journeyIdx].speed;
+                        dateTime[journeyIdx, 0] = trainRecords[trainIdx].journey[journeyIdx].dateTime;
 
                     }
+                    /* Reduce memory needs
+                     * Reduce the speed and dataTiem decleration.
+                     * Write each trains journey details individually here.
+                     */
+                    worksheet.Range[worksheet.Cells[headerOffset, horizontalOffset], worksheet.Cells[displayRow, displayColumn]].Value2 = speed;
+                    worksheet.Range[worksheet.Cells[timedataOffset, horizontalOffset], worksheet.Cells[timedataOffset + trainRecords[0].journey.Count() - 1, displayColumn]].Value2 = dateTime;
+                    displayColumn++;
+                    horizontalOffset++;
+                    
                 }
 
                 /* Write the data to the active excel workseet. */
@@ -758,10 +933,10 @@ namespace IOLibrary
                 worksheet.Range[worksheet.Cells[7, 3], worksheet.Cells[7, trainRecords.Count() + 2]].Value2 = direction;
 
                 worksheet.Range[worksheet.Cells[headerOffset, 1], worksheet.Cells[displayRow, 1]].Value2 = kilometerage;
-                worksheet.Range[worksheet.Cells[headerOffset, horizontalOffset], worksheet.Cells[displayRow, displayColumn]].Value2 = speed;
+                //worksheet.Range[worksheet.Cells[headerOffset, horizontalOffset], worksheet.Cells[displayRow, displayColumn]].Value2 = speed;
 
                 worksheet.Range[worksheet.Cells[timedataOffset, 1], worksheet.Cells[timedataOffset + trainRecords[0].journey.Count() - 1, 1]].Value2 = kilometerage;
-                worksheet.Range[worksheet.Cells[timedataOffset, horizontalOffset], worksheet.Cells[timedataOffset + trainRecords[0].journey.Count() - 1, displayColumn]].Value2 = dateTime;
+                //worksheet.Range[worksheet.Cells[timedataOffset, horizontalOffset], worksheet.Cells[timedataOffset + trainRecords[0].journey.Count() - 1, displayColumn]].Value2 = dateTime;
 
 
             }
@@ -792,6 +967,7 @@ namespace IOLibrary
         /// </summary>
         /// <param name="averageTrains">List of aggregated train journies.</param>
         /// <param name="stats">The statstics generated for each average train</param>
+        /// <param name="aggregatedDestination">The destination directory for the resulting file.</param>
         public static void wrtieAverageData(List<AverageTrain> averageTrains, List<TrainStatistics> stats, string aggregatedDestination)
         {
             /* Start Excel and get the references to the workbook and worksheet. */
@@ -1129,6 +1305,7 @@ namespace IOLibrary
         /// </summary>
         /// <param name="averageTrains">List of aggregated train journies.</param>
         /// <param name="stats">The statstics generated for each average train</param>
+        /// <param name="aggregatedDestination">The destination directory for the resulting file.</param>
         public static void wrtieTrainPairStatistics(List<TrainPairStatistics> stats, string aggregatedDestination)
         {
             /* Create the microsoft excel references. */
@@ -1209,6 +1386,7 @@ namespace IOLibrary
         /// Write the wagon details to an excel file for later analysis.
         /// </summary>
         /// <param name="wagon">The list of wagon objects containing the origin, destinaiton and net weight</param>
+        /// <param name="destinationFolder">The destination directory for the resulting file.</param>
         public static void writeWagonData(List<wagonDetails> wagon, string destinationFolder)
         {
             /* Maximum number of rows in an excel worksheet is 1,048,576 (round down to a nice number) */
@@ -1270,17 +1448,17 @@ namespace IOLibrary
                         detatch[j, 0] = wagon[checkIdx].detachmentTime;
                         weight[j, 0] = wagon[checkIdx].netWeight;
                     }
-                    //else
-                    //{
-                    //    /* The end of the data has been reached. Populate the remaining elements. */
-                    //    ID[j, 0] = "";
-                    //    Orig[j, 0] = "";
-                    //    Planned[j, 0] = "";
-                    //    Dest[j, 0] = "";
-                    //    attatch[j, 0] = DateTime.MinValue;
-                    //    detatch[j, 0] = DateTime.MinValue;
-                    //    weight[j, 0] = 0;
-                    //}
+                    else
+                    {
+                        /* The end of the data has been reached. Replace teh previous values with empty data. */
+                        ID[j, 0] = "";
+                        Orig[j, 0] = "";
+                        Planned[j, 0] = "";
+                        Dest[j, 0] = "";
+                        attatch[j, 0] = DateTime.MinValue;
+                        detatch[j, 0] = DateTime.MinValue;
+                        weight[j, 0] = 0;
+                    }
                 }
 
                 /* Write the data to the active excel workseet. */
@@ -1315,6 +1493,7 @@ namespace IOLibrary
         /// Write the volume data to an excel file for analysis.
         /// </summary>
         /// <param name="volume">The list of volume objects containing the final origin destination details.</param>
+        /// <param name="destinationFolder">The destination directory for the resulting file.</param>
         public static void writeVolumeData(List<volumeMovement> volume, string destinationFolder)
         {
             /* Maximum number of rows in an excel worksheet is 1,048,576 (round down to a nice number) */

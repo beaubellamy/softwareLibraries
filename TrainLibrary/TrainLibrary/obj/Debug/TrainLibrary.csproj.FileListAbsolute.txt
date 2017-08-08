@@ -2,3 +2,4 @@ S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\T
 S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\TrainLibrary\TrainLibrary\bin\Debug\TrainLibrary.pdb
 S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\TrainLibrary\TrainLibrary\obj\Debug\TrainLibrary.dll
 S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\TrainLibrary\TrainLibrary\obj\Debug\TrainLibrary.pdb
+S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\TrainLibrary\TrainLibrary\obj\Debug\TrainLibrary.csprojResolveAssemblyReference.cache
