@@ -22,11 +22,11 @@ namespace IOLibrary
         /// aggregate file will be saved to.
         /// </summary>
         /// <returns>The destination path.</returns>
-        public static string selectFolder()
+        public static string selectFolder(string path = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis")
         {
             /* Create the folder browser and set the intial starting location. */
             FolderBrowserDialog folder = new FolderBrowserDialog();
-            folder.SelectedPath = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis";
+            folder.SelectedPath = path;
 
             DialogResult result = folder.ShowDialog();
 
@@ -35,12 +35,13 @@ namespace IOLibrary
             else
                 return "";
         }
-        
+
         /// <summary>
         /// Function opens a dialog box to browse and select the data file.
         /// </summary>
+        /// <param name="initialDirectory">The default directory to start the browser from.</param>
         /// <returns>The full filename of the data file.</returns>
-        public static string selectDataFile()
+        public static string selectDataFile(string initialDirectory = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations")
         {
 
             /* Declare the filename to return. */
@@ -50,7 +51,7 @@ namespace IOLibrary
             OpenFileDialog fileSelectBrowser = new OpenFileDialog();
             /* Set the browser properties. */
             fileSelectBrowser.Title = "Select Volume data file";
-            fileSelectBrowser.InitialDirectory = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations";
+            fileSelectBrowser.InitialDirectory = initialDirectory;
             fileSelectBrowser.Filter = "All EXCEL FILES (*.xlsx*)|*.xlsx*|All files (*.*)|*.*";
             fileSelectBrowser.FilterIndex = 2;
             fileSelectBrowser.RestoreDirectory = true;
@@ -78,8 +79,9 @@ namespace IOLibrary
         /// Function opens a dialog box to browse and select the data file.
         /// </summary>
         /// <param name="caption">A caption for the browser.</param>
+        /// <param name="initialDirectory">The default directory to start the browser from.</param>
         /// <returns>The full filename of the data file.</returns>
-        public static string selectDataFile(string caption)
+        public static string selectDataFile(string caption, string initialDirectory = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations")
         {
 
             /* Declare the filename to return. */
@@ -89,7 +91,7 @@ namespace IOLibrary
             OpenFileDialog fileSelectBrowser = new OpenFileDialog();
             /* Set the browser properties. */
             fileSelectBrowser.Title = caption;
-            fileSelectBrowser.InitialDirectory = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations";
+            fileSelectBrowser.InitialDirectory = initialDirectory;
             fileSelectBrowser.Filter = "All EXCEL FILES (*.xlsx*)|*.xlsx*|All files (*.*)|*.*";
             fileSelectBrowser.FilterIndex = 2;
             fileSelectBrowser.RestoreDirectory = true;

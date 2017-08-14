@@ -388,6 +388,9 @@ namespace IOLibrary
             bool validRecord = false;
             string[] fields = null;
 
+            /* Read the first line of data - assum e first line has header information. */
+            fields = System.IO.File.ReadLines(filename).Skip(1).First().Split(delimiters);
+
             validFormat = Tools.validateFileFormat(fields);
             if (!validFormat)
             {

@@ -176,7 +176,7 @@ namespace Statistics
 
             if (pair.Count == 0)
             {
-                stats.Category = string.Format("{0:0.00} km - {0:0.00} km", 0,0);
+                stats.Category = string.Format("{0:0.00} km - {1:0.00} km", 0,0);
 
                 /* Extract the number of trains in the list */
                 stats.numberOfTrainsPairs = 0;
@@ -192,7 +192,7 @@ namespace Statistics
             }
             else if (pair.Count == 1)
             {
-                stats.Category = string.Format("{0:0.00} km - {0:0.00} km", pair[0].loopLocation.loopStart, pair[0].loopLocation.loopEnd);
+                stats.Category = string.Format("{0:0.00} km - {1:0.00} km", pair[0].loopLocation.loopStart, pair[0].loopLocation.loopEnd);
 
                 /* Extract the number of trains in the list */
                 stats.numberOfTrainsPairs = 1;
@@ -208,7 +208,7 @@ namespace Statistics
             }
             else
             {
-                stats.Category = string.Format("{0:0.00} km - {0:0.00} km", pair[0].loopLocation.loopStart, pair[0].loopLocation.loopEnd);
+                stats.Category = string.Format("{0:0.00} km - {1:0.00} km", pair[0].loopLocation.loopStart, pair[0].loopLocation.loopEnd);
 
                 /* Extract the number of trains in the list */
                 stats.numberOfTrainsPairs = pair.Count();

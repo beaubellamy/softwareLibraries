@@ -45,6 +45,16 @@ namespace TrainLibrary
         }
 
         /// <summary>
+        /// Convert radians to degrees
+        /// </summary>
+        /// <param name="radians">Angle in radians.</param>
+        /// <returns>Angle in degrees.</returns>
+        public static double radians2Degrees(double radians)
+        {
+            return radians * 180 / Math.PI;
+        }
+
+        /// <summary>
         /// Calculate the shortes distance between two geographical locations using the great circle formula.
         /// </summary>
         /// <param name="latitude1">Latitude of location 1.</param>
