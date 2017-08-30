@@ -223,6 +223,7 @@ namespace TrainLibrary
         public double elevation;
         public bool isLoopHere;
         public bool isTSRHere;
+        public bool interpolate;
 
         /// <summary>
         /// Default Train journey constructor
@@ -237,6 +238,7 @@ namespace TrainLibrary
             this.elevation = 0;
             this.isLoopHere = false;
             this.isTSRHere = false;
+            this.interpolate = true;
         }
 
         /// <summary>
@@ -253,10 +255,30 @@ namespace TrainLibrary
             this.elevation = 0;
             this.isLoopHere = false;
             this.isTSRHere = false;
+            this.interpolate = true;
         }
 
         /// <summary>
-        /// Train journey constructor for a standard train, built from the field in the data.
+        /// Train journey constructor for train record items after processing.
+        /// </summary>
+        /// <param name="record">A train record item containing all the information from the data.</param>
+        /// <param name="interpolate">A flag to indicate if the interpolation should be completed 
+        /// between this point and the previous point.</param>
+        public TrainJourney(TrainRecord record, bool interpolate)
+        {
+            this.location = record.location;
+            this.dateTime = record.dateTime;
+            this.speed = record.speed;
+            this.kmPost = record.kmPost;
+            this.kilometreage = record.kmPost;
+            this.elevation = 0;
+            this.isLoopHere = false;
+            this.isTSRHere = false;
+            this.interpolate = interpolate;
+        }
+
+        /// <summary>
+        /// Train journey constructor for a standard train, built from the fields in the data.
         /// </summary>
         /// <param name="location">Geolocation object describing the latitude and longitude of a data point</param>
         /// <param name="date">Date and time the data point was registered.</param>
@@ -276,6 +298,7 @@ namespace TrainLibrary
             this.elevation = elevation;
             this.isLoopHere = loop;
             this.isTSRHere = TSR;
+            this.interpolate = true;
         }
 
         /// <summary>
@@ -299,10 +322,36 @@ namespace TrainLibrary
             this.elevation = elevation;
             this.isLoopHere = loop;
             this.isTSRHere = TSR;
+            this.interpolate = true;
         }
 
         /// <summary>
-        /// 
+        /// Train journey constructor for a train after interpolating the data.
+        /// </summary>
+        /// <param name="date">Date and time the data point was registered.</param>
+        /// <param name="speed">The instantaneous speed of the train at the time of data recording.</param>
+        /// <param name="kmPost">The closest kilometreage marker to the current position.</param>
+        /// <param name="kilometreage">The calaculated kilometreage of the current train position.</param>
+        /// <param name="elevation">The elevation of the train at the current location, this is taken from the geometry information.</param>
+        /// <param name="loop">Identification of the presence of a loop at the current position.</param>
+        /// <param name="TSR">Identification of the presence of a TSR at the current position.</param>
+        /// <param name="interpolate">Flag indicating if interpolation of this point was conducted.</param>
+        public TrainJourney(DateTime date, double speed, double kmPost, double virtualKm, double elevation, bool loop, bool TSR, bool interpolate)
+        {
+            /* For interpolated Trains */
+            this.location = null;
+            this.dateTime = date;
+            this.speed = speed;
+            this.kmPost = kmPost;
+            this.kilometreage = virtualKm;
+            this.elevation = elevation;
+            this.isLoopHere = loop;
+            this.isTSRHere = TSR;
+            this.interpolate = interpolate;
+        }
+
+        /// <summary>
+        /// Train Journey data for simualted train.
         /// </summary>
         /// <param name="location">Geolocation object describing the latitude and longitude of a data point</param>
         /// <param name="date">Date and time the data point was registered.</param>
@@ -321,6 +370,7 @@ namespace TrainLibrary
             this.elevation = elevation;
             this.isLoopHere = false;
             this.isTSRHere = false;
+            this.interpolate = true;
         }
 
     }
@@ -498,7 +548,7 @@ namespace TrainLibrary
         }
 
         /// <summary>
-        /// Function gets the corresponding simulation to the instance of the stoped train.
+        /// Function gets the corresponding simulation to the instance of the stopped train.
         /// </summary>
         /// <param name="simulations">A list of simulations</param>
         /// <returns>The simulation that corresponds to the stopped train.</returns>

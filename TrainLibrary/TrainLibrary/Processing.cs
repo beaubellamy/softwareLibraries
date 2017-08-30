@@ -55,7 +55,7 @@ namespace TrainLibrary
         }
 
         /// <summary>
-        /// Calculate the shortes distance between two geographical locations using the great circle formula.
+        /// Calculate the shortest distance between two geographical locations using the great circle formula.
         /// </summary>
         /// <param name="latitude1">Latitude of location 1.</param>
         /// <param name="longitude1">Longitude of location 1.</param>
@@ -75,7 +75,7 @@ namespace TrainLibrary
         }
 
         /// <summary>
-        /// Calculate the shortes distance between two geographical locations using the great circle formula.
+        /// Calculate the shortest distance between two geographical locations using the great circle formula.
         /// </summary>
         /// <param name="point1">The geographic location of the first point.</param>
         /// <param name="point2">The geographic location of the second point.</param>
@@ -127,14 +127,14 @@ namespace TrainLibrary
 
             /* Set the kmPosts to the closest points on the geometry alignment. */
             track.matchTrainLocationToTrackGeometry(journey, trackGeometry);
-            
+
 
             start = 0;
 
             for (int journeyIdx = 0; journeyIdx < journey.Count() - numPoints; journeyIdx++)
             {
                 /* Calculate the moving average of the kmposts ahead of current position. */
-                distance = journey[journeyIdx + numPoints].kmPost - journey[journeyIdx].kmPost;
+                distance = journey[journeyIdx + numPoints].kilometreage - journey[journeyIdx].kilometreage;
                 movingAverage = distance / numPoints;
 
                 /* Check the direction has not changed. */
@@ -153,21 +153,11 @@ namespace TrainLibrary
                     /* There has been a change in direction. */
                     end = journeyIdx;
 
-                    /* Add the total distance achieved from the previous km posts to the list. */
-                    if (previousAverage > 0)
-                    {
-                        distances.Add(increasingDistance);
-                        startIdx.Add(start);
-                        endIdx.Add(end);
-                        increasingDistance = 0;
-                    }
-                    else if (previousAverage < 0)
-                    {
-                        distances.Add(decreasingDistance);
-                        startIdx.Add(start);
-                        endIdx.Add(end);
-                        decreasingDistance = 0;
-                    }
+                    distances.Add(Math.Max(increasingDistance, decreasingDistance));
+                    startIdx.Add(start);
+                    endIdx.Add(end);
+                    increasingDistance = 0;
+                    decreasingDistance = 0;
 
                     /* Reset the new start postion. */
                     start = journeyIdx++;
@@ -179,35 +169,10 @@ namespace TrainLibrary
 
             /* Add the last total distance achieved to the list. */
             end = journey.Count() - 1;
-            if (previousAverage > 0)
-            {
-                distances.Add(increasingDistance);
-                startIdx.Add(start);
-                endIdx.Add(end);
-            }
-            else if (previousAverage < 0)
-            {
-                distances.Add(decreasingDistance);
-                startIdx.Add(start);
-                endIdx.Add(end);
-            }
-            else
-            {
-                /* Condition when last average is 0, determine which total to add to the list. */
-                if (increasingDistance > decreasingDistance)
-                {
-                    distances.Add(increasingDistance);
-                    startIdx.Add(start);
-                    endIdx.Add(end);
-                }
-                else
-                {
-                    distances.Add(decreasingDistance);
-                    startIdx.Add(start);
-                    endIdx.Add(end);
-                }
-            }
-
+            distances.Add(Math.Max(increasingDistance, decreasingDistance));
+            startIdx.Add(start);
+            endIdx.Add(end);
+            
             if (distances.Count() == 1)
                 return journey;
 
@@ -220,6 +185,39 @@ namespace TrainLibrary
             /* Return the part of the journey that has the largest total length in a single direction. */
             return journey.GetRange(newStart, count);
 
+        }
+
+        /// <summary>
+        /// Remove any individual changes in direction in the train journey data.
+        /// </summary>
+        /// <param name="journey">The train journey details.</param>
+        /// <param name="ongoing">The identified train direction.</param>
+        /// <returns>Updated train journey details.</returns>
+        public static List<TrainJourney> removeIndividualChangesInDirection(List<TrainJourney> journey, direction ongoing)
+        {
+            if (journey.Count < 2)
+                return journey;
+
+            /* Create a list to store the new journey. */
+            List<TrainJourney> newJourney = new List<TrainJourney>();
+                        
+            /* Loop through the train journey. */
+            for (int index = 1; index < journey.Count(); index++)
+            {
+                /* Add the journey item when there is no change in the identified train direction. */
+                if (ongoing == direction.IncreasingKm)
+                {
+                    if ((journey[index].kilometreage - journey[index - 1].kilometreage) >= 0)
+                        newJourney.Add(journey[index]);
+                }
+                else
+                {
+                    if ((journey[index].kilometreage - journey[index - 1].kilometreage) <= 0)
+                        newJourney.Add(journey[index]);
+                }
+                
+            }
+            return newJourney;
         }
 
         /// <summary>
@@ -255,11 +253,35 @@ namespace TrainLibrary
             /* NOTE: This function does not take into account any train journey data that have 
              * multiple changes of direction. This should not be seen when the 'Cleaned Data' 
              * is deleviered by Enetrprise services.
-             * This is currently corrected for in longestDistanceTravelledInOneDirection()
+             * This is currently corrected for in longestDistanceTravelledInOneDirection() and removeIndividualChangesInDirection()
              */
 
             /* Determine the distance and sign from the first point to the last point */
             double journeyDistance = train.journey[train.journey.Count() - 1].kmPost - train.journey[0].kmPost;
+
+            if (journeyDistance > 0)
+                return direction.IncreasingKm;
+            else
+                return direction.DecreasingKm;
+
+
+        }
+
+        /// <summary>
+        /// Function determines the direction of the train using the first and last km posts.
+        /// </summary>
+        /// <param name="jounrye">The defiend journey of the train</param>
+        /// <returns>Enumerated direction of the train km's.</returns>
+        public static direction getTrainDirection(List<TrainJourney> journey)
+        {
+            /* NOTE: This function does not take into account any train journey data that have 
+             * multiple changes of direction. This should not be seen when the 'Cleaned Data' 
+             * is deleviered by Enetrprise services.
+             * This is currently corrected for in longestDistanceTravelledInOneDirection() and removeIndividualChangesInDirection()
+             */
+
+            /* Determine the distance and sign from the first point to the last point */
+            double journeyDistance = journey[journey.Count() - 1].kmPost - journey[0].kmPost;
 
             if (journeyDistance > 0)
                 return direction.IncreasingKm;
@@ -373,6 +395,9 @@ namespace TrainLibrary
         /// </summary>
         /// <param name="trains">List of train objects containing the parameters for each train journey.</param>
         /// <param name="trackGeometry">The list of Track geometry data to align the train location.</param>
+        /// <param name="startKm">Start kilometreage of the interpolation.</param>
+        /// <param name="endKm">End kilometreage of the interpolation.</param>
+        /// <param name="interpolationInterval">Interpolation interval in metres.</param>
         /// <returns>List of train objects with interpolated values at the specified interval.</returns>
         public static List<Train> interpolateTrainData(List<Train> trains, List<TrackGeometry> trackGeometry, 
             double startKm, double endKm, double interpolationInterval)
@@ -438,11 +463,11 @@ namespace TrainLibrary
                         /* Perform linear interpolation. */
                         interpolatedSpeed = linear(currentKm, X0, X1, Y0, Y1);
                         /* Interpolate the time */
-                        time = DateTime.FromOADate(Processing.linear(currentKm, X0, X1, journey[index0].dateTime.ToOADate(), journey[index1].dateTime.ToOADate()));
+                        time = DateTime.FromOADate(linear(currentKm, X0, X1, journey[index0].dateTime.ToOADate(), journey[index1].dateTime.ToOADate()));
 
                         /* Interpolate the time. */
                         /* This creates inconsistencies when the train is accelerating from a stop, creating instances where the train appears to go back in time. */
-                        //time = time.AddHours(Processing.calculateTimeInterval(previousKm, currentKm, interpolatedSpeed));
+                        //time = time.AddHours(calculateTimeInterval(previousKm, currentKm, interpolatedSpeed));
                        
                     }
                     else
@@ -470,7 +495,7 @@ namespace TrainLibrary
 
                     /* Create a copy of the current km marker and increment. */
                     previousKm = currentKm;
-                    currentKm = currentKm + interpolationInterval * Processing.metresToKilometers;
+                    currentKm = currentKm + interpolationInterval * metresToKilometers;
                     
                     /* Determine if we need to extract the time from the data or interpolate it. */
                     if (index1 >= 0)
@@ -491,6 +516,136 @@ namespace TrainLibrary
             /* Return the completed interpolated train data. */
             return newTrainList;
         }
+
+        ///  Interpolate the train speed to a specified interval using a linear interpolation.
+        /// </summary>
+        /// <param name="trains">List of train objects containing the parameters for each train journey.</param>
+        /// <param name="trackGeometry">The list of Track geometry data to align the train location.</param>
+        /// <param name="startKm">Start kilometreage of the interpolation.</param>
+        /// <param name="endKm">End kilometreage of the interpolation.</param>
+        /// <param name="interpolationInterval">Interpolation interval in metres.</param>
+        /// <returns>List of train objects with interpolated values at the specified interval.</returns>
+        public static List<Train> interpolateTrainDataWithGaps(List<Train> trains, List<TrackGeometry> trackGeometry,
+            double startKm, double endKm, double interpolationInterval)
+        {
+            /* Placeholders for the interpolated distance markers. */
+            double previousKm = 0;
+            double currentKm = 0;
+            /* Place holder to calculate the time for each interpolated value. */
+            DateTime time = new DateTime();
+
+            /* Additional loop and TSR details. */
+            int geometryIdx = 0;
+            bool loop = false;
+            bool TSR = false;
+            double TSRspeed = 0;
+
+            /* Index values for the interpolation parameters */
+            int index0 = -1;
+            int index1 = -1;
+
+            /* Interplation parameters. */
+            double interpolatedSpeed = 0;
+            double X0, X1, Y0, Y1;
+            bool interpolate = true;
+
+            /* Create a new list of trains for the journies interpolated values. */
+            List<Train> newTrainList = new List<Train>();
+
+            /* Cycle through each train to interpolate between points. */
+            for (int trainIdx = 0; trainIdx < trains.Count(); trainIdx++)
+            {
+                /* Create a new journey list of interpolated values. */
+                List<TrainJourney> interpolatedJourney = new List<TrainJourney>();
+                /* Extract the existing journey details. */
+                List<TrainJourney> journey = trains[trainIdx].journey;
+
+                /* Set the start of the interpolation. */
+                currentKm = startKm;
+                previousKm = currentKm;
+
+                List<int> closestBelow = new List<int>();
+                List<int> closestAbove = new List<int>();
+
+                while (currentKm < endKm)
+                {
+                    /* Find the closest kilometerage markers either side of the current interpolation point. */
+                    index0 = findClosestLowerKm(currentKm, journey);
+                    index1 = findClosestGreaterKm(currentKm, journey);
+
+                    /* If a valid index is found, extract the existing journey parameters and interpolate. */
+                    if (index0 >= 0 && index1 >= 0)
+                    {
+                        X0 = journey[index0].kilometreage;
+                        X1 = journey[index1].kilometreage;
+                        Y0 = journey[index0].speed;
+                        Y1 = journey[index1].speed;
+
+                            
+                        if (trains[trainIdx].trainDirection == direction.IncreasingKm && journey[index1].interpolate ||
+                            trains[trainIdx].trainDirection == direction.DecreasingKm && journey[index0].interpolate)
+                        {
+                            /* Perform linear interpolation. */
+                            interpolate = true;
+                            interpolatedSpeed = linear(currentKm, X0, X1, Y0, Y1);
+                            /* Interpolate the time */
+                            time = DateTime.FromOADate(linear(currentKm, X0, X1, journey[index0].dateTime.ToOADate(), journey[index1].dateTime.ToOADate()));
+                        }
+                        else
+                        {
+                            /* Assign values where there is a gap in the data. */
+                            interpolate = true; // should be false ????
+                            interpolatedSpeed = 0;
+                            /* Define a time for gaps in the data. */
+                            time = journey.Where(t => t.dateTime > DateTime.MinValue).Min(t => t.dateTime);
+                        }
+
+
+                    }
+                    else
+                    {
+                        /* Boundary conditions for interpolating the data prior to and beyond the existing journey points. */
+                        interpolate = false;
+                        time = journey.Where(t => t.dateTime > DateTime.MinValue).Min(t => t.dateTime);
+                        interpolatedSpeed = 0;
+                    }
+
+                    /* Extract the kilometreage from the geometry. */
+                    geometryIdx = trackGeometry[0].findClosestTrackGeometryPoint(trackGeometry, currentKm);
+
+                    if (geometryIdx >= 0)
+                    {
+                        /* Check if there is a loop at this location. */
+                        loop = trackGeometry[geometryIdx].isLoopHere;
+
+                        /* Check if there is a TSR at this location. */
+                        TSR = trackGeometry[geometryIdx].isTSRHere;
+                        TSRspeed = trackGeometry[geometryIdx].temporarySpeedRestriction;
+                    }
+
+                    /* Create the interpolated data object and add it to the list. */
+                    TrainJourney item = new TrainJourney(time, interpolatedSpeed, currentKm, currentKm, trackGeometry[geometryIdx].elevation, loop, TSR, interpolate);
+                    interpolatedJourney.Add(item);
+
+                    /* Create a copy of the current km marker and increment. */
+                    previousKm = currentKm;
+                    currentKm = currentKm + interpolationInterval * metresToKilometers;
+
+                }
+
+                /* Add the interpolated list to the list of new train objects. */
+                Train trainItem = new Train(trains[trainIdx].Category, trains[trainIdx].trainID, trains[trainIdx].locoID,
+                    trains[trainIdx].trainOperator, trains[trainIdx].commodity, trains[trainIdx].powerToWeight,
+                    interpolatedJourney, trains[trainIdx].trainDirection);
+
+                newTrainList.Add(trainItem);
+
+            }
+
+            /* Return the completed interpolated train data. */
+            return newTrainList;
+        }
+
 
         /// <summary>
         /// Calculate the aggregated average speed of all trains.
@@ -526,7 +681,7 @@ namespace TrainLibrary
             double aveSpeed = 0;
 
             /* Determine the number of points in the average train journey. */
-            int size = (int)((endKm - startKm) / (interpolationInterval * Processing.metresToKilometers));
+            int size = (int)((endKm - startKm) / (interpolationInterval * metresToKilometers));
 
             TrainJourney journey = new TrainJourney();
 
@@ -534,7 +689,7 @@ namespace TrainLibrary
             for (int journeyIdx = 0; journeyIdx < size; journeyIdx++)
             {
                 /* Determine the current location and elevation of the alignemnt at this point. */
-                kmPost = startKm + interpolationInterval * Processing.metresToKilometers * journeyIdx;
+                kmPost = startKm + interpolationInterval * metresToKilometers * journeyIdx;
                 altitude = trackGeometry[track.findClosestTrackGeometryPoint(trackGeometry, kmPost)].elevation;
 
                 speed.Clear();
@@ -634,8 +789,8 @@ namespace TrainLibrary
                 {
                     if (aveSpeed > 0 && CategorySim[journeyIdx].speed > 0)
                     {
-                        actualTime = actualTime + ((interpolationInterval * Processing.metresToKilometers) / aveSpeed);
-                        simulatedTime = simulatedTime + ((interpolationInterval * Processing.metresToKilometers) / CategorySim[journeyIdx].speed);
+                        actualTime = actualTime + ((interpolationInterval * metresToKilometers) / aveSpeed);
+                        simulatedTime = simulatedTime + ((interpolationInterval * metresToKilometers) / CategorySim[journeyIdx].speed);
                     }
                 }
 
@@ -847,31 +1002,30 @@ namespace TrainLibrary
         /// Returns -1 if a point does not exist.</returns>
         public static int findClosestLowerKm(double target, List<TrainJourney> journey)
         {
-            /* Set the initial values. */
-            double minimum = double.MaxValue;
-            double difference = double.MaxValue;
-            int index = 0;
+            /* Note: This method accounts for the items in the journey that have the same consecutive kilometreage points. 
+             * The index with the lowest speed is returned. 
+             */
 
-            /* Cycle through the journey parameters. */
-            for (int journeyIdx = 0; journeyIdx < journey.Count(); journeyIdx++)
+            /* Extract a sub list containung the journey prior to the target location. */
+            List<TrainJourney> valuesBelow = journey.Where(j => j.kilometreage < target).ToList();
+
+            if (valuesBelow.Count() > 0)
             {
-                /* Find the difference if the value is lower. */
-                if (journey[journeyIdx].kilometreage < target)
-                    difference = Math.Abs(journey[journeyIdx].kilometreage - target);
+                /* Find the location with the shortest distance to the target. */
+                double closestValueBelow = valuesBelow.Min(k => Math.Abs(target - k.kilometreage));
+                valuesBelow = valuesBelow.Where(i => Math.Abs(target - i.kilometreage) == closestValueBelow).ToList();
 
-                /* Find the minimum difference. */
-                if (difference < minimum)
-                {
-                    minimum = difference;
-                    index = journeyIdx;
-                }
-
+                /* Sort the journey list by increasing speed. */
+                valuesBelow = valuesBelow.OrderBy(j => j.speed).ToList();
+                /* Return the first index where speed is lowest prior to the target location. */                
+                return journey.Where(i => i.kilometreage < target).ToList().FindIndex(i => i.speed == valuesBelow[0].speed);
+                
+            }
+            else
+            {
+                return -1;
             }
 
-            if (difference == double.MaxValue)
-                return -1;
-
-            return index;
         }
 
         /// <summary>
@@ -883,30 +1037,34 @@ namespace TrainLibrary
         /// Returns -1 if a point does not exist.</returns>
         public static int findClosestGreaterKm(double target, List<TrainJourney> journey)
         {
-            /* Set the initial values. */
-            double minimum = double.MaxValue;
-            double difference = double.MaxValue;
-            int index = 0;
+            /* Note: This method accounts for the items in the journey that have the same consecutive kilometreage points. 
+             * The index with the lowest speed is returned. 
+             */
 
-            /* Cycle through the journey parameters. */
-            for (int journeyIdx = 0; journeyIdx < journey.Count(); journeyIdx++)
+
+            /* Extract a sub list containung the journey after the target location. */
+            List<TrainJourney> valuesAbove = journey.Where(j => j.kilometreage > target).ToList();
+
+            if (valuesAbove.Count() > 0)
             {
-                /* Find the difference if the value is lower. */
-                if (journey[journeyIdx].kilometreage > target)
-                    difference = Math.Abs(journey[journeyIdx].kilometreage - target);
+                /* Find the location with the shortest distance to the target. */
+                double closestValueAbove = valuesAbove.Min(n => n.kilometreage - target);
+                valuesAbove = valuesAbove.Where(i => (i.kilometreage - target) == closestValueAbove).ToList();
 
-                /* Find the minimum difference. */
-                if (difference < minimum)
-                {
-                    minimum = difference;
-                    index = journeyIdx;
-                }
+                /* Find the index offset to the sublist. */
+                int index = valuesAbove.FindIndex(s => s.speed == valuesAbove.Min(i => i.speed));
+
+                /* Return the first index where speed is lowest after the target location. */
+                return index + journey.FindIndex(i => i.kilometreage == valuesAbove[index].kilometreage);
+                                
+            }
+            else
+            {
+                return -1;
             }
 
-            if (difference == double.MaxValue)
-                return -1;
 
-            return index;
+
         }
 
         /// <summary>
@@ -933,56 +1091,44 @@ namespace TrainLibrary
         /// <param name="trackGeometry">A list of track Geometry objects</param>
         /// <returns>List of Train objects containing the journey details of each train.</returns>
         public static List<Train> CleanData(List<TrainRecord> record, List<TrackGeometry> trackGeometry,
-            double timeThreshold, double distanceThreshold, double minimumJourneyDistance, analysisCategory analysisCategory,
-            double Category1LowerBound = 0,double Category1UpperBound = 1,double Category2LowerBound = 1,double Category2UpperBound = 2)
+           double timeThreshold, double distanceThreshold, double minimumJourneyDistance, analysisCategory analysisCategory,
+           double Category1LowerBound = 0, double Category1UpperBound = 1, double Category2LowerBound = 1, double Category2UpperBound = 2)
         {
             /* Note: this function will not be needed when Enterprise Services delivers the interpolated 
              * date directly to the database. We can access this data directly, then analyse.
              */
 
-            bool removeTrain = false;
-            double distance = 0;
             double journeyDistance = 0;
 
             /* Create the lists for the processed train data. */
             List<Train> cleanTrainList = new List<Train>();
             List<TrainJourney> journey = new List<TrainJourney>();
 
-            GeoLocation point1 = null;
-            GeoLocation point2 = null;
-
             /* Add the first point to the train journey. */
             journey.Add(new TrainJourney(record[0]));
 
+            /* Loop through the train records */
             for (int trainIndex = 1; trainIndex < record.Count(); trainIndex++)
             {
+
                 /* Compare next train details with current train details to establish if its a new train. */
                 if (record[trainIndex].trainID.Equals(record[trainIndex - 1].trainID) &&
                     record[trainIndex].locoID.Equals(record[trainIndex - 1].locoID) &&
                     (record[trainIndex].dateTime - record[trainIndex - 1].dateTime).TotalMinutes < timeThreshold)
                 {
-
-                    /* If the current and previous record represent the same train journey, add it to the list. */
-                    journey.Add(new TrainJourney(record[trainIndex]));
-
-                    point1 = new GeoLocation(record[trainIndex - 1]);
-                    point2 = new GeoLocation(record[trainIndex]);
-
-                    distance = calculateGreatCircleDistance(point1, point2);
-
-                    if (distance > distanceThreshold)
-                    {
-                        /* If the distance between successive km points is greater than the
-                         * threshold then we want to remove this train from the data. 
-                         */
-                        removeTrain = true;
-                    }
-
+                    /* Add the record to the train journey */
+                    journey.Add(new TrainJourney(record[trainIndex], true));
                 }
                 else
                 {
                     /* Check uni directionality of the train */
                     journey = longestDistanceTravelledInOneDirection(journey, trackGeometry);
+
+                    /* Remove any individual changes in direction. */
+                    journey = removeIndividualChangesInDirection(journey, getTrainDirection(journey));
+                    /* Validate the distance between points is less than the threshold. */
+                    validateDistances(ref journey, distanceThreshold);
+
                     /* Calculate the total length of the journey */
                     journeyDistance = calculateTrainJourneyDistance(journey);
 
@@ -991,12 +1137,8 @@ namespace TrainLibrary
                     item.journey = journey;
                     item.trainDirection = getTrainDirection(item);
 
-                    /* remove the train if the direction is not valid. */
-                    if (item.trainDirection == direction.Invalid)
-                        removeTrain = true;
-
                     /* The end of the train journey has been reached. */
-                    if (!removeTrain && journeyDistance > minimumJourneyDistance)
+                    if (journeyDistance > minimumJourneyDistance)
                     {
                         /* If all points are acceptable and the train travels the minimum distance, 
                          * add the train journey to the cleaned list. 
@@ -1033,14 +1175,17 @@ namespace TrainLibrary
                         populateLoopLocations(item.journey, trackGeometry);
 
                         /* Sort the journey in ascending order. */
-                        item.journey = item.journey.OrderBy(t => t.kilometreage).ToList();
+                        if (item.trainDirection == direction.IncreasingKm)
+                            item.journey = item.journey.OrderBy(t => t.dateTime).ToList();
+                        else
+                            item.journey = item.journey.OrderByDescending(t => t.dateTime).ToList();
+
 
                         cleanTrainList.Add(item);
 
                     }
 
                     /* Reset the parameters for the next train. */
-                    removeTrain = false;
                     journeyDistance = 0;
                     journey.Clear();
 
@@ -1050,10 +1195,16 @@ namespace TrainLibrary
                 }
 
                 /* The end of the records have been reached. */
-                if (trainIndex == record.Count() - 1 && !removeTrain)
+                if (trainIndex == record.Count() - 1)
                 {
                     /* Check uni directionality of the last train */
                     journey = longestDistanceTravelledInOneDirection(journey, trackGeometry);
+
+                    /* Remove any individual changes in direction. */
+                    journey = removeIndividualChangesInDirection(journey, getTrainDirection(journey));
+                    /* Validate the distance between points is less than the threshold. */
+                    validateDistances(ref journey, distanceThreshold);
+
                     /* Calculate the total length of the journey */
                     journeyDistance = calculateTrainJourneyDistance(journey);
 
@@ -1062,11 +1213,7 @@ namespace TrainLibrary
                     lastItem.journey = journey;
                     lastItem.trainDirection = getTrainDirection(lastItem);
 
-                    /* remove the train if the direction is not valid. */
-                    if (lastItem.trainDirection == direction.Invalid)
-                        removeTrain = true;
-
-                    if (!removeTrain && journeyDistance > minimumJourneyDistance)
+                    if (journeyDistance > minimumJourneyDistance)
                     {
                         lastItem.trainID = record[trainIndex - 1].trainID;
                         lastItem.locoID = record[trainIndex - 1].locoID;
@@ -1099,7 +1246,10 @@ namespace TrainLibrary
                         populateLoopLocations(lastItem.journey, trackGeometry);
 
                         /* Sort the journey in ascending order. */
-                        lastItem.journey = lastItem.journey.OrderBy(t => t.kilometreage).ToList();
+                        if (lastItem.trainDirection == direction.IncreasingKm)
+                            lastItem.journey = lastItem.journey.OrderBy(t => t.dateTime).ToList();
+                        else
+                            lastItem.journey = lastItem.journey.OrderByDescending(t => t.dateTime).ToList();
 
                         cleanTrainList.Add(lastItem);
                     }
@@ -1107,7 +1257,7 @@ namespace TrainLibrary
                 }
 
             }
-           
+
             return cleanTrainList;
 
         }
@@ -1120,15 +1270,16 @@ namespace TrainLibrary
         /// <param name="trackGeometry">A list of track Geometry objects</param>
         /// <returns>List of Train objects containing the journey details of each train.</returns>
         public static List<Train> MakeTrains(List<TrainRecord> record, List<TrackGeometry> trackGeometry,
-            double timeThreshold, double distanceThreshold, double minimumJourneyDistance, analysisCategory analysisCategory,
-            double Category1LowerBound = 0,double Category1UpperBound = 1,double Category2LowerBound = 1,double Category2UpperBound = 2)
+           double timeThreshold, double distanceThreshold, double minimumJourneyDistance, analysisCategory analysisCategory,
+           double Category1LowerBound = 0, double Category1UpperBound = 1, double Category2LowerBound = 1, double Category2UpperBound = 2)
         {
-            /* Note: this function is designed to replace the cleanTrains function when the 
-             * interpolated data is delivered by Enterprise Services.
+            /* Note: this function will not be needed when Enterprise Services delivers the interpolated 
+             * date directly to the database. We can access this data directly, then analyse.
              */
+            double journeyDistance = 0;
 
             /* Create the lists for the processed train data. */
-            List<Train> TrainList = new List<Train>();
+            List<Train> trainList = new List<Train>();
             List<TrainJourney> journey = new List<TrainJourney>();
 
             /* Add the first point to the train journey. */
@@ -1136,34 +1287,39 @@ namespace TrainLibrary
 
             for (int trainIndex = 1; trainIndex < record.Count(); trainIndex++)
             {
+
                 /* Compare next train details with current train details to establish if its a new train. */
                 if (record[trainIndex].trainID.Equals(record[trainIndex - 1].trainID) &&
                     record[trainIndex].locoID.Equals(record[trainIndex - 1].locoID) &&
                     (record[trainIndex].dateTime - record[trainIndex - 1].dateTime).TotalMinutes < timeThreshold)
                 {
-
-                    /* If the current and previous record represent the same train journey, add it to the list. */
-                    journey.Add(new TrainJourney(record[trainIndex]));
+                    /* Add the record to the train journey. */
+                    journey.Add(new TrainJourney(record[trainIndex], true));
 
                 }
                 else
                 {
-                    /* The end of the train journey has been reached. */
-
                     /* Check uni directionality of the train */
                     journey = longestDistanceTravelledInOneDirection(journey, trackGeometry);
 
-                    /* Assign the train parameters. */
+                    /* Remove any individual changes in direction. */
+                    journey = removeIndividualChangesInDirection(journey, getTrainDirection(journey));
+
+                    /* Calculate the total length of the journey */
+                    journeyDistance = calculateTrainJourneyDistance(journey);
+
+                    /* Populate the train parameters. */
                     Train item = new Train();
                     item.journey = journey;
                     item.trainDirection = getTrainDirection(item);
+
                     item.trainID = record[trainIndex - 1].trainID;
                     item.locoID = record[trainIndex - 1].locoID;
                     item.trainOperator = record[trainIndex - 1].trainOperator;
                     item.commodity = record[trainIndex - 1].commodity;
                     item.powerToWeight = record[trainIndex - 1].powerToWeight;
 
-                    /* Determine the train Category. */
+                    /* Determine the analysis Category. */
                     if (analysisCategory == analysisCategory.TrainPowerToWeight)
                     {
                         if (item.powerToWeight > Category1LowerBound && item.powerToWeight <= Category1UpperBound)
@@ -1184,16 +1340,20 @@ namespace TrainLibrary
                     }
 
 
-                    /* Determine the actual km, and populate the loops information. */
+                    /* Determine the actual km, and populate the loops and TSR information. */
                     populateGeometryKm(item.journey, trackGeometry);
                     populateLoopLocations(item.journey, trackGeometry);
 
                     /* Sort the journey in ascending order. */
-                    item.journey = item.journey.OrderBy(t => t.kilometreage).ToList();
+                    if (item.trainDirection == direction.IncreasingKm)
+                        item.journey = item.journey.OrderBy(t => t.dateTime).ToList();
+                    else
+                        item.journey = item.journey.OrderByDescending(t => t.dateTime).ToList();
 
-                    TrainList.Add(item);
+                    trainList.Add(item);
 
                     /* Reset the parameters for the next train. */
+                    journeyDistance = 0;
                     journey.Clear();
 
                     /* Add the first record of the new train journey. */
@@ -1201,57 +1361,104 @@ namespace TrainLibrary
 
                 }
 
-                if (trainIndex == record.Count() - 1)
+                /* The end of the records have been reached. */
+                if (trainIndex == record.Count() - 1)//&& !removeTrain)
                 {
-                    /* The end of the records have been reached. */
-
                     /* Check uni directionality of the last train */
                     journey = longestDistanceTravelledInOneDirection(journey, trackGeometry);
+                    /* Remove any individual changes in direction. */
+                    journey = removeIndividualChangesInDirection(journey, getTrainDirection(journey));
 
-                    /*  Assign the train parameters. */
+                    /* Calculate the total length of the journey */
+                    journeyDistance = calculateTrainJourneyDistance(journey);
+
+                    /* Populate the train parameters. */
                     Train lastItem = new Train();
-
                     lastItem.journey = journey;
                     lastItem.trainDirection = getTrainDirection(lastItem);
 
-                    lastItem.trainID = record[trainIndex - 1].trainID;
-                    lastItem.locoID = record[trainIndex - 1].locoID;
-                    lastItem.trainOperator = record[trainIndex - 1].trainOperator;
-                    lastItem.commodity = record[trainIndex - 1].commodity;
-                    lastItem.powerToWeight = record[trainIndex - 1].powerToWeight;
-
-                    /* Determine the train Category. */
-                    if (analysisCategory == analysisCategory.TrainPowerToWeight)
+                    if (journeyDistance > minimumJourneyDistance)
                     {
-                        if (lastItem.powerToWeight > Category1LowerBound && lastItem.powerToWeight <= Category1UpperBound)
-                            lastItem.Category = Category.Underpowered;
-                        else if (lastItem.powerToWeight > Category2LowerBound && lastItem.powerToWeight <= Category2UpperBound)
-                            lastItem.Category = Category.Overpowered;
+                        lastItem.trainID = record[trainIndex - 1].trainID;
+                        lastItem.locoID = record[trainIndex - 1].locoID;
+                        lastItem.trainOperator = record[trainIndex - 1].trainOperator;
+                        lastItem.commodity = record[trainIndex - 1].commodity;
+                        lastItem.powerToWeight = record[trainIndex - 1].powerToWeight;
+
+                        /* Determine the analysis Category. */
+                        if (analysisCategory == analysisCategory.TrainPowerToWeight)
+                        {
+                            if (lastItem.powerToWeight > Category1LowerBound && lastItem.powerToWeight <= Category1UpperBound)
+                                lastItem.Category = Category.Underpowered;
+                            else if (lastItem.powerToWeight > Category2LowerBound && lastItem.powerToWeight <= Category2UpperBound)
+                                lastItem.Category = Category.Overpowered;
+                            else
+                                lastItem.Category = Category.Actual;
+
+                        }
+                        else if (analysisCategory == analysisCategory.TrainOperator)
+                        {
+                            lastItem.Category = convertTrainOperatorToCategory(lastItem.trainOperator);
+                        }
                         else
-                            lastItem.Category = Category.Actual;
+                        {
+                            lastItem.Category = convertCommodityToCategory(lastItem.commodity);
+                        }
 
+                        /* If all points are aceptable, add the train journey to the cleaned list. */
+                        populateGeometryKm(lastItem.journey, trackGeometry);
+                        populateLoopLocations(lastItem.journey, trackGeometry);
+
+                        /* Sort the journey in ascending order. */
+                        if (lastItem.trainDirection == direction.IncreasingKm)
+                            lastItem.journey = lastItem.journey.OrderBy(t => t.dateTime).ToList();
+                        else
+                            lastItem.journey = lastItem.journey.OrderByDescending(t => t.dateTime).ToList();
+
+                        trainList.Add(lastItem);
                     }
-                    else if (analysisCategory == analysisCategory.TrainOperator)
-                    {
-                        lastItem.Category = convertTrainOperatorToCategory(lastItem.trainOperator);
-                    }
-                    else
-                    {
-                        lastItem.Category = convertCommodityToCategory(lastItem.commodity);
-                    }
 
-                    /* Determine the actual km, and populate the loops information.  */
-                    populateGeometryKm(lastItem.journey, trackGeometry);
-                    populateLoopLocations(lastItem.journey, trackGeometry);
-
-                    /* Sort the journey in ascending order. */
-                    lastItem.journey = lastItem.journey.OrderBy(t => t.kilometreage).ToList();
-
-                    TrainList.Add(lastItem);
                 }
+
             }
 
-            return TrainList;
+            return trainList;
+
+        }
+
+        /// <summary>
+        /// Function determines if all consecutive points are within the distance threshold. If there are 
+        /// points that are at a greater distance, the interpolate property of the journey is defined as 
+        /// false to indicate that this point should not be considered when aggregating data.
+        /// </summary>
+        /// <param name="journey">The train journey details.</param>
+        /// <param name="distanceThreshold">The maximum allowable distance between points.</param>
+        public static void validateDistances(ref List<TrainJourney> journey, double distanceThreshold)
+        {
+            /* Declear two points to calcualte teh distance between. */
+            GeoLocation point1 = new GeoLocation();
+            GeoLocation point2 = new GeoLocation();
+            double distance = 0;
+            
+            /* Initialise the interpolate property for the first point of the journey. */
+            journey[0].interpolate = true;
+            
+            for (int index = 1; index < journey.Count(); index++)
+            {
+                point1 = journey[index - 1].location;
+                point2 = journey[index].location;
+
+                /* Calcualte the distance between the points. */
+                distance = calculateGreatCircleDistance(point1, point2);
+
+                /* Assign the interpolate property based on the distance from the prefious point. */
+                if (distance > distanceThreshold)
+                    journey[index].interpolate = false;
+                else
+                    journey[index].interpolate = true;
+
+
+            }
         }
 
         /// <summary>
@@ -1351,6 +1558,8 @@ namespace TrainLibrary
         {
             /* Still to be completed. */
             // ASR, AVA, AWR, FAL,FLK, NRC, SBR - Not sure what operators these are?
+
+            /* Initialise the operator arrays with known operator codes. */
             string[] ARTC = { };
             string[] Aurizon = { "QR" }; 
             string[] AustralianRailwaysHistoricalSociety = { }; 
@@ -1372,6 +1581,7 @@ namespace TrainLibrary
             string[] TheRailMotorService = { }; 
             string[] VLinePassenger = { };
 
+            /* Return the appropriate operator. */
             if (ARTC.Contains(Operator))
                 return trainOperator.ARTC;
             else if (Aurizon.Contains(Operator))
@@ -1426,6 +1636,8 @@ namespace TrainLibrary
         {
             /* Still to be completed. */
             // GDS, SUP - Not sure what commodities these are.
+
+            /* Initialise the commodity arrays with known commodity codes. */
             string[] Clinker = { "CLS" };
             string[] Coal = { "CLE" };
             string[] Freight = { "FRE", "GEN" };
@@ -1438,6 +1650,7 @@ namespace TrainLibrary
             string[] Steel = { "STL" };
             string[] Work = { "WRk" };
             
+            /* Return the appropriate commodity. */
             if (Clinker.Contains(commodity))
                 return trainCommodity.Clinker;
             else if (Coal.Contains(commodity))
