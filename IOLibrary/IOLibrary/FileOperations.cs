@@ -362,8 +362,9 @@ namespace IOLibrary
         ///  15     Tare Mass
         /// </summary>
         /// <param name="filename">The wagon data file.</param>
+        /// <param name="grossTonnes">A flag indicating if the prefered weight values should be gross tonnes or net weight.</param>
         /// <returns>The list of wagon objects.</returns>
-        public static List<wagonDetails> readWagonDataFile(string filename)
+        public static List<wagonDetails> readWagonDataFile(string filename, bool grossTonnes = false)
         {
             /* Read the all lines of the text file. */
             char[] delimiters = { '\t' };
@@ -378,7 +379,7 @@ namespace IOLibrary
             string origin = null;
             string plannedDestination = null;
             string destination = null;
-            double netWeight = 0;
+            double weight = 0;
 
             /* Create the list of wagon objects. */
             List<wagonDetails> wagon = new List<wagonDetails>();
@@ -449,12 +450,16 @@ namespace IOLibrary
                     DateTime.TryParse(fields[5], out detachmentTime);
                     double.TryParse(fields[15], out tareWeight);
                     double.TryParse(fields[12], out grossWeight);
-                    netWeight = grossWeight - tareWeight;
+
+                    if (grossTonnes)
+                        weight = grossWeight;
+                    else
+                        weight = grossWeight-tareWeight;
 
                     /* Construct the wagon object and add to the list. */
                     if (validRecord)
                     {
-                        wagonDetails data = new wagonDetails(trainID, trainDate, trainOperator, commodity, wagonID, origin, plannedDestination, destination, attachmentTime, detachmentTime, netWeight);
+                        wagonDetails data = new wagonDetails(trainID, trainDate, trainOperator, commodity, wagonID, origin, plannedDestination, destination, attachmentTime, detachmentTime, weight);
                         wagon.Add(data);
                     }
                 }
@@ -463,6 +468,7 @@ namespace IOLibrary
             return wagon;
         }
         
+
         /// <summary>
         /// Read the file containing the temporary speed restriction information and 
         /// store in a manalgable list of TSR objects, which contain all neccessary 
