@@ -37,6 +37,28 @@ namespace IOLibrary
         }
 
         /// <summary>
+        /// A wrapper function to contain the try catch block for selecting a file using the browser.
+        /// </summary>
+        /// <param name="browseTitle">The title of the browser window.</param>
+        /// <returns>The full path of the file selected.</returns>
+        public static string browseFile(string browseTitle)
+        {
+            string filename = null;
+            try
+            {
+                /* Open the browser and retrieve the file. */
+                filename = selectDataFile(browseTitle);
+                if (filename == null)
+                    return "";
+            }
+            catch (Exception e)
+            {
+                return e.Message;
+            }
+            return filename;
+        }
+
+        /// <summary>
         /// Function opens a dialog box to browse and select the data file.
         /// </summary>
         /// <param name="initialDirectory">The default directory to start the browser from.</param>

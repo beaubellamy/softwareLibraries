@@ -654,7 +654,7 @@ namespace TrainLibrary
         /// <param name="CategorySim">The simulted train for the specified analysis Category.</param>
         /// <param name="trackGeometry">The track alignment information for the train journey.</param>
         /// <returns>An average train containing information about the average speed at each location.</returns>
-        public AverageTrain averageTrain(List<Train> trains, List<TrainJourney> CategorySim, List<TrackGeometry> trackGeometry, 
+        public static AverageTrain averageTrain(List<Train> trains, List<TrainJourney> CategorySim, List<TrackGeometry> trackGeometry, 
             double startKm, double endKm, double interpolationInterval, double loopSpeedThreshold, double loopBoundaryThreshold, double TSRwindowBoundary)
         {
 
@@ -914,7 +914,7 @@ namespace TrainLibrary
         /// <param name="train">The train object containing the journey details.</param>
         /// <param name="targetLocation">The specific location being considered.</param>
         /// <returns>True, if the train is within the boundaries of the loop window.</returns>
-        public bool isTrainInLoopBoundary(Train train, double targetLocation, double startKm, double endKm, double interpolationInterval, double loopBoundaryThreshold)
+        public static bool isTrainInLoopBoundary(Train train, double targetLocation, double startKm, double endKm, double interpolationInterval, double loopBoundaryThreshold)
         {
             /* Find the indecies of the boundaries of the loop. */
             double lookBack = targetLocation - loopBoundaryThreshold;
@@ -954,7 +954,7 @@ namespace TrainLibrary
         /// <param name="train">The train object containing the journey details.</param>
         /// <param name="targetLocation">The specific location being considered.</param>
         /// <returns>TSR object containting the TSR flag and the associated speed. </returns>
-        public bool withinTemporarySpeedRestrictionBoundaries(Train train, double targetLocation, double startKm, double endKm, double TSRwindowBoundary)
+        public static bool withinTemporarySpeedRestrictionBoundaries(Train train, double targetLocation, double startKm, double endKm, double TSRwindowBoundary)
         {
 
             bool isTSRHere = false;
@@ -1076,6 +1076,8 @@ namespace TrainLibrary
         /// <returns>The time taken to traverse the distance in hours.</returns>
         public static double calculateTimeInterval(double startPositon, double endPosition, double speed)
         {
+            if (Math.Abs(endPosition - startPositon) == 0)
+                return 0;
 
             if (speed > 0)
                 return Math.Abs(endPosition - startPositon) / speed;    // hours.
@@ -1126,6 +1128,10 @@ namespace TrainLibrary
 
                     /* Remove any individual changes in direction. */
                     journey = removeIndividualChangesInDirection(journey, getTrainDirection(journey));
+
+                    if (journey.Count() == 0)
+                        journeyDistance = 0;
+
                     /* Validate the distance between points is less than the threshold. */
                     validateDistances(ref journey, distanceThreshold);
 
@@ -1435,11 +1441,14 @@ namespace TrainLibrary
         /// <param name="distanceThreshold">The maximum allowable distance between points.</param>
         public static void validateDistances(ref List<TrainJourney> journey, double distanceThreshold)
         {
-            /* Declear two points to calcualte teh distance between. */
+            /* Declear two points to calcualte the distance between. */
             GeoLocation point1 = new GeoLocation();
             GeoLocation point2 = new GeoLocation();
             double distance = 0;
-            
+
+            if (journey.Count() == 0)
+                return;
+
             /* Initialise the interpolate property for the first point of the journey. */
             journey[0].interpolate = true;
             
@@ -1547,6 +1556,61 @@ namespace TrainLibrary
             }
 
             return trainCategory;
+        }
+
+        /// <summary>
+        /// Set the Train operator to the group remaining Categories for full aggregation.
+        /// </summary>
+        /// <param name="combined">The list of trains to convert the operator to grouped.</param>
+        public static void setOperatorToGrouped(List<Train> trains)
+        {
+            foreach (Train train in trains)
+            {
+                train.Category = Category.GroupRemaining;
+            }
+        }
+
+        /// <summary>
+        /// Set the Train operator to the combination of the other Categories for full aggregation.
+        /// </summary>
+        /// <param name="combined">The list of trains to convert the operator to combined.</param>
+        public static void setOperatorToCombined(List<Train> combined)
+        {
+            foreach (Train train in combined)
+            {
+                train.Category = Category.Combined;
+            }
+        }
+
+        /// <summary>
+        /// Creates an empty average train when there are no trains in the list to aggregate.
+        /// </summary>
+        /// <param name="trainCategory">The anlaysis Category where there are no trains in the list.</param>
+        /// <param name="direction">The empty trains direction of travel.</param>
+        /// <returns></returns>
+        public static AverageTrain createZeroedAverageTrain(Category trainCategory, direction direction, double startKm, double endKm, double interval)
+        {
+            /* Determine the number of points in the average train journey. */
+            int size = (int)((endKm - startKm) / (interval / 1000));
+
+            int trainCount = 0;
+            List<double> kilometreage = new List<double>(size);
+            List<double> elevation = new List<double>(size);
+            List<double> averageSpeed = new List<double>(size);
+            List<bool> isInLoopBoundary = new List<bool>(size);
+            List<bool> isInTSRboundary = new List<bool>(size);
+
+            /* Set all properties to 0 or false. */
+            for (int index = 0; index < size; index++)
+            {
+                kilometreage.Add(startKm + interval / 1000 * index);
+                elevation.Add(0);
+                averageSpeed.Add(0);
+                isInLoopBoundary.Add(false);
+                isInTSRboundary.Add(false);
+            }
+
+            return new AverageTrain(trainCategory, direction, trainCount, kilometreage, elevation, averageSpeed, isInLoopBoundary, isInTSRboundary);
         }
 
         /// <summary>
