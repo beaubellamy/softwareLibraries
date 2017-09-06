@@ -128,6 +128,103 @@ namespace IOLibrary
             /* Return the list of records. */
             return IceRecord;
         }
+
+        public static List<TrainRecord> readICEData2(string filename, List<string> trainList, bool excludeListOfTrains, DateTime[] dateRange)
+        {
+
+            /* Read all the lines of the data file. */
+            Tools.isFileOpen(filename);
+
+            char[] delimeters = { '\t' };
+            string[] fields = null;
+
+            /* Minimum length of the operator string to distinguisg between them. */
+            int operatorStringLength = 6;
+
+            /* Initialise the fields of interest. */
+            string TrainID = "none";
+            string locoID = "none";
+            string subOperator = "";
+            trainOperator trainOperator = trainOperator.Unknown;
+            trainCommodity commodity = trainCommodity.Unknown;
+            double powerToWeight = 0.0;
+            double speed = 0.0;
+            double kmPost = 0.0;
+            double latitude = 0.0;
+            double longitude = 0.0;
+            DateTime dateTime = DateTime.MinValue;
+            Category Category = Category.Unknown;
+
+            bool header = true;
+            bool includeTrain = true;
+
+            /* List of all valid train data. */
+            List<TrainRecord> IceRecord = new List<TrainRecord>();
+
+            foreach (string line in System.IO.File.ReadLines(filename))
+            {
+                if (header)
+                    /* Ignore the header line. */
+                    header = false;
+                else
+                {
+                    /* Seperate each record into each field */
+                    fields = line.Split(delimeters);
+
+                    TrainID = fields[6];
+                    locoID = fields[1];
+
+                    if (fields[5].Count() >= operatorStringLength)
+                        subOperator = fields[5].Substring(0, operatorStringLength);
+                    else
+                        subOperator = fields[5].PadRight(operatorStringLength);
+
+                    trainOperator = getOperator(subOperator);
+
+                    commodity = getCommodity(fields[4]);
+
+                    /* Ensure values are valid while reading them out. */
+                    double.TryParse(fields[9], out speed);
+                    double.TryParse(fields[8], out kmPost);
+                    double.TryParse(fields[0], out latitude);
+                    double.TryParse(fields[2], out longitude);
+                    DateTime.TryParse(fields[3], out dateTime);
+                    double.TryParse(fields[7], out powerToWeight);
+
+                    /* Possible TSR information as well*/
+                    /* TSR region
+                     * Start km
+                     * end km
+                     * TSR issue Data
+                     * TSR lift date
+                     * 
+                     * This would need to be added to the trainRecord class.
+                     */
+
+                    /* Check if the train is in the exclude list */
+                    if (excludeListOfTrains)
+                        includeTrain = !trainList.Contains(TrainID);
+                    else
+                    {
+                        if (trainList.Count() > 0)
+                            includeTrain = trainList.Contains(TrainID);
+                        else
+                            includeTrain = true;
+                    }
+
+                    if (dateTime >= dateRange[0] && dateTime < dateRange[1] &&
+                        includeTrain)
+                    {
+                        TrainRecord record = new TrainRecord(TrainID, locoID, dateTime, new GeoLocation(latitude, longitude), trainOperator, commodity, kmPost, speed, powerToWeight);
+                        IceRecord.Add(record);
+                    }
+
+                }
+            }
+
+            /* Return the list of records. */
+            return IceRecord;
+        }
         
         /// <summary>
         /// This function reads the Traxim simulation files and populates the simualtedTrain 
@@ -201,6 +298,149 @@ namespace IOLibrary
 
             /* Return the list of records. */
             return simulatedTrain;
+        }
+
+        /// <summary>
+        /// This function reads the actual average performance file and extracts the 
+        /// average train performance for each category
+        /// </summary>
+        /// <param name="filename">The actual Average performance file</param>
+        /// <param name="numberOfCategories">The number of catagories expected in the file, This can included the combined category</param>
+        /// <returns>A list of average trains to allow comparison of speeds through loops sections.</returns>
+        public static List<Train> readSimulationData(string filename, int numberOfCategories)
+        {
+            /* Multiply the number of catagories by the number of direction for each category */
+            numberOfCategories *= 2;
+
+            /* Read all the lines of the data file. */
+            Tools.isFileOpen(filename);
+
+            char[] delimeters = { ',', '\t' };
+            string[] fields = null;
+
+            /* Initialise the fields of interest. */
+            double elevation = 0;
+
+            double previousKilometreage = 0;
+            double kilometreage = 0;
+
+            double speed = 0;
+            double previousSpeed = 0;
+
+            /* Track the averaged perfomance train properties. */
+            List<Category> category = new List<Category>();
+            List<direction> trainDirection = new List<direction>();
+
+            /* Initialise the starting time for the averaged train. */
+            DateTime time = new DateTime(2000, 1, 1);
+
+            int count = 0;
+            bool header = true;
+            int offset = 2;
+
+            /* List of the simulated journey. */
+            List<double> kilometre = new List<double>();
+            List<double> dictionarySpeeds = new List<double>();
+            /* Dictionary of speeds for each kilometre value */
+            Dictionary<double, List<double>> journeySpeeds = new Dictionary<double, List<double>>();
+
+            /* Lists to contain the actual average train performance and train properties. */
+            List<TrainJourney> actualPerformance = new List<TrainJourney>();
+            List<List<TrainJourney>> trains = new List<List<TrainJourney>>();
+
+            /* Read each line of the file. */
+            foreach (string line in System.IO.File.ReadLines(filename))
+            {
+                /* Seperate each record into each field */
+                fields = line.Split(delimeters);
+
+                if (header)
+                {
+                    /* Extract the train characteristics. */
+                    trainOperator trainOperator = trainOperator.Unknown;
+
+                    /* Extract each of the train properties. */
+                    if (count == 0)
+                    {
+                        for (int categoryIdx = 0; categoryIdx < numberOfCategories; categoryIdx++)
+                        {
+                            trainOperator = getOperator(fields[offset + categoryIdx].Split(' ')[0]);
+                            category.Add(Processing.convertTrainOperatorToCategory(trainOperator));
+                            trainDirection.Add(getDirection(fields[offset + categoryIdx].Split(' ')[1]));
+                        }
+                    }
+
+                    /* Check if we have reached the actual data values. */
+                    count++;
+                    if (count >= 9)
+                        header = false;
+                }
+                else
+                {
+                    /* Add the properties to their respsective fields. */
+                    double.TryParse(fields[0], out kilometreage);
+                    double.TryParse(fields[1], out elevation);
+
+                    /* Clear the list of speeds. */
+                    dictionarySpeeds.Clear();
+                    for (int categoryIdx = 0; categoryIdx < numberOfCategories; categoryIdx++)
+                    {
+                        /* Extract the speeds from the file. */
+                        double.TryParse(fields[offset + categoryIdx], out speed);
+                        dictionarySpeeds.Add(speed);
+                    }
+                    /* Add the list of speeds for the current kilometreage. */
+                    journeySpeeds.Add(kilometreage, new List<double>(dictionarySpeeds));
+                    kilometre.Add(kilometreage);
+                }
+            }
+
+            /* Transpose the journey speeds into individual train journeys. */
+            speed = 0;
+            for (int categoryIdx = 0; categoryIdx < numberOfCategories; categoryIdx++)
+            {
+                actualPerformance.Clear();
+                for (int journeyIdx = 0; journeyIdx < journeySpeeds.Count(); journeyIdx++)
+                {
+                    /* Extract the neccesasry journey parameters for the specified train. */
+                    kilometreage = kilometre[journeyIdx];
+                    speed = journeySpeeds[kilometreage][categoryIdx];
+
+                    if (journeyIdx > 0)
+                    {
+                        previousKilometreage = kilometre[journeyIdx - 1];
+                        previousSpeed = journeySpeeds[previousKilometreage][categoryIdx];
+                    }
+                    else
+                    {
+                        previousKilometreage = kilometreage;
+                        previousSpeed = speed;
+                    }
+
+                    /* Calcualte the time according to the direction of travel. */
+                    if (trainDirection[categoryIdx] == direction.IncreasingKm)
+                        time = time.AddHours(Processing.calculateTimeInterval(previousKilometreage, kilometreage, previousSpeed));
+                    else
+                        time = time.AddHours(Processing.calculateTimeInterval(kilometreage, previousKilometreage, speed));
+
+                    /* Create and add the journey point to the trains journy. */
+                    TrainJourney item = new TrainJourney(new GeoLocation(), time, speed, kilometreage, kilometreage, elevation);
+                    actualPerformance.Add(item);
+                }
+                /* Add the train journey to the list. */
+                trains.Add(new List<TrainJourney>(actualPerformance));
+            }
+
+            /* Create the list of actual average trains. */
+            List<Train> actualAverageTrains = new List<Train>();
+
+            /* Add each train journy to the actual average train list with the appropriate properties. */
+            for (int categoryIdx = 0; categoryIdx < numberOfCategories; categoryIdx++)
+                actualAverageTrains.Add(new Train(trains[categoryIdx], category[categoryIdx], trainDirection[categoryIdx]));
+
+
+            /* Return the list of records. */
+            return actualAverageTrains;
         }
 
         /// <summary>
@@ -468,7 +708,6 @@ namespace IOLibrary
             return wagon;
         }
         
-
         /// <summary>
         /// Read the file containing the temporary speed restriction information and 
         /// store in a manalgable list of TSR objects, which contain all neccessary 
@@ -1147,6 +1386,7 @@ namespace IOLibrary
                                      { "", "Loco ID:", "" },
                                      { "", "Train Operator:", "" },
                                      { "", "Date:", "" },
+                                     {"",  "Commodity:", ""},
                                      { "", "Direction:", "" },
                                      { "", "", "" },
                                      { "","Time for stopped train to reach track speed", "" },
@@ -1270,13 +1510,13 @@ namespace IOLibrary
                     worksheet.Range[worksheet.Cells[3, 3], worksheet.Cells[3, numberOfPairsAtLoop * 2 + 2]].Value2 = LocoID;
                     worksheet.Range[worksheet.Cells[4, 3], worksheet.Cells[4, numberOfPairsAtLoop * 2 + 2]].Value2 = trainOperator;
                     worksheet.Range[worksheet.Cells[5, 3], worksheet.Cells[5, numberOfPairsAtLoop * 2 + 2]].Value2 = trainDate;
-                    worksheet.Range[worksheet.Cells[6, 3], worksheet.Cells[6, numberOfPairsAtLoop * 2 + 2]].Value2 = direction;
-                    //worksheet.Range[worksheet.Cells[7, 3], worksheet.Cells[7, numberOfPairsAtLoop * 2 + 2]].Value2 = commodity;
-
-                    worksheet.Range[worksheet.Cells[8, 3], worksheet.Cells[8, numberOfPairsAtLoop * 2 + 2]].Value2 = timeForStoppedTrainToReachTrackSpeed;
-                    worksheet.Range[worksheet.Cells[9, 3], worksheet.Cells[9, numberOfPairsAtLoop * 2 + 2]].Value2 = simulatedTrainToReachTrackSpeedLocation;
-                    worksheet.Range[worksheet.Cells[10, 3], worksheet.Cells[10, numberOfPairsAtLoop * 2 + 2]].Value2 = timeBetweenClearingLoopAndRestart;
-                    worksheet.Range[worksheet.Cells[11, 3], worksheet.Cells[11, numberOfPairsAtLoop * 2 + 2]].Value2 = transactionTime;
+                    worksheet.Range[worksheet.Cells[6, 3], worksheet.Cells[6, numberOfPairsAtLoop * 2 + 2]].Value2 = commodity;
+                    worksheet.Range[worksheet.Cells[7, 3], worksheet.Cells[7, numberOfPairsAtLoop * 2 + 2]].Value2 = direction;
+                    
+                    worksheet.Range[worksheet.Cells[9, 3], worksheet.Cells[9, numberOfPairsAtLoop * 2 + 2]].Value2 = timeForStoppedTrainToReachTrackSpeed;
+                    worksheet.Range[worksheet.Cells[10, 3], worksheet.Cells[10, numberOfPairsAtLoop * 2 + 2]].Value2 = simulatedTrainToReachTrackSpeedLocation;
+                    worksheet.Range[worksheet.Cells[11, 3], worksheet.Cells[11, numberOfPairsAtLoop * 2 + 2]].Value2 = timeBetweenClearingLoopAndRestart;
+                    worksheet.Range[worksheet.Cells[12, 3], worksheet.Cells[12, numberOfPairsAtLoop * 2 + 2]].Value2 = transactionTime;
 
                     /* Speed data */
                     worksheet.Range[worksheet.Cells[headerOffset, 1], worksheet.Cells[displayRow, 1]].Value2 = kilometerage;
@@ -1606,12 +1846,36 @@ namespace IOLibrary
         }
 
         /// <summary>
+        /// Determine the direction of travel based on teh direction string. 
+        /// The string must match the enumerated string values.
+        /// </summary>
+        /// <param name="subDirection">The string representing the train direction.</param>
+        /// <returns></returns>
+        private static direction getDirection(string subDirection)
+        {
+            if (direction.IncreasingKm.ToString().Equals(subDirection, StringComparison.OrdinalIgnoreCase))
+                return direction.IncreasingKm;
+            else if (direction.DecreasingKm.ToString().Equals(subDirection, StringComparison.OrdinalIgnoreCase))
+                return direction.DecreasingKm;
+            else
+                return direction.Unknown;
+
+        }
+
+        /// <summary>
         /// Identify the train operator from the first few letters of the field.
         /// </summary>
         /// <param name="shortOperator">The first few letters of the operator field.</param>
         /// <returns>A train operator object identifying the train operator.</returns>
         private static trainOperator getOperator(string shortOperator)
         {
+            int operatorStringLength = 6;
+
+            if (shortOperator.Count() >= operatorStringLength)
+                shortOperator = shortOperator.Substring(0, operatorStringLength);
+            else
+                shortOperator = shortOperator.PadRight(operatorStringLength);
+
             /* Compare each train operator to the supplied string to identify the correct operator. */
             if (shortOperator.Equals("Austra", StringComparison.OrdinalIgnoreCase))
                 return trainOperator.ARTC;
@@ -1620,6 +1884,8 @@ namespace IOLibrary
             else if (shortOperator.Equals("Aust R", StringComparison.OrdinalIgnoreCase))
                 return trainOperator.AustralianRailwaysHistoricalSociety;
             else if (shortOperator.Equals("Aurizo", StringComparison.OrdinalIgnoreCase))
+                return trainOperator.Aurizon;
+            else if (shortOperator.Equals("QR Nat", StringComparison.OrdinalIgnoreCase))
                 return trainOperator.Aurizon;
             else if (shortOperator.Equals("City R", StringComparison.OrdinalIgnoreCase))
                 return trainOperator.CityRail;
@@ -1657,6 +1923,14 @@ namespace IOLibrary
                 return trainOperator.TheRailMotorService;
             else if (shortOperator.Equals("V Line", StringComparison.OrdinalIgnoreCase))
                 return trainOperator.VLinePassenger;
+            else if (shortOperator.Equals("Combin", StringComparison.OrdinalIgnoreCase))
+                return trainOperator.Combined;
+            else if (shortOperator.Equals("Groupe", StringComparison.OrdinalIgnoreCase))
+                return trainOperator.GroupRemaining;
+            else if (shortOperator.Equals("GroupR", StringComparison.OrdinalIgnoreCase))
+                return trainOperator.GroupRemaining;
+            else if (shortOperator.Equals("Simula", StringComparison.OrdinalIgnoreCase))
+                return trainOperator.Simulated;
             else
                 return trainOperator.Unknown;
 
