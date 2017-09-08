@@ -227,6 +227,9 @@ namespace TrainLibrary
         /// <returns>The total distance travelled in metres.</returns>
         public static double calculateTrainJourneyDistance(List<TrainJourney> journey)
         {
+            if (journey.Count() == 0)
+                return 0; 
+
             double distance = 0;
 
             for (int pointIdx = 1; pointIdx < journey.Count; pointIdx++)
@@ -1112,7 +1115,6 @@ namespace TrainLibrary
             /* Loop through the train records */
             for (int trainIndex = 1; trainIndex < record.Count(); trainIndex++)
             {
-
                 /* Compare next train details with current train details to establish if its a new train. */
                 if (record[trainIndex].trainID.Equals(record[trainIndex - 1].trainID) &&
                     record[trainIndex].locoID.Equals(record[trainIndex - 1].locoID) &&
@@ -1129,8 +1131,9 @@ namespace TrainLibrary
                     /* Remove any individual changes in direction. */
                     journey = removeIndividualChangesInDirection(journey, getTrainDirection(journey));
 
+                    /* If teh jounrey has been lost due to diration variation, skip to the next iteration. */
                     if (journey.Count() == 0)
-                        journeyDistance = 0;
+                        continue;
 
                     /* Validate the distance between points is less than the threshold. */
                     validateDistances(ref journey, distanceThreshold);

@@ -421,7 +421,7 @@ namespace IOLibrary
                     if (trainDirection[categoryIdx] == direction.IncreasingKm)
                         time = time.AddHours(Processing.calculateTimeInterval(previousKilometreage, kilometreage, previousSpeed));
                     else
-                        time = time.AddHours(Processing.calculateTimeInterval(kilometreage, previousKilometreage, speed));
+                        time = time.AddHours(-1 * Processing.calculateTimeInterval(previousKilometreage, kilometreage, speed));
 
                     /* Create and add the journey point to the trains journy. */
                     TrainJourney item = new TrainJourney(new GeoLocation(), time, speed, kilometreage, kilometreage, elevation);
