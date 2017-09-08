@@ -1131,7 +1131,7 @@ namespace TrainLibrary
                     /* Remove any individual changes in direction. */
                     journey = removeIndividualChangesInDirection(journey, getTrainDirection(journey));
 
-                    /* If teh jounrey has been lost due to diration variation, skip to the next iteration. */
+                    /* If the journey has been lost due to direction variation, skip to the next iteration. */
                     if (journey.Count() == 0)
                         continue;
 
@@ -1213,6 +1213,10 @@ namespace TrainLibrary
                     journey = removeIndividualChangesInDirection(journey, getTrainDirection(journey));
                     /* Validate the distance between points is less than the threshold. */
                     validateDistances(ref journey, distanceThreshold);
+                    
+                    /* If the journey has been lost due to direction variation, skip to the next iteration. */
+                    if (journey.Count() == 0)
+                        continue;
 
                     /* Calculate the total length of the journey */
                     journeyDistance = calculateTrainJourneyDistance(journey);
@@ -1317,6 +1321,10 @@ namespace TrainLibrary
                     /* Calculate the total length of the journey */
                     journeyDistance = calculateTrainJourneyDistance(journey);
 
+                    /* If the journey has been lost due to direction variation, skip to the next iteration. */
+                    if (journey.Count() == 0)
+                        continue;
+
                     /* Populate the train parameters. */
                     Train item = new Train();
                     item.journey = journey;
@@ -1381,6 +1389,10 @@ namespace TrainLibrary
                     /* Calculate the total length of the journey */
                     journeyDistance = calculateTrainJourneyDistance(journey);
 
+                    /* If the journey has been lost due to direction variation, skip to the next iteration. */
+                    if (journey.Count() == 0)
+                        continue;
+                    
                     /* Populate the train parameters. */
                     Train lastItem = new Train();
                     lastItem.journey = journey;

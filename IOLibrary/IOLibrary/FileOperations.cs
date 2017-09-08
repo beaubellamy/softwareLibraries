@@ -1699,7 +1699,7 @@ namespace IOLibrary
                     }
                     else
                     {
-                        /* The end of the data has been reached. Replace teh previous values with empty data. */
+                        /* The end of the data has been reached. Replace the previous values with empty data. */
                         ID[j, 0] = "";
                         Orig[j, 0] = "";
                         Planned[j, 0] = "";
@@ -1846,7 +1846,7 @@ namespace IOLibrary
         }
 
         /// <summary>
-        /// Determine the direction of travel based on teh direction string. 
+        /// Determine the direction of travel based on the direction string. 
         /// The string must match the enumerated string values.
         /// </summary>
         /// <param name="subDirection">The string representing the train direction.</param>
