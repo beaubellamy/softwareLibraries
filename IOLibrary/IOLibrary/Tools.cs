@@ -155,8 +155,8 @@ namespace IOLibrary
             catch (IOException e)
             {
                 /* File is already opended and locked for reading. */
-                messageBox(e.Message + ":\n\nClose the file and Start again.");
-                Environment.Exit(0);
+                messageBox(e.Message + ":\n\nClose the file and Press OK.");
+                //Environment.Exit(0);
             }
             finally
             {

@@ -1535,7 +1535,7 @@ namespace IOLibrary
             /* Check the file does not exist yet. */
             if (File.Exists(saveFilename))
             {
-                //isFileOpen(saveFilename);
+                Tools.isFileOpen(saveFilename);
                 File.Delete(saveFilename);
             }
 
@@ -1615,7 +1615,7 @@ namespace IOLibrary
             /* Check the file does not exist yet. */
             if (File.Exists(saveFilename))
             {
-                //isFileOpen(saveFilename);
+                Tools.isFileOpen(saveFilename);
                 File.Delete(saveFilename);
             }
 

@@ -1016,12 +1016,13 @@ namespace TrainLibrary
             {
                 /* Find the location with the shortest distance to the target. */
                 double closestValueBelow = valuesBelow.Min(k => Math.Abs(target - k.kilometreage));
-                valuesBelow = valuesBelow.Where(i => Math.Abs(target - i.kilometreage) == closestValueBelow).ToList();
+                List<TrainJourney> closestPoints = valuesBelow.Where(i => Math.Abs(target - i.kilometreage) == closestValueBelow).ToList();
 
-                /* Sort the journey list by increasing speed. */
-                valuesBelow = valuesBelow.OrderBy(j => j.speed).ToList();
-                /* Return the first index where speed is lowest prior to the target location. */                
-                return journey.Where(i => i.kilometreage < target).ToList().FindIndex(i => i.speed == valuesBelow[0].speed);
+                /* Sort the list of points by speed. */
+                closestPoints = closestPoints.OrderBy(j => j.speed).ToList();
+                
+                /* return the last index in the sublist of the smallest speed for the closest point to the target location. */
+                return valuesBelow.FindLastIndex(i => i.kilometreage == closestPoints[0].kilometreage && i.speed == closestPoints[0].speed);
                 
             }
             else
