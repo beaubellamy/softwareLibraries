@@ -1099,7 +1099,7 @@ namespace IOLibrary
             int headerColumns = headerString.GetLength(1);
 
             int displayRow = headerOffset + trainRecords[0].journey.Count() - 1;
-            int displayColumn = horizontalOffset; // +trainRecords.Count() - 1;
+            int displayColumn = horizontalOffset;
 
             int timeOffset = 5;
             int timedataOffset = displayRow + timeOffset;
@@ -1121,12 +1121,8 @@ namespace IOLibrary
 
             double[,] kilometerage = new double[trainRecords[0].journey.Count(), 1];
 
-            double[,] speed = new double[trainRecords[0].journey.Count(), 1]; //trainRecords.Count()];
-            DateTime[,] dateTime = new DateTime[trainRecords[0].journey.Count(), 1]; // trainRecords.Count()];
-
-            //double[,] speed = new double[6000, 2000];
-            //DateTime[,] dateTime = new DateTime[6000,2000];
-
+            double[,] speed = new double[trainRecords[0].journey.Count(), 1];
+            DateTime[,] dateTime = new DateTime[trainRecords[0].journey.Count(), 1];
 
             /* Loop through the excel pages. */
             for (int excelPage = 0; excelPage < excelPages; excelPage++)
@@ -1153,20 +1149,19 @@ namespace IOLibrary
 
                     for (int journeyIdx = 0; journeyIdx < trainRecords[trainIdx].journey.Count(); journeyIdx++)
                     {
-                        //Console.WriteLine("{0}:: {1}",trainIdx,journeyIdx);
-
                         kilometerage[journeyIdx, 0] = startKm + interpoaltionInterval * Processing.metresToKilometers * journeyIdx;
 
                         speed[journeyIdx, 0] = trainRecords[trainIdx].journey[journeyIdx].speed;
                         dateTime[journeyIdx, 0] = trainRecords[trainIdx].journey[journeyIdx].dateTime;
 
                     }
-                    /* Reduce memory needs
-                     * Reduce the speed and dataTiem decleration.
-                     * Write each trains journey details individually here.
-                     */
+
+                    /* To reduce memory usage, write each trains journey details individually here. */
                     worksheet.Range[worksheet.Cells[headerOffset, horizontalOffset], worksheet.Cells[displayRow, displayColumn]].Value2 = speed;
-                    worksheet.Range[worksheet.Cells[timedataOffset, horizontalOffset], worksheet.Cells[timedataOffset + trainRecords[0].journey.Count() - 1, displayColumn]].Value2 = dateTime;
+                    worksheet.Range[worksheet.Cells[timedataOffset, horizontalOffset], 
+                        worksheet.Cells[timedataOffset + trainRecords[0].journey.Count() - 1, displayColumn]].Value2 = dateTime;
+                    
+                    /* Adjust the offsets for each train. */
                     displayColumn++;
                     horizontalOffset++;
                     
@@ -1389,10 +1384,10 @@ namespace IOLibrary
                                      {"",  "Commodity:", ""},
                                      { "", "Direction:", "" },
                                      { "", "", "" },
-                                     { "","Time for stopped train to reach track speed", "" },
-                                     { "","Simulated train to reach track speed location", "" },
-                                     { "","Time between clearing loop and restarting", "" },
-                                     { "","Transaction time", "" }};
+                                     { "","Time of stopped train to converge with through train speed", "" },
+                                     { "","Time of average actual through train to reach converged speed location", "" },
+                                     { "","Time between rear of through train clearing, to stopped train starting", "" },
+                                     { "","Total transaction time", "" }};
             /* Set display offset parameters. */
             int headerRows = headerString.GetLength(0);
             int headerColumns = headerString.GetLength(1);
@@ -1408,7 +1403,7 @@ namespace IOLibrary
             /* Index offset for the train pairs. */
             int pairCount = 0;
 
-            /* Loop through each loop location, diaplaying all train pairs associated with each loop on seperate worksheets. */
+            /* Loop through each loop location, displaying all train pairs associated with each loop on seperate worksheets. */
             for (int tabIdx = 0; tabIdx < loopLocations.Count(); tabIdx++)
             {
                 /* Determine the number of train pairs stopping at each loop. */
@@ -1631,6 +1626,209 @@ namespace IOLibrary
 
         }
 
+        /// <summary>
+        /// Write the occupation blocks of each section to file.
+        /// </summary>
+        /// <param name="utilisation">List of occupation blocks for each section.</param>
+        /// <param name="aggregatedDestination">The destination directory for the resulting file.</param>
+        public static void writeSectionUtilistion(List<List<OccupationBlock>> utilisation, string aggregatedDestination)
+        {
+            /* Create the microsoft excel references. */
+            Microsoft.Office.Interop.Excel.Application excel = new Microsoft.Office.Interop.Excel.Application();
+            excel.Visible = false;
+            Workbook workbook = excel.Workbooks.Add(Type.Missing);
+            Worksheet worksheet;
+
+            /* Create the header details. */
+            string[,] headerString = {{"Section:", "", "", "" },
+                                      {"Time:", "Start",  "End", "Occupied" }};
+
+            /* Pagenate the data for writing to excel. */
+            int excelPageSize = 1000000;        /* Page size of the excel worksheet. */
+            int excelPages = 1;                 /* Number of Excel pages to write. */
+
+            int headerRows = headerString.GetLength(0);
+            int headerColumns = headerString.GetLength(1);
+
+            int columnOffset = 1;
+
+            int maximumNumberOfOccupationBlocks = 0;
+
+            /* Adjust the excel page size or the number of pages to write. */
+            foreach (List<OccupationBlock> sections in utilisation) { if (sections.Count() > maximumNumberOfOccupationBlocks) maximumNumberOfOccupationBlocks = sections.Count(); }
+
+            if (maximumNumberOfOccupationBlocks < excelPageSize)
+                excelPageSize = maximumNumberOfOccupationBlocks;
+            else
+                excelPages = (int)Math.Round((double)maximumNumberOfOccupationBlocks / excelPageSize + 0.5);
+
+            /* Loop through the excel pages. */
+            for (int excelPage = 0; excelPage < excelPages; excelPage++)
+            {
+                /* Set the active worksheet. */
+                worksheet = workbook.Sheets[excelPage + 1];
+                workbook.Sheets[excelPage + 1].Activate();
+                Range topLeft = worksheet.Cells[1, 1];
+                Range bottomRight = worksheet.Cells[headerRows, headerColumns];
+                worksheet.get_Range(topLeft, bottomRight).Value2 = headerString;
+
+                /* Loop through the data for each excel page. */
+                for (int sectionIndex = 0; sectionIndex < utilisation.Count(); sectionIndex++)
+                {
+                    /* Extract each section. */
+                    List<OccupationBlock> section = utilisation[sectionIndex];
+
+                    /* Define the arrays to write to the file. */
+                    double[] sectionBoundaries = new double[] { section[0].section.sectionStart, section[0].section.sectionEnd };
+                    DateTime[,] startTime = new DateTime[section.Count(), 1];
+                    DateTime[,] endTime = new DateTime[section.Count(), 1];
+                    double[,] timeOccupied = new double[section.Count(), 1];
+
+                    /* Loop through each occupation block for the section. */
+                    for (int blocKidx = 0; blocKidx < section.Count(); blocKidx++)
+                    {
+                        startTime[blocKidx, 0] = section[blocKidx].startTime;
+                        endTime[blocKidx, 0] = section[blocKidx].endTime;
+                        timeOccupied[blocKidx, 0] = section[blocKidx].minutesOccupied;
+                    }
+
+                    /* Adjust the desplay offset for each section. */
+                    columnOffset = (sectionIndex * headerColumns) + 1;
+
+                    /* Write the data to file. */
+                    worksheet.Range[worksheet.Cells[1, columnOffset + 1], worksheet.Cells[1, columnOffset + 2]].Value2 = sectionBoundaries;
+                    worksheet.Range[worksheet.Cells[headerRows + 1, columnOffset + 1], worksheet.Cells[headerRows + section.Count(), columnOffset + 1]].Value2 = startTime;
+                    worksheet.Range[worksheet.Cells[headerRows + 1, columnOffset + 2], worksheet.Cells[headerRows + section.Count(), columnOffset + 2]].Value2 = endTime;
+                    worksheet.Range[worksheet.Cells[headerRows + 1, columnOffset + 3], worksheet.Cells[headerRows + section.Count(), columnOffset + 3]].Value2 = timeOccupied;
+
+                }
+
+            }
+
+            /* Generate the resulting file name and location to save to. */
+            string saveFilename = aggregatedDestination + @"\sectionUtilisation_" + DateTime.Now.ToString("yyyyMMdd") + ".xlsx";
+
+            /* Check the file does not exist yet. */
+            if (File.Exists(saveFilename))
+            {
+                Tools.isFileOpen(saveFilename);
+                File.Delete(saveFilename);
+            }
+
+            /* Save the excel file. */
+            excel.UserControl = false;
+            workbook.SaveAs(saveFilename, XlFileFormat.xlWorkbookDefault, Type.Missing, Type.Missing, false, false,
+                XlSaveAsAccessMode.xlNoChange, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
+
+            workbook.Close();
+
+            return;
+        }
+
+        /// <summary>
+        /// Write the aggregated utilisation data to file.
+        /// </summary>
+        /// <param name="rollingUtilisation">The sorted dictionary of rolling 24 hour section utilisation.</param>
+        /// <param name="aggregatedDestination">The destination directory for the resulting file.</param>
+        public static void writeRollingUtilistion(SortedDictionary<string, List<double>> rollingUtilisation, string aggregatedDestination, DateTime[] dateRange)
+        {
+            /* Create the microsoft excel references. */
+            Microsoft.Office.Interop.Excel.Application excel = new Microsoft.Office.Interop.Excel.Application();
+            excel.Visible = false;
+            Workbook workbook = excel.Workbooks.Add(Type.Missing);
+            Worksheet worksheet;
+
+            /* Create the header details. */
+            string[,] headerString = {{"", "Section:"},
+                                      {"Start Time", "End Time"}};
+
+            /* Pagenate the data for writing to excel. */
+            int excelPageSize = 1000000;        /* Page size of the excel worksheet. */
+            int excelPages = 1;                 /* Number of Excel pages to write. */
+
+            int headerRows = headerString.GetLength(0);
+            int headerColumns = headerString.GetLength(1);
+
+            int rowOffset = 2;
+            int columnOffset = 2;
+
+            int numberOfTimePeriods = (int)(dateRange[1] - dateRange[0]).TotalHours;
+
+            /* Adjust the excel page size or the number of pages to write. */
+            if (numberOfTimePeriods < excelPageSize)
+                excelPageSize = numberOfTimePeriods;
+            else
+                excelPages = (int)Math.Round((double)numberOfTimePeriods / excelPageSize + 0.5);
+
+            /* Loop through the excel pages. */
+            for (int excelPage = 0; excelPage < excelPages; excelPage++)
+            {
+                /* Set the active worksheet. */
+                worksheet = workbook.Sheets[excelPage + 1];
+                workbook.Sheets[excelPage + 1].Activate();
+                Range topLeft = worksheet.Cells[1, 1];
+                Range bottomRight = worksheet.Cells[headerRows, headerColumns];
+                worksheet.get_Range(topLeft, bottomRight).Value2 = headerString;
+
+                /* Define the arrays to write to file. */
+                string[,] startTime = new string[numberOfTimePeriods, 1];
+                string[,] endTime = new string[numberOfTimePeriods, 1];
+                string[] sectionBoundaries = new string[rollingUtilisation.Count()];
+                /* The total number of minutes the section is occupied fr a 24 hour period from startTme. */
+                double[,] totalMinutesOccupied = new double[numberOfTimePeriods, rollingUtilisation.Count()];
+
+                /* Loop through the data for each excel page. */
+                for (int sectionIndex = 0; sectionIndex < rollingUtilisation.Count(); sectionIndex++)
+                {
+                    /* Extract teh key from teh dictionary. */
+                    string key = rollingUtilisation.Keys.ToList()[sectionIndex];
+                    sectionBoundaries[sectionIndex] = key;
+
+                    /* Loop through each hourly aggregation period. */
+                    for (int timeIdx = 0; timeIdx < numberOfTimePeriods; timeIdx++)
+                    {
+                        if (sectionIndex == 0)
+                        {
+                            /* Set the start and end times. */
+                            startTime[timeIdx, 0] = dateRange[0].AddHours(timeIdx).ToString();
+                            endTime[timeIdx, 0] = dateRange[0].AddHours(timeIdx + 1).ToString();
+                        }
+
+                        /* Extract the total number of minutes the section is occupied. */
+                        totalMinutesOccupied[timeIdx, sectionIndex] = rollingUtilisation[key][timeIdx];
+                    }
+
+                }
+
+                /* Write the data to file. */
+                worksheet.Range[worksheet.Cells[1, 3], worksheet.Cells[1, rollingUtilisation.Count() + columnOffset]].Value2 = sectionBoundaries;
+                worksheet.Range[worksheet.Cells[1 + rowOffset, 1], worksheet.Cells[numberOfTimePeriods + rowOffset, 1]].Value2 = startTime;
+                worksheet.Range[worksheet.Cells[1 + rowOffset, 2], worksheet.Cells[numberOfTimePeriods + rowOffset, 2]].Value2 = endTime;
+                worksheet.Range[worksheet.Cells[1 + rowOffset, 3], 
+                    worksheet.Cells[numberOfTimePeriods + rowOffset, rollingUtilisation.Count() + columnOffset]].Value2 = totalMinutesOccupied;
+                
+            }
+
+            /* Generate the resulting file name and location to save to. */
+            string saveFilename = aggregatedDestination + @"\rollingUtilisation_" + DateTime.Now.ToString("yyyyMMdd") + ".xlsx";
+
+            /* Check the file does not exist yet. */
+            if (File.Exists(saveFilename))
+            {
+                Tools.isFileOpen(saveFilename);
+                File.Delete(saveFilename);
+            }
+
+            /* Save the excel file. */
+            excel.UserControl = false;
+            workbook.SaveAs(saveFilename, XlFileFormat.xlWorkbookDefault, Type.Missing, Type.Missing, false, false,
+                XlSaveAsAccessMode.xlNoChange, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
+
+            workbook.Close();
+
+            return;
+        }
+        
         /// <summary>
         /// Write the wagon details to an excel file for later analysis.
         /// </summary>

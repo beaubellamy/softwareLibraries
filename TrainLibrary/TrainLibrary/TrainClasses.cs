@@ -850,6 +850,72 @@ namespace TrainLibrary
     }
 
     /// <summary>
+    /// A Class defining the start and end of a line section.
+    /// </summary>
+    public class Section
+    {
+        public double sectionStart;
+        public double sectionEnd;
+
+        /// <summary>
+        /// Default Section constructor
+        /// </summary>
+        public Section()
+        {
+            this.sectionStart = 0;
+            this.sectionEnd = 0;
+        }
+
+        /// <summary>
+        /// Section Constructor
+        /// </summary>
+        /// <param name="start">The start kilometerage of the section.</param>
+        /// <param name="end">The end kilometerage of the section.</param>
+        public Section(double start, double end)
+        {
+            this.sectionStart = start;
+            this.sectionEnd = end;
+        }
+
+    }
+
+    /// <summary>
+    /// A class describing individual occupation blocks for a section
+    /// </summary>
+    public class OccupationBlock
+    {
+        public Section section;
+        public DateTime startTime;
+        public DateTime endTime;
+        public double minutesOccupied;
+
+        /// <summary>
+        /// Default Ocupation block constructr
+        /// </summary>
+        public OccupationBlock()
+        {
+            this.section = new Section();
+            this.startTime = DateTime.MinValue;
+            this.endTime = DateTime.MinValue;
+            this.minutesOccupied = (endTime - startTime).TotalMinutes;
+        }
+
+        /// <summary>
+        /// Occupation block constructor
+        /// </summary>
+        /// <param name="section">The section that the occupation block belongs to.</param>
+        /// <param name="startTime">The start time of the occupation.</param>
+        /// <param name="endTime">The end time of the occupation</param>
+        public OccupationBlock(Section section, DateTime startTime, DateTime endTime)
+        {
+            this.section = section;
+            this.startTime = startTime;
+            this.endTime = endTime;
+            this.minutesOccupied = (endTime - startTime).TotalMinutes;
+        }
+    }
+    
+    /// <summary>
     /// A class describing a geographic location with latitude and longitude.
     /// </summary>
     public class GeoLocation

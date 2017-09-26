@@ -597,7 +597,7 @@ namespace TrainLibrary
                         else
                         {
                             /* Assign values where there is a gap in the data. */
-                            interpolate = true; // should be false ????
+                            interpolate = false;
                             interpolatedSpeed = 0;
                             /* Define a time for gaps in the data. */
                             time = journey.Where(t => t.dateTime > DateTime.MinValue).Min(t => t.dateTime);
@@ -648,8 +648,7 @@ namespace TrainLibrary
             /* Return the completed interpolated train data. */
             return newTrainList;
         }
-
-
+        
         /// <summary>
         /// Calculate the aggregated average speed of all trains.
         /// </summary>
@@ -1758,7 +1757,7 @@ namespace TrainLibrary
 
         }
 
-
+        
 
     } // Class Processing
 }
