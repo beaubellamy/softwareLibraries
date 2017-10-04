@@ -75,6 +75,109 @@ namespace TrainLibrary
         public bool include;
 
         /// <summary>
+        /// Overloaded Equald operator
+        /// </summary>
+        /// <param name="train1">The initial train object.</param>
+        /// <param name="train2">The train object to compare with</param>
+        /// <returns>Retrns True if the objects are the same trains.</returns>
+        public static bool operator ==(Train train1, Train train2)
+        {
+            if (ReferenceEquals(train1, train2))
+                return true;
+            
+            if (ReferenceEquals(train1, null))
+                return false;
+            
+            if (ReferenceEquals(train2, null))
+                return false;
+            
+            /* Ignore the comparison of the train journey, when comparing trains to avoid the 
+             * differences between an interpoalted trains with gaps and interpoalting 
+             * through the gaps for the utilisation. */
+            return (train1.Category == train2.Category &&
+                train1.trainID == train2.trainID &&
+                train1.locoID == train2.locoID &&
+                train1.trainOperator == train2.trainOperator &&
+                train1.commodity == train2.commodity &&
+                train1.powerToWeight == train2.powerToWeight &&
+                train1.trainDirection == train2.trainDirection &&
+                train1.include == train2.include);
+
+        }
+
+        /// <summary>
+        /// Overloaded Not Equald operator
+        /// </summary>
+        /// <param name="train1">The initial train object.</param>
+        /// <param name="train2">The train object to compare with</param>
+        /// <returns>Retrns True if the objects are the same trains.</returns>
+        public static bool operator !=(Train train1, Train train2)
+        {
+            return !(train1 == train2);
+        }
+
+        /// <summary>
+        /// Overloaded Equals method
+        /// </summary>
+        /// <param name="other">The train object to compare.</param>
+        /// <returns>Retrns True if the objects are the same trains.</returns>
+        public bool Equals(Train other)
+        {
+            if (ReferenceEquals(null, other))
+                return false;
+            
+            if (ReferenceEquals(this, other))
+                return true;
+
+            /* Ignore the comparison of the train journey, when comparing trains to avoid the 
+             * differences between an interpoalted trains with gaps and interpoalting 
+             * through the gaps for the utilisation. */
+            return (Category.Equals(other.Category) &&
+                trainID.Equals(other.trainID) &&
+                locoID.Equals(other.locoID) &&
+                trainOperator.Equals(other.trainOperator) &&
+                commodity.Equals(other.commodity) &&
+                powerToWeight.Equals(other.powerToWeight) &&
+                trainDirection.Equals(other.trainDirection) &&
+                include.Equals(other.include));
+        }
+
+        /// <summary>
+        /// Override Equals method
+        /// </summary>
+        /// <param name="obj">System object to compare</param>
+        /// <returns>Retrns True if the objects are the same trains.</returns>
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+                return false;
+            
+            if (ReferenceEquals(this, obj))
+                return true;
+            
+            /* Ensure the objects are the same type and that they can be cast to the train object. */
+            return obj.GetType() == GetType() && Equals((Train)obj);
+        }
+
+        /// <summary>
+        /// Implementation of cutoms HashCode for the equals methods.
+        /// </summary>
+        /// <returns>returns a hashcode for the train opbject.</returns>
+        public override int GetHashCode()
+        {
+            /* Return the hash codes for the relevant components of the train object. */
+            return Category.GetHashCode() +
+                trainID.GetHashCode() +
+                locoID.GetHashCode() +
+                trainOperator.GetHashCode() +
+                commodity.GetHashCode() +
+                powerToWeight.GetHashCode() +
+                trainDirection.GetHashCode()+
+                include.GetHashCode();
+
+        }
+
+        /// <summary>
         /// Default train constructor
         /// </summary>
         public Train()
@@ -224,7 +327,8 @@ namespace TrainLibrary
         public bool isLoopHere;
         public bool isTSRHere;
         public bool interpolate;
-
+        
+        
         /// <summary>
         /// Default Train journey constructor
         /// </summary>
