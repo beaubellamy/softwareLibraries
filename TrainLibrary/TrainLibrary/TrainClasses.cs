@@ -753,6 +753,7 @@ namespace TrainLibrary
             this.hasBeenCounted = false;
 
         }
+        
         /// <summary>
         /// VolumeMovement constructor.
         /// </summary>
