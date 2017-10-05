@@ -1127,6 +1127,9 @@ namespace TrainLibrary
                 {
                     /* Check uni directionality of the train */
                     journey = longestDistanceTravelledInOneDirection(journey, trackGeometry);
+                    
+                    /* Remove any significant change in direction of the journey */
+                    journey = changeDetection(journey, getTrainDirection(journey));
 
                     /* Remove any individual changes in direction. */
                     journey = removeIndividualChangesInDirection(journey, getTrainDirection(journey));
@@ -1209,6 +1212,9 @@ namespace TrainLibrary
                     /* Check uni directionality of the last train */
                     journey = longestDistanceTravelledInOneDirection(journey, trackGeometry);
 
+                    /* Remove any significant change in direction of the journey */
+                    journey = changeDetection(journey, getTrainDirection(journey));
+
                     /* Remove any individual changes in direction. */
                     journey = removeIndividualChangesInDirection(journey, getTrainDirection(journey));
                     /* Validate the distance between points is less than the threshold. */
@@ -1290,7 +1296,7 @@ namespace TrainLibrary
              * date directly to the database. We can access this data directly, then analyse.
              */
             double journeyDistance = 0;
-
+            
             /* Create the lists for the processed train data. */
             List<Train> trainList = new List<Train>();
             List<TrainJourney> journey = new List<TrainJourney>();
@@ -1311,9 +1317,12 @@ namespace TrainLibrary
 
                 }
                 else
-                {
+                {                    
                     /* Check uni directionality of the train */
                     journey = longestDistanceTravelledInOneDirection(journey, trackGeometry);
+                    
+                    /* Remove any significant change in direction of the journey */
+                    journey = changeDetection(journey, getTrainDirection(journey));
 
                     /* Remove any individual changes in direction. */
                     journey = removeIndividualChangesInDirection(journey, getTrainDirection(journey));
@@ -1355,8 +1364,7 @@ namespace TrainLibrary
                     {
                         item.Category = convertCommodityToCategory(item.commodity);
                     }
-
-
+                    
                     /* Determine the actual km, and populate the loops and TSR information. */
                     populateGeometryKm(item.journey, trackGeometry);
                     populateLoopLocations(item.journey, trackGeometry);
@@ -1383,6 +1391,10 @@ namespace TrainLibrary
                 {
                     /* Check uni directionality of the last train */
                     journey = longestDistanceTravelledInOneDirection(journey, trackGeometry);
+
+                    /* Remove any significant change in direction of the journey */
+                    journey = changeDetection(journey, getTrainDirection(journey));
+                    
                     /* Remove any individual changes in direction. */
                     journey = removeIndividualChangesInDirection(journey, getTrainDirection(journey));
 
@@ -1485,6 +1497,128 @@ namespace TrainLibrary
             }
         }
 
+        /// <summary>
+        /// Identify if there is a significant change in direction of the trains journey and 
+        /// extract the longest part of the journey.
+        /// This aims to identify where there are extended periods of no movement at the beginning 
+        /// or end of a journey. This is assumed to represent a train path that has stopped and the 
+        /// transponder has not been rest properly.
+        /// </summary>
+        /// <param name="journey">The list of Journey objects describing the trains full journey.</param>
+        /// <param name="direction">Direction the train is travelling.</param>
+        /// <returns>The cleaned Journey list.</returns>
+        public static List<TrainJourney> changeDetection(List<TrainJourney> journey, direction direction)
+        {
+            /* Change Point Analysis compares the variance of the time orderd data to a the varaince of the 
+             * randomly distributed data to determine if there is a chagne in direction of the data. 
+             * http://www.variation.com/cpa/tech/changepoint.html 
+             */
+            
+            /* The threshold for the difference between the range of the cumulative sum of the original 
+             * time-ordered data and teh randomly ordered data. 
+             * The value is an arbitrary value based on data from Gunnedah Basin 3rd jan. 
+             */
+            int changeThreshold = 40;
+            /* Threshold for the confidence of a change in the data. */
+            int confidenceThreshold = 90;
+
+            /* Only need to perform the cahgne point analysis if there is more than one poin in the journey. */
+            if (journey.Count() > 1)
+            {
+
+                /* Initialise the difference and cumulative sum list to contian the first element. */
+                List<double> difference = new List<double>(new double[1]);
+                List<double> cumulativeSum = new List<double>(new double[difference.Count()]);
+
+                /* Set the first difference point to 0. */
+                difference[0] = 0;
+                /* Set the cumulative sum to 0. */
+                cumulativeSum[0] = 0;
+
+                /* Calcaulte the differences between susccesive kilometreage points. */
+                difference.AddRange(journey.Zip(journey.Skip(1), (x, y) => x.kilometreage - y.kilometreage).ToList());
+                
+                /* Calcualte average */
+                double average = difference.Average(); 
+
+                /* Calcualte the cumulative sum of the variance. */
+                for (int index = 1; index < difference.Count(); index++)
+                    cumulativeSum[index] = cumulativeSum[index - 1] + difference[index] - average;
+
+                /* Determine the range of values from the cumulative sum. */
+                double cumulativeSumRange = cumulativeSum.Max() - cumulativeSum.Min();
+
+                /* Set the confidence counter. */
+                double changeCount = 0;
+                /* Number of iteration to resample */
+                int numberOfiterations = 1000;
+
+                for (int index = 0; index < numberOfiterations; index++)
+                {
+                    /* Resample the data without replacement. ie, randomise the order. */
+                    List<double> resampleData = difference.OrderBy(r => Guid.NewGuid()).ToList();
+
+                    /* Create a list for teh resampled cumulative sum */
+                    List<double> resampledCumulativeSum = new List<double>(new double[resampleData.Count()]);
+                    resampledCumulativeSum[0] = 0;
+
+                    /*  Calcualte cumulative sum of the variance of the resampled data. */
+                    for (int cSumIdx = 1; cSumIdx < resampleData.Count(); cSumIdx++)
+                        resampledCumulativeSum[cSumIdx] = resampledCumulativeSum[cSumIdx - 1] + resampleData[cSumIdx] - average;
+
+                    /*  Determine therange of the cumulative sum. */
+                    double resampledRange = resampledCumulativeSum.Max() - resampledCumulativeSum.Min();
+
+                    /* compare the difference in the ranges of teh resampled data to the original time-ordered 
+                     * data to determine if there is a chagne in direction. */
+                    if (Math.Abs(resampledRange - cumulativeSumRange) > changeThreshold)
+                        /* Increment the count to determine the confidence of the change. */
+                        changeCount++;
+                    
+                }
+                
+                /* Determine the confidence of the change based on the number of times a change was identified 
+                 * against the total number of iterations. */
+                double confidence = changeCount / numberOfiterations * 100;
+
+                /* Estimate the location of the change */
+                if (confidence > confidenceThreshold)
+                {
+                    /* initialise the point of change to be the last point in the journey */
+                    int changePoint = journey.Count()-1;
+
+                    /* Determine the change point by the direction of the train. */
+                    if (direction == direction.IncreasingKm)
+                        changePoint = cumulativeSum.IndexOf(cumulativeSum.Min());
+                    else
+                        changePoint = cumulativeSum.IndexOf(cumulativeSum.Max());
+
+                    /* Divide the journey up by the change point. */
+                    List<TrainJourney> beforeChange = journey.GetRange(0, changePoint);
+                    List<TrainJourney> afterChange = journey.GetRange(changePoint, journey.Count() - changePoint - 1);
+                    
+                    /* If the change point was at either of of the journey, just return the original journey. */
+                    if (beforeChange.Count() == 0 || afterChange.Count() == 0)
+                        return journey;
+
+                    /* Take the part of the journey that has the longest range in kilometreage bounded by the change. */
+                    if ((beforeChange.Max(j => j.kilometreage) - beforeChange.Min(j => j.kilometreage)) > 
+                        (afterChange.Max(j => j.kilometreage) - afterChange.Min(j => j.kilometreage)))
+                        journey = beforeChange;
+                    else
+                        journey = afterChange;
+
+                }
+
+                /* There was no chagne detected. */
+                return journey;
+            }
+            else
+                /* There isn't enough points for a change in direction. */
+                return journey;
+
+        }
+        
         /// <summary>
         /// Convert The analysis Category to the train Operator.
         /// </summary>
