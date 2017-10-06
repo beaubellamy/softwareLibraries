@@ -1528,7 +1528,7 @@ namespace TrainLibrary
 
                 /* Initialise the difference and cumulative sum list to contian the first element. */
                 List<double> difference = new List<double>(new double[1]);
-                List<double> cumulativeSum = new List<double>(new double[difference.Count()]);
+                List<double> cumulativeSum = new List<double>(new double[journey.Count()]);
 
                 /* Set the first difference point to 0. */
                 difference[0] = 0;
