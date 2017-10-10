@@ -7,7 +7,9 @@ using TrainLibrary;
 
 namespace Statistics
 {
-    
+    /// <summary>
+    /// Statistics class for the train objects
+    /// </summary>
     public class TrainStatistics
     {
 
@@ -145,6 +147,9 @@ namespace Statistics
 
     }
 
+    /// <summary>
+    /// Statistics class for the train pair objects.
+    /// </summary>
     public class TrainPairStatistics
     {
 

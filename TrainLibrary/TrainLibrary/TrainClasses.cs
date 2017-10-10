@@ -75,7 +75,7 @@ namespace TrainLibrary
         public bool include;
 
         /// <summary>
-        /// Overloaded Equald operator
+        /// Overloaded Equal operator
         /// </summary>
         /// <param name="train1">The initial train object.</param>
         /// <param name="train2">The train object to compare with</param>
@@ -106,7 +106,7 @@ namespace TrainLibrary
         }
 
         /// <summary>
-        /// Overloaded Not Equald operator
+        /// Overloaded Not Equal operator
         /// </summary>
         /// <param name="train1">The initial train object.</param>
         /// <param name="train2">The train object to compare with</param>
@@ -160,7 +160,7 @@ namespace TrainLibrary
         }
 
         /// <summary>
-        /// Implementation of cutoms HashCode for the equals methods.
+        /// Implementation of custom HashCode for the equals methods.
         /// </summary>
         /// <returns>returns a hashcode for the train opbject.</returns>
         public override int GetHashCode()

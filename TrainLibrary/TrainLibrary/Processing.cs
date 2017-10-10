@@ -1510,12 +1510,12 @@ namespace TrainLibrary
         public static List<TrainJourney> changeDetection(List<TrainJourney> journey, direction direction)
         {
             /* Change Point Analysis compares the variance of the time orderd data to a the varaince of the 
-             * randomly distributed data to determine if there is a chagne in direction of the data. 
+             * randomly distributed data to determine if there is a change in direction of the data. 
              * http://www.variation.com/cpa/tech/changepoint.html 
              */
             
             /* The threshold for the difference between the range of the cumulative sum of the original 
-             * time-ordered data and teh randomly ordered data. 
+             * time-ordered data and the randomly ordered data. 
              * The value is an arbitrary value based on data from Gunnedah Basin 3rd jan. 
              */
             int changeThreshold = 40;
