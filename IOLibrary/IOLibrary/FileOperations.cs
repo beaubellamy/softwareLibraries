@@ -930,7 +930,9 @@ namespace IOLibrary
 
 
             /* Pagenate the data for writing to excel. */
-            int excelPageSize = 1000000;        /* Page size of the excel worksheet. */
+            int columnOffset = 4;
+            
+            int excelPageSize = (int)16380/columnOffset;          /* Max Columns in the excel worksheet. */
             int excelPages = 1;                 /* Number of Excel pages to write. */
 
             int headerOffset = 9;
@@ -941,26 +943,26 @@ namespace IOLibrary
 
             int displayColumn = horizontalOffset; 
 
-            int columnOffset = 4;
-            
             /* Adjust the excel page size or the number of pages to write. */
             if (trainRecords.Count() < excelPageSize)
                 excelPageSize = trainRecords.Count();
             else
                 excelPages = (int)Math.Round((double)trainRecords.Count() / excelPageSize + 0.5);
 
-            /* Deconstruct the train details into excel columns. */
-            string[,] TrainID = new string[1, trainRecords.Count() * columnOffset];
-            string[,] LocoID = new string[1, trainRecords.Count() * columnOffset];
-            double[,] powerToWeight = new double[1, trainRecords.Count() * columnOffset];
-            string[,] commodity = new string[1, trainRecords.Count() * columnOffset];
-            string[,] direction = new string[1, trainRecords.Count() * columnOffset];
-            DateTime[,] trainDate = new DateTime[1, trainRecords.Count() * columnOffset];
-
-
             /* Loop through the excel pages. */
             for (int excelPage = 0; excelPage < excelPages; excelPage++)
             {
+                /* Deconstruct the train details into excel columns. */
+                string[,] TrainID = new string[1, excelPageSize * columnOffset];
+                string[,] LocoID = new string[1, excelPageSize * columnOffset];
+                double[,] powerToWeight = new double[1, excelPageSize * columnOffset];
+                string[,] commodity = new string[1, excelPageSize * columnOffset];
+                string[,] direction = new string[1, excelPageSize * columnOffset];
+                DateTime[,] trainDate = new DateTime[1, excelPageSize * columnOffset];
+
+                horizontalOffset = 3;
+                displayColumn = horizontalOffset; 
+                
                 /* Set the active worksheet. */
                 worksheet = workbook.Sheets[excelPage + 1];
                 workbook.Sheets[excelPage + 1].Activate();
@@ -969,71 +971,78 @@ namespace IOLibrary
                 worksheet.get_Range(topLeft, bottomRight).Value2 = headerString;
 
                 /* Loop through the data for each excel page. */
-                for (int trainIdx = 0; trainIdx < trainRecords.Count(); trainIdx++)
+                for (int trainIdx = 0; trainIdx < excelPageSize; trainIdx++)
                 {
+                    /* Calucalte the appropriate index for the train. */
+                    int offsetIndex = excelPage * excelPageSize + trainIdx;
 
-                    int displayRow = headerOffset + trainRecords[trainIdx].journey.Count() - 1;
-                    
-                    double[,] kilometerage = new double[trainRecords[trainIdx].journey.Count(), 1];
-
-                    double[,] speed = new double[trainRecords[trainIdx].journey.Count(), 1];
-                    DateTime[,] dateTime = new DateTime[trainRecords[trainIdx].journey.Count(), 1];
-
-
-                    TrainID[0, trainIdx * columnOffset] = trainRecords[trainIdx].trainID;
-                    LocoID[0, trainIdx * columnOffset] = trainRecords[trainIdx].locoID;
-                    trainDate[0, trainIdx * columnOffset] = trainRecords[trainIdx].journey.Where(t => t.dateTime > DateTime.MinValue).ToList().Min(t => t.dateTime);
-
-                    powerToWeight[0, trainIdx * columnOffset] = trainRecords[trainIdx].powerToWeight;
-
-                    commodity[0, trainIdx * columnOffset] = trainRecords[trainIdx].commodity.ToString();
-
-                    direction[0, trainIdx * columnOffset] = trainRecords[trainIdx].trainDirection.ToString();
-
-                    TrainID[0, trainIdx * columnOffset + 1] = "";
-                    LocoID[0, trainIdx * columnOffset + 1] = "";
-                    trainDate[0, trainIdx * columnOffset + 1] = DateTime.MinValue;
-                    powerToWeight[0, trainIdx * columnOffset + 1] = 0;
-                    commodity[0, trainIdx * columnOffset + 1] = "";
-                    direction[0, trainIdx * columnOffset + 1] = "";
-
-                    TrainID[0, trainIdx * columnOffset + 2] = "";
-                    LocoID[0, trainIdx * columnOffset + 2] = "";
-                    trainDate[0, trainIdx * columnOffset + 2] = DateTime.MinValue;
-                    powerToWeight[0, trainIdx * columnOffset + 2] = 0;
-                    commodity[0, trainIdx * columnOffset + 2] = "";
-                    direction[0, trainIdx * columnOffset + 2] = "";
-
-
-                    for (int journeyIdx = 0; journeyIdx < trainRecords[trainIdx].journey.Count(); journeyIdx++)
+                    if (offsetIndex < trainRecords.Count())
                     {
-                        kilometerage[journeyIdx, 0] = trainRecords[trainIdx].journey[journeyIdx].kilometreage;
+                        int displayRow = headerOffset + trainRecords[offsetIndex].journey.Count() - 1;
 
-                        speed[journeyIdx, 0] = trainRecords[trainIdx].journey[journeyIdx].speed;
-                        dateTime[journeyIdx, 0] = trainRecords[trainIdx].journey[journeyIdx].dateTime;
+                        /* Create new arrays for each parameter for each train. */
+                        double[,] kilometerage = new double[trainRecords[offsetIndex].journey.Count(), 1];
+
+                        double[,] speed = new double[trainRecords[offsetIndex].journey.Count(), 1];
+                        DateTime[,] dateTime = new DateTime[trainRecords[offsetIndex].journey.Count(), 1];
+
+                        /* Populate the train properties. */
+                        TrainID[0, trainIdx * columnOffset] = trainRecords[offsetIndex].trainID;
+                        LocoID[0, trainIdx * columnOffset] = trainRecords[offsetIndex].locoID;
+                        trainDate[0, trainIdx * columnOffset] = trainRecords[offsetIndex].journey.Where(t => t.dateTime > DateTime.MinValue).ToList().Min(t => t.dateTime);
+
+                        powerToWeight[0, trainIdx * columnOffset] = trainRecords[offsetIndex].powerToWeight;
+
+                        commodity[0, trainIdx * columnOffset] = trainRecords[offsetIndex].commodity.ToString();
+
+                        direction[0, trainIdx * columnOffset] = trainRecords[offsetIndex].trainDirection.ToString();
+
+                        /* Fill in the empy spaces where the speed and time columns correspond to. */
+                        TrainID[0, trainIdx * columnOffset + 1] = "";
+                        LocoID[0, trainIdx * columnOffset + 1] = "";
+                        trainDate[0, trainIdx * columnOffset + 1] = DateTime.MinValue;
+                        powerToWeight[0, trainIdx * columnOffset + 1] = 0;
+                        commodity[0, trainIdx * columnOffset + 1] = "";
+                        direction[0, trainIdx * columnOffset + 1] = "";
+
+                        TrainID[0, trainIdx * columnOffset + 2] = "";
+                        LocoID[0, trainIdx * columnOffset + 2] = "";
+                        trainDate[0, trainIdx * columnOffset + 2] = DateTime.MinValue;
+                        powerToWeight[0, trainIdx * columnOffset + 2] = 0;
+                        commodity[0, trainIdx * columnOffset + 2] = "";
+                        direction[0, trainIdx * columnOffset + 2] = "";
+
+                        /* Populate the train journey parameters. */
+                        for (int journeyIdx = 0; journeyIdx < trainRecords[offsetIndex].journey.Count(); journeyIdx++)
+                        {
+                            kilometerage[journeyIdx, 0] = trainRecords[offsetIndex].journey[journeyIdx].kilometreage;
+
+                            speed[journeyIdx, 0] = trainRecords[offsetIndex].journey[journeyIdx].speed;
+                            dateTime[journeyIdx, 0] = trainRecords[offsetIndex].journey[journeyIdx].dateTime;
+
+                        }
+
+                        /* Reduce memory needs
+                         * Reduce the speed and dataTiem decleration.
+                         * Write each trains journey details individually here.
+                         */
+                        worksheet.Range[worksheet.Cells[headerOffset, displayColumn], worksheet.Cells[displayRow, displayColumn]].Value2 = kilometerage;
+
+                        worksheet.Range[worksheet.Cells[headerOffset, displayColumn + 1], worksheet.Cells[displayRow, displayColumn + 1]].Value2 = speed;
+                        worksheet.Range[worksheet.Cells[headerOffset, displayColumn + 2], worksheet.Cells[displayRow, displayColumn + 2]].Value2 = dateTime;
+                        displayColumn = displayColumn + columnOffset;
+                        horizontalOffset = horizontalOffset + columnOffset;
 
                     }
-                    /* Reduce memory needs
-                     * Reduce the speed and dataTiem decleration.
-                     * Write each trains journey details individually here.
-                     */
-                    worksheet.Range[worksheet.Cells[headerOffset, displayColumn], worksheet.Cells[displayRow, displayColumn]].Value2 = kilometerage;
-                    
-                    worksheet.Range[worksheet.Cells[headerOffset, displayColumn + 1], worksheet.Cells[displayRow, displayColumn + 1]].Value2 = speed;
-                    worksheet.Range[worksheet.Cells[headerOffset, displayColumn + 2], worksheet.Cells[displayRow, displayColumn + 2]].Value2 = dateTime;
-                    displayColumn = displayColumn + columnOffset;
-                    horizontalOffset = horizontalOffset + columnOffset;
 
+                    /* Write the data to the active excel workseet. */
+                    worksheet.Range[worksheet.Cells[2, 3], worksheet.Cells[2, excelPageSize * columnOffset + 2]].Value2 = TrainID;
+                    worksheet.Range[worksheet.Cells[3, 3], worksheet.Cells[3, excelPageSize * columnOffset + 2]].Value2 = LocoID;
+                    worksheet.Range[worksheet.Cells[4, 3], worksheet.Cells[4, excelPageSize * columnOffset + 2]].Value2 = trainDate;
+                    worksheet.Range[worksheet.Cells[5, 3], worksheet.Cells[5, excelPageSize * columnOffset + 2]].Value2 = powerToWeight;
+                    worksheet.Range[worksheet.Cells[6, 3], worksheet.Cells[6, excelPageSize * columnOffset + 2]].Value2 = commodity;
+                    worksheet.Range[worksheet.Cells[7, 3], worksheet.Cells[7, excelPageSize * columnOffset + 2]].Value2 = direction;
                 }
-
-                /* Write the data to the active excel workseet. */
-                worksheet.Range[worksheet.Cells[2, 3], worksheet.Cells[2, trainRecords.Count() * columnOffset + 2]].Value2 = TrainID;
-                worksheet.Range[worksheet.Cells[3, 3], worksheet.Cells[3, trainRecords.Count() * columnOffset + 2]].Value2 = LocoID;
-                worksheet.Range[worksheet.Cells[4, 3], worksheet.Cells[4, trainRecords.Count() * columnOffset + 2]].Value2 = trainDate;
-                worksheet.Range[worksheet.Cells[5, 3], worksheet.Cells[5, trainRecords.Count() * columnOffset + 2]].Value2 = powerToWeight;
-                worksheet.Range[worksheet.Cells[6, 3], worksheet.Cells[6, trainRecords.Count() * columnOffset + 2]].Value2 = commodity;
-                worksheet.Range[worksheet.Cells[7, 3], worksheet.Cells[7, trainRecords.Count() * columnOffset + 2]].Value2 = direction;
-
             }
 
             /* Generate the resulting file name and location to save to. */
@@ -1089,7 +1098,7 @@ namespace IOLibrary
 
 
             /* Pagenate the data for writing to excel. */
-            int excelPageSize = 1000000;        /* Page size of the excel worksheet. */
+            int excelPageSize = 16380;          /* Max Columns in the excel worksheet. */
             int excelPages = 1;                 /* Number of Excel pages to write. */
 
             int headerOffset = 9;
@@ -1110,23 +1119,26 @@ namespace IOLibrary
             else
                 excelPages = (int)Math.Round((double)trainRecords.Count() / excelPageSize + 0.5);
 
-            /* Deconstruct the train details into excel columns. */
-            string[,] TrainID = new string[1, trainRecords.Count()];
-            string[,] LocoID = new string[1, trainRecords.Count()];
-            double[,] powerToWeight = new double[1, trainRecords.Count()];
-            string[,] commodity = new string[1, trainRecords.Count()];
-            string[,] direction = new string[1, trainRecords.Count()];
-            DateTime[,] trainDate = new DateTime[1, trainRecords.Count()];
-
-
-            double[,] kilometerage = new double[trainRecords[0].journey.Count(), 1];
-
-            double[,] speed = new double[trainRecords[0].journey.Count(), 1];
-            DateTime[,] dateTime = new DateTime[trainRecords[0].journey.Count(), 1];
-
             /* Loop through the excel pages. */
             for (int excelPage = 0; excelPage < excelPages; excelPage++)
             {
+                /* Deconstruct the train details into excel columns. */
+                string[,] TrainID = new string[1, excelPageSize];
+                string[,] LocoID = new string[1, excelPageSize];
+                double[,] powerToWeight = new double[1, excelPageSize];
+                string[,] commodity = new string[1, excelPageSize];
+                string[,] direction = new string[1, excelPageSize];
+                DateTime[,] trainDate = new DateTime[1, excelPageSize];
+
+
+                double[,] kilometerage = new double[trainRecords[0].journey.Count(), 1];
+
+                double[,] speed = new double[trainRecords[0].journey.Count(), 1];
+                DateTime[,] dateTime = new DateTime[trainRecords[0].journey.Count(), 1];
+
+                horizontalOffset = 3;
+                displayColumn = horizontalOffset;
+
                 /* Set the active worksheet. */
                 worksheet = workbook.Sheets[excelPage + 1];
                 workbook.Sheets[excelPage + 1].Activate();
@@ -1135,53 +1147,60 @@ namespace IOLibrary
                 worksheet.get_Range(topLeft, bottomRight).Value2 = headerString;
 
                 /* Loop through the data for each excel page. */
-                for (int trainIdx = 0; trainIdx < trainRecords.Count(); trainIdx++)
+                for (int trainIdx = 0; trainIdx < excelPageSize; trainIdx++)
                 {
-                    TrainID[0, trainIdx] = trainRecords[trainIdx].trainID;
-                    LocoID[0, trainIdx] = trainRecords[trainIdx].locoID;
-                    trainDate[0, trainIdx] = trainRecords[trainIdx].journey.Where(t => t.dateTime > DateTime.MinValue).ToList().Min(t => t.dateTime);
-
-                    powerToWeight[0, trainIdx] = trainRecords[trainIdx].powerToWeight;
-
-                    commodity[0, trainIdx] = trainRecords[trainIdx].commodity.ToString();
-
-                    direction[0, trainIdx] = trainRecords[trainIdx].trainDirection.ToString();
-
-                    for (int journeyIdx = 0; journeyIdx < trainRecords[trainIdx].journey.Count(); journeyIdx++)
+                    /* Calucalte the appropriate index for the train. */
+                    int offsetIndex = excelPage * excelPageSize + trainIdx;
+                     
+                    if (offsetIndex < trainRecords.Count())
                     {
-                        kilometerage[journeyIdx, 0] = startKm + interpoaltionInterval * Processing.metresToKilometers * journeyIdx;
+                        /* Populate the train properties. */
+                        TrainID[0, trainIdx] = trainRecords[offsetIndex].trainID;
+                        LocoID[0, trainIdx] = trainRecords[offsetIndex].locoID;
+                        trainDate[0, trainIdx] = trainRecords[offsetIndex].journey.Where(t => t.dateTime > DateTime.MinValue).ToList().Min(t => t.dateTime);
 
-                        speed[journeyIdx, 0] = trainRecords[trainIdx].journey[journeyIdx].speed;
-                        dateTime[journeyIdx, 0] = trainRecords[trainIdx].journey[journeyIdx].dateTime;
+                        powerToWeight[0, trainIdx] = trainRecords[offsetIndex].powerToWeight;
+
+                        commodity[0, trainIdx] = trainRecords[offsetIndex].commodity.ToString();
+
+                        direction[0, trainIdx] = trainRecords[offsetIndex].trainDirection.ToString();
+
+                        /* Populate the train parameters. */
+                        for (int journeyIdx = 0; journeyIdx < trainRecords[offsetIndex].journey.Count(); journeyIdx++)
+                        {
+                            kilometerage[journeyIdx, 0] = startKm + interpoaltionInterval * Processing.metresToKilometers * journeyIdx;
+
+                            speed[journeyIdx, 0] = trainRecords[offsetIndex].journey[journeyIdx].speed;
+                            dateTime[journeyIdx, 0] = trainRecords[offsetIndex].journey[journeyIdx].dateTime;
+
+                        }
+
+                        /* To reduce memory usage, write each trains journey details individually here. */
+                        worksheet.Range[worksheet.Cells[headerOffset, horizontalOffset], worksheet.Cells[displayRow, displayColumn]].Value2 = speed;
+                        worksheet.Range[worksheet.Cells[timedataOffset, horizontalOffset],
+                            worksheet.Cells[timedataOffset + trainRecords[0].journey.Count() - 1, displayColumn]].Value2 = dateTime;
+
+                        /* Adjust the offsets for each train. */
+                        displayColumn++;
+                        horizontalOffset++;
 
                     }
 
-                    /* To reduce memory usage, write each trains journey details individually here. */
-                    worksheet.Range[worksheet.Cells[headerOffset, horizontalOffset], worksheet.Cells[displayRow, displayColumn]].Value2 = speed;
-                    worksheet.Range[worksheet.Cells[timedataOffset, horizontalOffset], 
-                        worksheet.Cells[timedataOffset + trainRecords[0].journey.Count() - 1, displayColumn]].Value2 = dateTime;
-                    
-                    /* Adjust the offsets for each train. */
-                    displayColumn++;
-                    horizontalOffset++;
-                    
+                    /* Write the data to the active excel workseet. */
+                    worksheet.Range[worksheet.Cells[2, 3], worksheet.Cells[2, excelPageSize + 2]].Value2 = TrainID;
+                    worksheet.Range[worksheet.Cells[3, 3], worksheet.Cells[3, excelPageSize + 2]].Value2 = LocoID;
+                    worksheet.Range[worksheet.Cells[4, 3], worksheet.Cells[4, excelPageSize + 2]].Value2 = trainDate;
+                    worksheet.Range[worksheet.Cells[5, 3], worksheet.Cells[5, excelPageSize + 2]].Value2 = powerToWeight;
+                    worksheet.Range[worksheet.Cells[6, 3], worksheet.Cells[6, excelPageSize + 2]].Value2 = commodity;
+                    worksheet.Range[worksheet.Cells[7, 3], worksheet.Cells[7, excelPageSize + 2]].Value2 = direction;
+
+                    worksheet.Range[worksheet.Cells[headerOffset, 1], worksheet.Cells[displayRow, 1]].Value2 = kilometerage;
+                    //worksheet.Range[worksheet.Cells[headerOffset, horizontalOffset], worksheet.Cells[displayRow, displayColumn]].Value2 = speed;
+
+                    worksheet.Range[worksheet.Cells[timedataOffset, 1], worksheet.Cells[timedataOffset + trainRecords[0].journey.Count() - 1, 1]].Value2 = kilometerage;
+                    //worksheet.Range[worksheet.Cells[timedataOffset, horizontalOffset], worksheet.Cells[timedataOffset + trainRecords[0].journey.Count() - 1, displayColumn]].Value2 = dateTime;
+
                 }
-
-                /* Write the data to the active excel workseet. */
-                worksheet.Range[worksheet.Cells[2, 3], worksheet.Cells[2, trainRecords.Count() + 2]].Value2 = TrainID;
-                worksheet.Range[worksheet.Cells[3, 3], worksheet.Cells[3, trainRecords.Count() + 2]].Value2 = LocoID;
-                worksheet.Range[worksheet.Cells[4, 3], worksheet.Cells[4, trainRecords.Count() + 2]].Value2 = trainDate;
-                worksheet.Range[worksheet.Cells[5, 3], worksheet.Cells[5, trainRecords.Count() + 2]].Value2 = powerToWeight;
-                worksheet.Range[worksheet.Cells[6, 3], worksheet.Cells[6, trainRecords.Count() + 2]].Value2 = commodity;
-                worksheet.Range[worksheet.Cells[7, 3], worksheet.Cells[7, trainRecords.Count() + 2]].Value2 = direction;
-
-                worksheet.Range[worksheet.Cells[headerOffset, 1], worksheet.Cells[displayRow, 1]].Value2 = kilometerage;
-                //worksheet.Range[worksheet.Cells[headerOffset, horizontalOffset], worksheet.Cells[displayRow, displayColumn]].Value2 = speed;
-
-                worksheet.Range[worksheet.Cells[timedataOffset, 1], worksheet.Cells[timedataOffset + trainRecords[0].journey.Count() - 1, 1]].Value2 = kilometerage;
-                //worksheet.Range[worksheet.Cells[timedataOffset, horizontalOffset], worksheet.Cells[timedataOffset + trainRecords[0].journey.Count() - 1, displayColumn]].Value2 = dateTime;
-
-
             }
 
             /* Generate the resulting file name and location to save to. */
@@ -1780,7 +1799,7 @@ namespace IOLibrary
                 /* Loop through the data for each excel page. */
                 for (int sectionIndex = 0; sectionIndex < rollingUtilisation.Count(); sectionIndex++)
                 {
-                    /* Extract teh key from teh dictionary. */
+                    /* Extract the key from the dictionary. */
                     string key = rollingUtilisation.Keys.ToList()[sectionIndex];
                     sectionBoundaries[sectionIndex] = key;
 

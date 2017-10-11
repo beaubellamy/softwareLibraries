@@ -1300,7 +1300,7 @@ namespace TrainLibrary
             /* Create the lists for the processed train data. */
             List<Train> trainList = new List<Train>();
             List<TrainJourney> journey = new List<TrainJourney>();
-
+            
             /* Add the first point to the train journey. */
             journey.Add(new TrainJourney(record[0]));
 
@@ -1326,7 +1326,7 @@ namespace TrainLibrary
 
                     /* Remove any individual changes in direction. */
                     journey = removeIndividualChangesInDirection(journey, getTrainDirection(journey));
-
+                                        
                     /* Calculate the total length of the journey */
                     journeyDistance = calculateTrainJourneyDistance(journey);
 
