@@ -835,7 +835,11 @@ namespace IOLibrary
             for (int excelPage = 0; excelPage < excelPages; excelPage++)
             {
                 /* Set the active worksheet. */
-                worksheet = workbook.Sheets[excelPage + 1];
+                if (excelPage >= 3)
+                    worksheet = workbook.Worksheets.Add();
+                else
+                    worksheet = workbook.Sheets[excelPage + 1];
+               
                 workbook.Sheets[excelPage + 1].Activate();
                 Range topLeft = worksheet.Cells[1, 1];
                 Range bottomRight = worksheet.Cells[headerRows, headerColumns];
@@ -931,8 +935,8 @@ namespace IOLibrary
 
             /* Pagenate the data for writing to excel. */
             int columnOffset = 4;
-            
-            int excelPageSize = (int)16380/columnOffset;          /* Max Columns in the excel worksheet. */
+
+            int excelPageSize = (int)16380 / columnOffset;          /* Max Columns in the excel worksheet. */
             int excelPages = 1;                 /* Number of Excel pages to write. */
 
             int headerOffset = 9;
@@ -964,7 +968,11 @@ namespace IOLibrary
                 displayColumn = horizontalOffset; 
                 
                 /* Set the active worksheet. */
-                worksheet = workbook.Sheets[excelPage + 1];
+                if (excelPage >= 3)
+                    worksheet = workbook.Worksheets.Add();
+                else
+                    worksheet = workbook.Sheets[excelPage + 1];
+                
                 workbook.Sheets[excelPage + 1].Activate();
                 Range topLeft = worksheet.Cells[1, 1];
                 Range bottomRight = worksheet.Cells[headerRows, headerColumns];
