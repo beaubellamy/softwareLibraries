@@ -660,7 +660,8 @@ namespace TrainLibrary
         }
         
         /// <summary>
-        /// Calculate the aggregated average speed of all trains.
+        /// Calculate the aggregated average speed of all trains, while removing the section
+        /// of a train journey that is affected by a TSR or a loop.
         /// </summary>
         /// <param name="trains">A list of trains to be aggregated in a single group.</param>
         /// <param name="CategorySim">The simulted train for the specified analysis Category.</param>
