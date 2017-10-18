@@ -103,12 +103,15 @@ namespace TrainLibrary
         /// travelled in a single direction.</returns>
         public static List<TrainJourney> longestDistanceTravelledInOneDirection(List<TrainJourney> journey, List<TrackGeometry> trackGeometry)
         {
+            double MaximumTime = 60;
+
             /* Set up intial conditions */
             double movingAverage = 0;
             double previousAverage = 0;
             double distance = 0;
             double increasingDistance = 0;
             double decreasingDistance = 0;
+            double timeBetweenPoints = 0;
 
             int start, end;
             int newStart, count;
@@ -137,8 +140,14 @@ namespace TrainLibrary
                 distance = journey[journeyIdx + numPoints].kilometreage - journey[journeyIdx].kilometreage;
                 movingAverage = distance / numPoints;
 
+                /* Ensure the time between points doesn exceed 60 minutes to catch the trains that appear 
+                 * to sit in a loop for several hours between crew change and change in direction. 
+                 */
+                timeBetweenPoints = Math.Abs((journey[journeyIdx + numPoints].dateTime - journey[journeyIdx].dateTime).TotalMinutes);
+                
                 /* Check the direction has not changed. */
-                if (Math.Sign(movingAverage) == Math.Sign(previousAverage) || Math.Sign(movingAverage) == 0 || Math.Sign(previousAverage) == 0)
+                if (Math.Sign(movingAverage) == Math.Sign(previousAverage) || Math.Sign(movingAverage) == 0 || Math.Sign(previousAverage) == 0 &&
+                    timeBetweenPoints < MaximumTime)
                 {
                     /* Increment the assumed distance travelled in current direction. */
                     if (movingAverage > 0)
@@ -162,6 +171,7 @@ namespace TrainLibrary
                     /* Reset the new start postion. */
                     start = journeyIdx++;
                 }
+                
 
                 previousAverage = movingAverage;
 

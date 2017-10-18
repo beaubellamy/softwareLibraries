@@ -1818,7 +1818,7 @@ namespace IOLibrary
                         {
                             /* Set the start and end times. */
                             startTime[timeIdx, 0] = dateRange[0].AddHours(timeIdx).ToString();
-                            endTime[timeIdx, 0] = dateRange[0].AddHours(timeIdx + 1).ToString();
+                            endTime[timeIdx, 0] = dateRange[0].AddHours(timeIdx + 24).ToString();
                         }
 
                         /* Extract the total number of minutes the section is occupied. */
