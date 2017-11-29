@@ -244,7 +244,7 @@ namespace TrainLibrary
 
             for (int pointIdx = 1; pointIdx < journey.Count; pointIdx++)
             {
-                /* Create the conequtive points */
+                /* Create the consecutive points */
                 GeoLocation point1 = journey[pointIdx - 1].location;
                 GeoLocation point2 = journey[pointIdx].location;
 
@@ -452,7 +452,7 @@ namespace TrainLibrary
                 /* Set the start of the interpolation. */
                 currentKm = startKm;
                 previousKm = currentKm;
-
+                                
                 while (currentKm < endKm)
                 {
 
@@ -709,7 +709,7 @@ namespace TrainLibrary
                 TSRList.Clear();
                 slowTrains.Clear();
                 sum = 0;
-
+                
                 /* Cycle through each train in the list. */
                 foreach (Train train in trains)
                 {
