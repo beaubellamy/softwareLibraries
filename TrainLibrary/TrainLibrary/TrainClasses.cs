@@ -24,17 +24,19 @@ namespace TrainLibrary
     /// </summary>
     public enum trainOperator
     {
-        ARTC, Aurizon, AustralianRailwaysHistoricalSociety, CityRail, Countrylink, Freightliner, GenesseeWyoming, GreatSouthernRail, Interail,
-        JohnHollandRail, LauchlanValleyRailSociety, PacificNational, QUBE, RailTransportMuseum, RailCorp, SCT, SouthernShorthaulRail,
-        SydneyRailService, TheRailMotorService, VLinePassenger, GroupRemaining, Combined, Simulated, Unknown
+        ARCInfrastructure, ARTC, Aurizon, AustralianRailGroup, AustralianRailwaysHistoricalSociety, AustralianTransportNetwork, AvailableRollingStock, 
+        CityRail, Countrylink, Freightliner, GenesseeWyoming, GreatSouthernRail, Interail, JohnHollandRail, LauchlanValleyRailSociety, Limited3801, 
+        MetroTrainsMelbourne, PacificNational, QUBE, QueenslandRail, RailTransportMuseum, RailCorp, SCT, SouthernShorthaulRail, SpecialistBulkRail,
+        SydneyRailService, TheRailMotorService, Transport4NSW, VLinePassenger, GroupRemaining, Combined, Simulated, Unknown
     };
 
+   
     /// <summary>
     /// A list of available commodities.
     /// </summary>
     public enum trainCommodity
     {
-        GeneralFreight, Coal, Express, Grain, Mineral, Shuttle, Steel, Clinker, Intermodal, Passenger, Work, GroupRemaining, Unknown
+        GeneralFreight, Coal, Express,  Grain, Goods, Mineral, Shuttle, Steel, Shunt, Clinker, Intermodal, Passenger, TrailerRail, Work, GroupRemaining, Unknown
     };
 
     /// <summary>
@@ -44,15 +46,16 @@ namespace TrainLibrary
     public enum Category
     {
         /* Train Operators. */
-        ARTC, Aurizon, AustralianRailwaysHistoricalSociety, CityRail, Countrylink, Freightliner, GenesseeWyoming, GreatSouthernRail, Interail,
-        JohnHollandRail, LauchlanValleyRailSociety, PacificNational, QUBE, RailTransportMuseum, RailCorp, SCT, SouthernShorthaulRail,
-        SydneyRailService, TheRailMotorSociety, VLinePassenger,
+        ARCInfrastructure, ARTC, Aurizon, AustralianRailGroup, AustralianRailwaysHistoricalSociety, AustralianTransportNetwork, AvailableRollingStock, 
+        CityRail, Countrylink, Freightliner, GenesseeWyoming, GreatSouthernRail, Interail, JohnHollandRail, LauchlanValleyRailSociety, Limited3801, 
+        MetroTrainsMelbourne, PacificNational, QUBE, QueenslandRail, RailTransportMuseum, RailCorp, SCT, SouthernShorthaulRail, SpecialistBulkRail,
+        SydneyRailService, TheRailMotorService, Transport4NSW, VLinePassenger,  
         /* Commodities. */
-        GeneralFreight, Coal, Express, Grain, Mineral, Shuttle, Steel, Clinker, Intermodal, Passenger, Work, GroupRemaining,
+        GeneralFreight, Coal, Express, Goods, Mineral, Shuttle, Steel, Shunt, Clinker, Intermodal, Passenger, TrailerRailGrain, Work,
         /* Power to weight catagories. */
         Underpowered, Overpowered, Alternative,
         /* Other */
-        Combined, Actual, Simulated, Unknown
+        GroupRemaining, Combined, Actual, Simulated, Unknown
     };
 
     /*
@@ -683,11 +686,15 @@ namespace TrainLibrary
     /// </summary>
     public class volumeMovement
     {
+        public string trainID;
+        public trainOperator trainOperator;
+        public trainCommodity commodity;
         public string wagonID;
         public List<string> Origin;         /* Location name, location SA4 Region, Location State */
         public List<string> Via;            /* Location name, location SA4 Region, Location State */
         public List<string> Destination;    /* Location name, location SA4 Region, Location State */
-        public double weight;
+        public double netWeight;
+        public double grossWeight;
         public DateTime attachmentTime;
         public DateTime detachmentTime;
         public bool hasBeenCounted;
@@ -698,11 +705,15 @@ namespace TrainLibrary
         /// <param name="volume">Wagon details object.</param>
         public volumeMovement(wagonDetails volume)
         {
+            this.trainID = volume.TrainID;
+            this.trainOperator = volume.trainOperator;
+            this.commodity = volume.commodity;
             this.wagonID = volume.wagonID;
             this.Origin = new List<string> {volume.origin, null, null};
             this.Via = new List<string> { volume.plannedDestination, null, null };
             this.Destination = new List<string> { volume.destination, null, null };
-            this.weight = volume.netWeight;
+            this.netWeight = volume.netWeight;
+            this.grossWeight = volume.grossWeight;
             this.attachmentTime = volume.attachmentTime;
             this.detachmentTime = volume.detachmentTime;
 
@@ -718,13 +729,17 @@ namespace TrainLibrary
         /// <param name="plannedDestination">Wagon planned destination.</param>
         /// <param name="Destination">Wagon actual destination.</param>
         /// <param name="weight">Net weight carried by the wagon.</param>
-        public volumeMovement(string wagonID, List<string> Origin, List<string> plannedDestination, List<string> Destination, double weight, DateTime attachmentTime, DateTime detachmentTime)
+        public volumeMovement(string trainID, trainOperator trainOperator, trainCommodity commodity, string wagonID, List<string> Origin, List<string> plannedDestination, List<string> Destination, double netWeight, double grossWeight, DateTime attachmentTime, DateTime detachmentTime)
         {
+            this.trainID = trainID;
+            this.trainOperator = trainOperator;
+            this.commodity = commodity; 
             this.wagonID = wagonID;
             this.Origin = Origin;
             this.Via = plannedDestination;
             this.Destination = Destination;
-            this.weight = weight;
+            this.netWeight = netWeight;
+            this.grossWeight = grossWeight;
             this.attachmentTime = attachmentTime;
             this.detachmentTime = detachmentTime;
 
@@ -740,13 +755,17 @@ namespace TrainLibrary
         /// <param name="plannedDestination">Wagon planned destination.</param>
         /// <param name="Destination">Wagon actual destination.</param>
         /// <param name="weight">Net weight carried by the wagon.</param>
-        public volumeMovement(string wagonID, string Origin, string plannedDestination, string Destination, double weight, DateTime attachmentTime, DateTime detachmentTime)
+        public volumeMovement(string trainID, trainOperator trainOperator, trainCommodity commodity, string wagonID, string Origin, string plannedDestination, string Destination, double netWeight, double grossWeight, DateTime attachmentTime, DateTime detachmentTime)
         {
+            this.trainID = trainID;
+            this.trainOperator = trainOperator;
+            this.commodity = commodity;
             this.wagonID = wagonID;
             this.Origin = new List<string> { Origin, null, null };
             this.Via = new List<string> { plannedDestination, null, null };
             this.Destination = new List<string> { Destination, null, null };
-            this.weight = weight;
+            this.netWeight = netWeight;
+            this.grossWeight = grossWeight;
             this.attachmentTime = attachmentTime;
             this.detachmentTime = detachmentTime;
 
@@ -763,13 +782,17 @@ namespace TrainLibrary
         /// <param name="Destination">Wagon actual destination.</param>
         /// <param name="weight">Net weight carried by the wagon.</param>
         /// <param name="hasBeenCounted">Flag indicating if the volume has been counted in the final volume movement list.</param>
-        public volumeMovement(string wagonID, string Origin, string plannedDestination, string Destination, double weight, DateTime attachmentTime, DateTime detachmentTime, bool hasBeenCounted)
+        public volumeMovement(string trainID, trainOperator trainOperator, trainCommodity commodity, string wagonID, string Origin, string plannedDestination, string Destination, double netWeight, double grossWeight, DateTime attachmentTime, DateTime detachmentTime, bool hasBeenCounted)
         {
+            this.trainID = trainID;
+            this.trainOperator = trainOperator;
+            this.commodity = commodity;
             this.wagonID = wagonID;
             this.Origin = new List<string> { Origin, null, null };
             this.Via = new List<string> { plannedDestination, null, null };
             this.Destination = new List<string> { Destination, null, null };
-            this.weight = weight;
+            this.netWeight = netWeight;
+            this.grossWeight = grossWeight;
             this.attachmentTime = attachmentTime;
             this.detachmentTime = detachmentTime;
             this.hasBeenCounted = hasBeenCounted;
@@ -796,6 +819,7 @@ namespace TrainLibrary
         public DateTime attachmentTime;
         public DateTime detachmentTime;
         public double netWeight;
+        public double grossWeight;
 
         /// <summary>
         /// Default Wagon Constrcutor.
@@ -815,6 +839,7 @@ namespace TrainLibrary
             this.attachmentTime = wagon.attachmentTime;
             this.detachmentTime = wagon.detachmentTime;
             this.netWeight = wagon.netWeight;
+            this.grossWeight = wagon.grossWeight;
 
             /* Fix the known issues with the location codes. */
             fixIssues(this.plannedDestination, this.destination);
@@ -829,7 +854,7 @@ namespace TrainLibrary
         /// <param name="destination">The destination code of the wagon.</param>
         /// <param name="netWeight">The net weight carried to the destination by the wagon.</param>
         public wagonDetails(string TrainID, DateTime trainDate, trainOperator trainOperator, trainCommodity commodity,
-            string wagonID, string origin, string plannedDestination, string destination, double netWeight)
+            string wagonID, string origin, string plannedDestination, string destination, double netWeight, double grossWeight)
         {
             this.TrainID = TrainID;
             this.trainDate = trainDate;
@@ -843,6 +868,7 @@ namespace TrainLibrary
             this.attachmentTime = DateTime.MinValue;
             this.detachmentTime = DateTime.MinValue;
             this.netWeight = netWeight;
+            this.grossWeight = grossWeight;
 
             /* Fix the known issues with the location codes. */
             fixIssues(this.plannedDestination, this.destination);
@@ -858,8 +884,8 @@ namespace TrainLibrary
         /// <param name="attachmentTime">The time the wagon was attached to the Train.</param>
         /// <param name="detachmentTime">The time the wagon was detached from the Train.</param>
         /// <param name="netWeight">The net weight carried to the destination by the wagon.</param>
-        public wagonDetails(string TrainID, DateTime trainDate, trainOperator trainOperator, trainCommodity commodity, 
-            string wagonID, string origin, string plannedDestination, string destination, DateTime attachmentTime, DateTime detachmentTime, double netWeight)
+        public wagonDetails(string TrainID, DateTime trainDate, trainOperator trainOperator, trainCommodity commodity,
+            string wagonID, string origin, string plannedDestination, string destination, DateTime attachmentTime, DateTime detachmentTime, double netWeight, double grossWeight)
         {
             this.TrainID = TrainID;
             this.trainDate = trainDate;
@@ -873,6 +899,7 @@ namespace TrainLibrary
             this.attachmentTime = attachmentTime;
             this.detachmentTime = detachmentTime;
             this.netWeight = netWeight;
+            this.grossWeight = grossWeight;
 
             /* Fix the known issues with the location codes. */
             fixIssues(this.plannedDestination, this.destination);
