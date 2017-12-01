@@ -1774,44 +1774,58 @@ namespace TrainLibrary
         }
 
         /// <summary>
-        /// Convert the opertor string to the trainOperator class - INCOMPLETE
+        /// Convert the opertor string to the trainOperator class
         /// </summary>
         /// <param name="Operator">A 3 character string designation for the traqin operator.</param>
         /// <returns>A trainOperator object.</returns>
         public static trainOperator getWagonOperator(string Operator)
-        {
-            /* Still to be completed. */
-            // ASR, AVA, AWR, FAL,FLK, NRC, SBR - Not sure what operators these are?
-
+        {            
             /* Initialise the operator arrays with known operator codes. */
-            string[] ARTC = { };
-            string[] Aurizon = { "QR" }; 
-            string[] AustralianRailwaysHistoricalSociety = { }; 
-            string[] CityRail = { }; 
-            string[] Countrylink = { }; 
-            string[] Freightliner = { }; 
-            string[] GenesseeWyoming = { "GWI" }; 
-            string[] GreatSouthernRail = { }; 
+            string[] ARCInfrastructure = { "WR" };
+            string[] ARTC = { "ART" };
+            string[] Aurizon = { "QR", "AWR" }; 
+            string[] AustralianRailwaysHistoricalSociety = { "ARH" };
+            string[] AustralianRailGroup = { "ARG" };
+            string[] AustralianTransportNetwork = { "ATN" };
+            string[] AvailableRollingStock = { "AVA" };
+            string[] CityRail = { "CTY" }; 
+            string[] Countrylink = { "CLK" }; 
+            string[] Freightliner = { "FLN", "FLK" }; 
+            string[] GenesseeWyoming = { "GWI","ASG", "ASR"}; 
+            string[] GreatSouthernRail = { "GSR" ,"GNR"};
             string[] Interail = { "INT" };
-            string[] JohnHollandRail = { }; 
-            string[] LauchlanValleyRailSociety = { }; 
-            string[] PacificNational = { "PAT", "PNC", "PND", "PNL", "PNT" }; 
-            string[] QUBE = { }; 
-            string[] RailTransportMuseum = { }; 
-            string[] RailCorp = { }; 
+            string[] JohnHollandRail = { "LSM", "LRM"}; 
+            string[] LauchlanValleyRailSociety = { "LVR" };
+            string[] Limited3801 = { "380" };
+            string[] MetroTrainsMelbourne = { "MTM" };
+            string[] PacificNational = { "FAL", "FAB", "GCP", "NRC", "PAG", "PAT", "PNB", "PNC", "PND", "PNG", "PNH", "PNL", "PNT" }; 
+            string[] QUBE = { "QUB", "QUG", "SPS", "ST"};
+            string[] QueenslandRail = { "QRN" };
+            string[] RailTransportMuseum = { "RTM" }; 
+            string[] RailCorp = { "RCP" }; 
             string[] SCT = { "SCT" }; 
-            string[] SouthernShorthaulRail = { };
-            string[] SydneyRailService = { }; 
-            string[] TheRailMotorService = { }; 
-            string[] VLinePassenger = { };
+            string[] SouthernShorthaulRail = { "SSR", "SSG" };
+            string[] SpecialistBulkRail = { "SBR" };
+            string[] SydneyRailService = { "SRS" }; 
+            string[] TheRailMotorService = { "RMS" };
+            string[] Transport4NSW = { "SRA" };
+            string[] VLinePassenger = { "VLP" };
 
             /* Return the appropriate operator. */
-            if (ARTC.Contains(Operator))
+            if (ARCInfrastructure.Contains(Operator))
+                return trainOperator.ARCInfrastructure;
+            else if (ARTC.Contains(Operator))
                 return trainOperator.ARTC;
             else if (Aurizon.Contains(Operator))
                 return trainOperator.Aurizon;
             else if (AustralianRailwaysHistoricalSociety.Contains(Operator))
                 return trainOperator.AustralianRailwaysHistoricalSociety;
+            else if (AustralianRailGroup.Contains(Operator))
+                return trainOperator.AustralianRailGroup;
+            else if (AustralianTransportNetwork.Contains(Operator))
+                return trainOperator.AustralianTransportNetwork;
+            else if (AvailableRollingStock.Contains(Operator))
+                return trainOperator.AvailableRollingStock;
             else if (CityRail.Contains(Operator))
                 return trainOperator.CityRail;
             else if (Countrylink.Contains(Operator))
@@ -1828,22 +1842,32 @@ namespace TrainLibrary
                 return trainOperator.JohnHollandRail;
             else if (LauchlanValleyRailSociety.Contains(Operator))
                 return trainOperator.LauchlanValleyRailSociety;
+            else if (Limited3801.Contains(Operator))
+                return trainOperator.Limited3801;
+            else if (MetroTrainsMelbourne.Contains(Operator))
+                return trainOperator.MetroTrainsMelbourne;
             else if (PacificNational.Contains(Operator))
                 return trainOperator.PacificNational;
             else if (QUBE.Contains(Operator))
                 return trainOperator.QUBE;
+            else if (QueenslandRail.Contains(Operator))
+                return trainOperator.QueenslandRail;
             else if (RailTransportMuseum.Contains(Operator))
                 return trainOperator.RailTransportMuseum;
             else if (RailCorp.Contains(Operator))
                 return trainOperator.RailCorp;
             else if (SCT.Contains(Operator))
                 return trainOperator.SCT;
+            else if (SpecialistBulkRail.Contains(Operator))
+                return trainOperator.SpecialistBulkRail;
             else if (SouthernShorthaulRail.Contains(Operator))
                 return trainOperator.SouthernShorthaulRail;
             else if (SydneyRailService.Contains(Operator))
                 return trainOperator.SydneyRailService;
             else if (TheRailMotorService.Contains(Operator))
                 return trainOperator.TheRailMotorService;
+            else if (Transport4NSW.Contains(Operator))
+                return trainOperator.Transport4NSW;
             else if (VLinePassenger.Contains(Operator))
                 return trainOperator.VLinePassenger;
             else
@@ -1852,27 +1876,29 @@ namespace TrainLibrary
         }
 
         /// <summary>
-        /// Convert the commodity string to the commodity object - INCOMPLETE
+        /// Convert the commodity string to the commodity object
         /// </summary>
         /// <param name="commodity">A 3 character string designation for the commodity.</param>
         /// <returns>A trainCommodity object.</returns>
         public static trainCommodity getWagonCommodity(string commodity)
         {
-            /* Still to be completed. */
-            // GDS, SUP - Not sure what commodities these are.
-
+            
             /* Initialise the commodity arrays with known commodity codes. */
             string[] Clinker = { "CLS" };
-            string[] Coal = { "CLE" };
-            string[] Freight = { "FRE", "GEN" };
-            string[] Express = { "EXP" };
+            string[] Coal = { "CLE", "CLD", "CLS" };
+            string[] Freight = { "FRE", "GEN" ,"SUP"};
+            string[] Express = { "EXP", "XPT"};
             string[] Grain = { "GRN" };
+            string[] Goods = { "GDS" };
             string[] Intermodal = { "INT" };
             string[] Minerals = { "MIN" };
             string[] Passenger = { "PAS" };
+            string[] Shunt = { "SHT" };
             string[] Shuttle = { "SHT" };
             string[] Steel = { "STL" };
-            string[] Work = { "WRk" };
+            string[] TrailerRail = { "TRL" };
+            string[] Work = { "WRK" };
+
             
             /* Return the appropriate commodity. */
             if (Clinker.Contains(commodity))
@@ -1885,16 +1911,22 @@ namespace TrainLibrary
                 return trainCommodity.Express;
             else if (Grain.Contains(commodity))
                 return trainCommodity.Grain;
+            else if (Goods.Contains(commodity))
+                return trainCommodity.Goods;
             else if (Intermodal.Contains(commodity))
                 return trainCommodity.Intermodal;
             else if (Minerals.Contains(commodity))
                 return trainCommodity.Mineral;
             else if (Passenger.Contains(commodity))
                 return trainCommodity.Passenger;
+            else if (Shunt.Contains(commodity))
+                return trainCommodity.Shunt;
             else if (Shuttle.Contains(commodity))
                 return trainCommodity.Shuttle;
             else if (Steel.Contains(commodity))
                 return trainCommodity.Steel;
+            else if (TrailerRail.Contains(commodity))
+                return trainCommodity.TrailerRail;
             else if (Work.Contains(commodity))
                 return trainCommodity.Work;
             else
