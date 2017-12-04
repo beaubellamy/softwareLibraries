@@ -699,7 +699,7 @@ namespace IOLibrary
                     /* Construct the wagon object and add to the list. */
                     if (validRecord)
                     {
-                        wagonDetails data = new wagonDetails(trainID, trainDate, trainOperator, commodity, wagonID, origin, plannedDestination, destination, attachmentTime, detachmentTime, weight);
+                        wagonDetails data = new wagonDetails(trainID, trainDate, trainOperator, commodity, wagonID, origin, plannedDestination, destination, attachmentTime, detachmentTime, weight, grossWeight);
                         wagon.Add(data);
                     }
                 }
@@ -1875,8 +1875,8 @@ namespace IOLibrary
             workbook = (Workbook)(excel.Workbooks.Add(""));
 
             /* Create the header details. */
-            string[] headerString = { "Wagon ID", "Origin", "Planned Destiantion", "Destination", 
-                                  "Attatchment Time", "Detatchment Time", "Net Weight" };
+            string[] headerString = { "Train ID", "Operator", "Commodity", "Wagon ID", "Origin", "Planned Destiantion", "Destination", 
+                                  "Attatchment Time", "Detatchment Time", "Net Weight", "Gross Weight" };
 
             /* Get the page size of the excel worksheet. */
             int header = 2;
@@ -1890,13 +1890,17 @@ namespace IOLibrary
             }
 
             /* Deconstruct the wagon details into excel columns. */
-            string[,] ID = new string[excelPageSize, 1];
+            string[,] trainID = new string[excelPageSize, 1];
+            string[,] trainOperator = new string[excelPageSize, 1];
+            string[,] commodity = new string[excelPageSize, 1];
+            string[,] wagonID = new string[excelPageSize, 1];
             string[,] Orig = new string[excelPageSize, 1];
             string[,] Planned = new string[excelPageSize, 1];
             string[,] Dest = new string[excelPageSize, 1];
             DateTime[,] attatch = new DateTime[excelPageSize, 1];
             DateTime[,] detatch = new DateTime[excelPageSize, 1];
-            double[,] weight = new double[excelPageSize, 1];
+            double[,] netWeight = new double[excelPageSize, 1];
+            double[,] grossWeight = new double[excelPageSize, 1];
 
 
             /* Loop through the excel pages. */
@@ -1905,7 +1909,7 @@ namespace IOLibrary
                 /* Set the active worksheet. */
                 worksheet = (Worksheet)workbook.Sheets[excelPage + 1];
                 workbook.Sheets[excelPage + 1].Activate();
-                worksheet.get_Range("A1", "G1").Value2 = headerString;
+                worksheet.get_Range("A1", "K1").Value2 = headerString;
 
                 /* Loop through the data for each excel page. */
                 for (int j = 0; j < excelPageSize; j++)
@@ -1914,35 +1918,47 @@ namespace IOLibrary
                     int checkIdx = j + excelPage * excelPageSize;
                     if (checkIdx < wagon.Count())
                     {
-                        ID[j, 0] = wagon[checkIdx].wagonID;
+                        trainID[j, 0] = wagon[checkIdx].TrainID;
+                        trainOperator[j, 0] = wagon[checkIdx].trainOperator.ToString();
+                        commodity[j, 0] = wagon[checkIdx].commodity.ToString();
+                        wagonID[j, 0] = wagon[checkIdx].wagonID;
                         Orig[j, 0] = wagon[checkIdx].origin;
                         Planned[j, 0] = wagon[checkIdx].plannedDestination;
                         Dest[j, 0] = wagon[checkIdx].destination;
                         attatch[j, 0] = wagon[checkIdx].attachmentTime;
                         detatch[j, 0] = wagon[checkIdx].detachmentTime;
-                        weight[j, 0] = wagon[checkIdx].netWeight;
+                        netWeight[j, 0] = wagon[checkIdx].netWeight;
+                        grossWeight[j, 0] = wagon[checkIdx].grossWeight;
                     }
                     else
                     {
                         /* The end of the data has been reached. Replace the previous values with empty data. */
-                        ID[j, 0] = "";
+                        trainID[j, 0] = "";
+                        trainOperator[j, 0] = "";
+                        commodity[j, 0] = "";
+                        wagonID[j, 0] = "";
                         Orig[j, 0] = "";
                         Planned[j, 0] = "";
                         Dest[j, 0] = "";
                         attatch[j, 0] = DateTime.MinValue;
                         detatch[j, 0] = DateTime.MinValue;
-                        weight[j, 0] = 0;
+                        netWeight[j, 0] = 0;
+                        grossWeight[j, 0] = 0;
                     }
                 }
 
                 /* Write the data to the active excel workseet. */
-                worksheet.get_Range("A" + header, "A" + (header + excelPageSize-1)).Value2 = ID;
-                worksheet.get_Range("B" + header, "B" + (header + excelPageSize - 1)).Value2 = Orig;
-                worksheet.get_Range("C" + header, "C" + (header + excelPageSize - 1)).Value2 = Planned;
-                worksheet.get_Range("D" + header, "D" + (header + excelPageSize - 1)).Value2 = Dest;
-                worksheet.get_Range("E" + header, "E" + (header + excelPageSize - 1)).Value2 = attatch;
-                worksheet.get_Range("F" + header, "F" + (header + excelPageSize - 1)).Value2 = detatch;
-                worksheet.get_Range("G" + header, "G" + (header + excelPageSize - 1)).Value2 = weight;
+                worksheet.get_Range("A" + header, "A" + (header + excelPageSize - 1)).Value2 = trainID;
+                worksheet.get_Range("B" + header, "B" + (header + excelPageSize - 1)).Value2 = trainOperator;
+                worksheet.get_Range("C" + header, "C" + (header + excelPageSize - 1)).Value2 = commodity;
+                worksheet.get_Range("D" + header, "D" + (header + excelPageSize - 1)).Value2 = wagonID;
+                worksheet.get_Range("E" + header, "E" + (header + excelPageSize - 1)).Value2 = Orig;
+                worksheet.get_Range("F" + header, "F" + (header + excelPageSize - 1)).Value2 = Planned;
+                worksheet.get_Range("G" + header, "G" + (header + excelPageSize - 1)).Value2 = Dest;
+                worksheet.get_Range("H" + header, "H" + (header + excelPageSize - 1)).Value2 = attatch;
+                worksheet.get_Range("I" + header, "I" + (header + excelPageSize - 1)).Value2 = detatch;
+                worksheet.get_Range("J" + header, "J" + (header + excelPageSize - 1)).Value2 = netWeight;
+                worksheet.get_Range("K" + header, "K" + (header + excelPageSize - 1)).Value2 = grossWeight;
 
             }
 
@@ -1982,11 +1998,11 @@ namespace IOLibrary
             workbook = (Workbook)(excel.Workbooks.Add(""));
 
             /* Create the header details. */
-            string[] headerString = { "Wagon ID", 
+            string[] headerString = { "Train ID", "Operator", "Commodity", "Wagon ID", 
                                         "Origin", "Origin SA4", "Origin State", 
                                         "Via", "Via SA4", "Via State", 
                                         "Destination", "Destination SA4", "Destination State", 
-                                        "Weight" };
+                                        "Attachment", "Detachment", "Net Weight", "Gross Weight" };
 
             /* Get the page size of the excel worksheet. */
             int header = 2;
@@ -2000,11 +2016,17 @@ namespace IOLibrary
             }
 
             /* Deconstruct the volume details into excel columns. */
-            string[,] ID = new string[excelPageSize, 1];
+            string[,] trainID = new string[excelPageSize, 1];
+            string[,] trainOperator = new string[excelPageSize, 1];
+            string[,] commodity = new string[excelPageSize, 1];
+            string[,] wagonID = new string[excelPageSize, 1];
             string[,] Orig = new string[excelPageSize, volume[0].Origin.Count()];
             string[,] Via = new string[excelPageSize, volume[0].Via.Count()];
             string[,] Dest = new string[excelPageSize, volume[0].Destination.Count()];
-            double[,] weight = new double[excelPageSize, 1];
+            double[,] netWeight = new double[excelPageSize, 1];
+            double[,] grossWeight = new double[excelPageSize, 1];
+            DateTime[,] attachment = new DateTime[excelPageSize, 1];
+            DateTime[,] detachment = new DateTime[excelPageSize, 1];
 
             /* Loop through the excel pages. */
             for (int excelPage = 0; excelPage < excelPages; excelPage++)
@@ -2021,35 +2043,49 @@ namespace IOLibrary
                     int checkIdx = j + excelPage * excelPageSize;
                     if (checkIdx < volume.Count())
                     {
-                        ID[j, 0] = volume[checkIdx].wagonID;
+                        trainID[j, 0] = volume[checkIdx].trainID;
+                        trainOperator[j, 0] = volume[checkIdx].trainOperator.ToString();
+                        commodity[j, 0] = volume[checkIdx].commodity.ToString();
+                        wagonID[j, 0] = volume[checkIdx].wagonID;
                         for (int locationIdx = 0; locationIdx < volume[checkIdx].Origin.Count(); locationIdx++)
                         {
                             Orig[j, locationIdx] = volume[checkIdx].Origin[locationIdx];
                             Via[j, locationIdx] = volume[checkIdx].Via[locationIdx];
                             Dest[j, locationIdx] = volume[checkIdx].Destination[locationIdx];
                         }
-                        weight[j, 0] = volume[checkIdx].weight;
+                        netWeight[j, 0] = volume[checkIdx].netWeight;
+                        grossWeight[j, 0] = volume[checkIdx].grossWeight;
+
+                        attachment[j, 0] = volume[checkIdx].attachmentTime;
+                        detachment[j, 0] = volume[checkIdx].detachmentTime;
                     }
                     else
                     {
                         /* The end of the data has been reached. Populate the remaining elements. */
-                        ID[j, 0] = "";
+                        wagonID[j, 0] = "";
                         for (int locationIdx = 0; locationIdx < volume[checkIdx].Origin.Count(); locationIdx++)
                         {
                             Orig[j, locationIdx] = "";
                             Via[j, locationIdx] = "";
                             Dest[j, locationIdx] = "";
                         }
-                        weight[j, 0] = 0;
+                        netWeight[j, 0] = 0;
                     }
                 }
 
                 /* Write the data to the active excel workseet. */
-                worksheet.get_Range("A" + header, "A" + (header + excelPageSize - 1)).Value2 = ID;
-                worksheet.get_Range("B" + header, "D" + (header + excelPageSize - 1)).Value2 = Orig;
-                worksheet.get_Range("E" + header, "G" + (header + excelPageSize - 1)).Value2 = Via;
-                worksheet.get_Range("H" + header, "J" + (header + excelPageSize - 1)).Value2 = Dest;
-                worksheet.get_Range("K" + header, "K" + (header + excelPageSize - 1)).Value2 = weight;
+                worksheet.get_Range("A" + header, "A" + (header + excelPageSize - 1)).Value2 = trainID;
+                worksheet.get_Range("B" + header, "B" + (header + excelPageSize - 1)).Value2 = trainOperator;
+                worksheet.get_Range("C" + header, "C" + (header + excelPageSize - 1)).Value2 = commodity;
+                worksheet.get_Range("D" + header, "D" + (header + excelPageSize - 1)).Value2 = wagonID;
+                worksheet.get_Range("E" + header, "E" + (header + excelPageSize - 1)).Value2 = Orig;
+                worksheet.get_Range("F" + header, "F" + (header + excelPageSize - 1)).Value2 = Via;
+                worksheet.get_Range("G" + header, "G" + (header + excelPageSize - 1)).Value2 = Dest;
+                worksheet.get_Range("H" + header, "H" + (header + excelPageSize - 1)).Value2 = attachment;
+                worksheet.get_Range("I" + header, "I" + (header + excelPageSize - 1)).Value2 = detachment;
+                worksheet.get_Range("J" + header, "J" + (header + excelPageSize - 1)).Value2 = netWeight;
+                worksheet.get_Range("K" + header, "K" + (header + excelPageSize - 1)).Value2 = grossWeight;
+                
 
             }
 
