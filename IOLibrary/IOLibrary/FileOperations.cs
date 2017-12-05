@@ -1905,8 +1905,7 @@ namespace IOLibrary
             for (int excelPage = 0; excelPage < excelPages; excelPage++)
             {
                 /* Set the active worksheet. */
-                worksheet = (Worksheet)workbook.Sheets[excelPage + 1];
-                workbook.Sheets[excelPage + 1].Activate();
+                worksheet = workbook.Sheets.Add(Type.Missing, Type.Missing, 1, Type.Missing) as Worksheet;
                 worksheet.get_Range("A1", "K1").Value2 = headerString;
 
                 /* Loop through the data for each excel page. */
@@ -2030,8 +2029,7 @@ namespace IOLibrary
             for (int excelPage = 0; excelPage < excelPages; excelPage++)
             {
                 /* Set the active worksheet. */
-                worksheet = (Worksheet)workbook.Sheets[excelPage + 1];
-                workbook.Sheets[excelPage + 1].Activate();
+                worksheet = workbook.Sheets.Add(Type.Missing, Type.Missing, 1, Type.Missing) as Worksheet;
                 worksheet.get_Range("A1", "Q1").Value2 = headerString;
 
                 /* Loop through the data for each excel page. */
@@ -2060,14 +2058,21 @@ namespace IOLibrary
                     else
                     {
                         /* The end of the data has been reached. Populate the remaining elements. */
+                        trainID[j, 0] = "";
+                        trainOperator[j, 0] = "";
+                        commodity[j, 0] = "";
                         wagonID[j, 0] = "";
-                        for (int locationIdx = 0; locationIdx < volume[checkIdx].Origin.Count(); locationIdx++)
+                        for (int locationIdx = 0; locationIdx < volume[0].Origin.Count(); locationIdx++)
                         {
                             Orig[j, locationIdx] = "";
                             Via[j, locationIdx] = "";
                             Dest[j, locationIdx] = "";
                         }
                         netWeight[j, 0] = 0;
+                        grossWeight[j, 0] = 0;
+
+                        attachment[j, 0] = DateTime.MinValue;
+                        detachment[j, 0] = DateTime.MinValue;
                     }
                 }
 
