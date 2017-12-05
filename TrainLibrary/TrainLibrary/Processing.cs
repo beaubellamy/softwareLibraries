@@ -1776,7 +1776,7 @@ namespace TrainLibrary
         /// <summary>
         /// Convert the opertor string to the trainOperator class
         /// </summary>
-        /// <param name="Operator">A 3 character string designation for the traqin operator.</param>
+        /// <param name="Operator">A 3 character string designation for the train operator.</param>
         /// <returns>A trainOperator object.</returns>
         public static trainOperator getWagonOperator(string Operator)
         {            
@@ -1878,24 +1878,23 @@ namespace TrainLibrary
         /// <summary>
         /// Convert the commodity string to the commodity object
         /// </summary>
-        /// <param name="commodity">A 3 character string designation for the commodity.</param>
+        /// <param name="commodity">A 3 or 4 character string designation for the commodity.</param>
         /// <returns>A trainCommodity object.</returns>
         public static trainCommodity getWagonCommodity(string commodity)
         {
-            
             /* Initialise the commodity arrays with known commodity codes. */
-            string[] Clinker = { "CLS" };
-            string[] Coal = { "CLE", "CLD", "CLS" };
-            string[] Freight = { "FRE", "GEN" ,"SUP"};
-            string[] Express = { "EXP", "XPT"};
-            string[] Grain = { "GRN" };
+            string[] Clinker = { "CLS" , "CLNK"};
+            string[] Coal = { "CLE", "CLD" , "COLD", "COLE"};
+            string[] Freight = { "FRE", "GEN" ,"SUP", "GENF"};
+            string[] Express = { "EXP", "XPT", "CONT"};
+            string[] Grain = { "GRN", "GRAN"};
             string[] Goods = { "GDS" };
-            string[] Intermodal = { "INT" };
-            string[] Minerals = { "MIN" };
-            string[] Passenger = { "PAS" };
+            string[] Intermodal = { "INT", "INTM" };
+            string[] Minerals = { "MIN", "MINL"};
+            string[] Passenger = { "PAS", "PASS"};
             string[] Shunt = { "SHT" };
             string[] Shuttle = { "SHT" };
-            string[] Steel = { "STL" };
+            string[] Steel = { "STL", "STEL" };
             string[] TrailerRail = { "TRL" };
             string[] Work = { "WRK" };
 

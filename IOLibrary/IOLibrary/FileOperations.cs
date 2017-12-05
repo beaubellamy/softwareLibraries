@@ -604,7 +604,7 @@ namespace IOLibrary
         /// <param name="filename">The wagon data file.</param>
         /// <param name="grossTonnes">A flag indicating if the prefered weight values should be gross tonnes or net weight.</param>
         /// <returns>The list of wagon objects.</returns>
-        public static List<wagonDetails> readWagonDataFile(string filename, bool grossTonnes = false)
+        public static List<wagonDetails> readWagonDataFile(string filename)
         {
             /* Read the all lines of the text file. */
             char[] delimiters = { '\t' };
@@ -652,31 +652,31 @@ namespace IOLibrary
                     fields = line.Split(delimiters);
 
                     /* Extract the train related information. */
-                    string trainID = fields[9];
-                    DateTime.TryParse(fields[8], out trainDate);
-                    trainOperator trainOperator = Processing.getWagonOperator(fields[7]);
-                    trainCommodity commodity = Processing.getWagonCommodity(fields[10]);
+                    string trainID = fields[10];
+                    DateTime.TryParse(fields[9], out trainDate);
+                    trainOperator trainOperator = Processing.getWagonOperator(fields[8]);
+                    trainCommodity commodity = Processing.getWagonCommodity(fields[0]);
 
                     /* Extract the wagon location information and validate the codes. */
-                    wagonID = fields[3] + " " + Regex.Replace(fields[6], ",", "");
+                    wagonID = fields[4] + " " + Regex.Replace(fields[7], ",", "");
                     double wagonTest;
-                    if (double.TryParse(fields[3], out wagonTest))
+                    if (double.TryParse(fields[4], out wagonTest))
                         validRecord = false;
                     else
                         validRecord = true;
 
                     /* Wagon Origin. */
-                    origin = fields[0].ToUpper();
+                    origin = fields[1].ToUpper();
                     if (origin.Count() != 3)
                         Tools.messageBox("Origin location code is unknown: {0} Unknown location code.", origin);
 
                     /* Wagon planned destination. */
-                    plannedDestination = fields[1].ToUpper();
+                    plannedDestination = fields[2].ToUpper();
                     if (plannedDestination.Count() != 3)
                         Tools.messageBox("Consigned Destination location code in unknown: {0} Unknown location code.", plannedDestination);
 
                     /* Wagon destination. */
-                    destination = fields[4].ToUpper();
+                    destination = fields[5].ToUpper();
                     if (destination.Count() != 3)
                     {   /* If the destination field is empty, assume the wagon reaches the planned destination. */
                         if (destination.Equals(""))
@@ -686,15 +686,13 @@ namespace IOLibrary
                     }
 
                     /* Extract remaining wagon details. */
-                    DateTime.TryParse(fields[2], out attachmentTime);
-                    DateTime.TryParse(fields[5], out detachmentTime);
+                    DateTime.TryParse(fields[3], out attachmentTime);
+                    DateTime.TryParse(fields[6], out detachmentTime);
                     double.TryParse(fields[15], out tareWeight);
                     double.TryParse(fields[12], out grossWeight);
 
-                    if (grossTonnes)
-                        weight = grossWeight;
-                    else
-                        weight = grossWeight-tareWeight;
+                    /* Net weight */
+                    weight = grossWeight-tareWeight;
 
                     /* Construct the wagon object and add to the list. */
                     if (validRecord)
@@ -2034,7 +2032,7 @@ namespace IOLibrary
                 /* Set the active worksheet. */
                 worksheet = (Worksheet)workbook.Sheets[excelPage + 1];
                 workbook.Sheets[excelPage + 1].Activate();
-                worksheet.get_Range("A1", "K1").Value2 = headerString;
+                worksheet.get_Range("A1", "Q1").Value2 = headerString;
 
                 /* Loop through the data for each excel page. */
                 for (int j = 0; j < excelPageSize; j++)
@@ -2078,13 +2076,13 @@ namespace IOLibrary
                 worksheet.get_Range("B" + header, "B" + (header + excelPageSize - 1)).Value2 = trainOperator;
                 worksheet.get_Range("C" + header, "C" + (header + excelPageSize - 1)).Value2 = commodity;
                 worksheet.get_Range("D" + header, "D" + (header + excelPageSize - 1)).Value2 = wagonID;
-                worksheet.get_Range("E" + header, "E" + (header + excelPageSize - 1)).Value2 = Orig;
-                worksheet.get_Range("F" + header, "F" + (header + excelPageSize - 1)).Value2 = Via;
-                worksheet.get_Range("G" + header, "G" + (header + excelPageSize - 1)).Value2 = Dest;
-                worksheet.get_Range("H" + header, "H" + (header + excelPageSize - 1)).Value2 = attachment;
-                worksheet.get_Range("I" + header, "I" + (header + excelPageSize - 1)).Value2 = detachment;
-                worksheet.get_Range("J" + header, "J" + (header + excelPageSize - 1)).Value2 = netWeight;
-                worksheet.get_Range("K" + header, "K" + (header + excelPageSize - 1)).Value2 = grossWeight;
+                worksheet.get_Range("E" + header, "G" + (header + excelPageSize - 1)).Value2 = Orig;
+                worksheet.get_Range("H" + header, "J" + (header + excelPageSize - 1)).Value2 = Via;
+                worksheet.get_Range("K" + header, "M" + (header + excelPageSize - 1)).Value2 = Dest;
+                worksheet.get_Range("N" + header, "N" + (header + excelPageSize - 1)).Value2 = attachment;
+                worksheet.get_Range("O" + header, "O" + (header + excelPageSize - 1)).Value2 = detachment;
+                worksheet.get_Range("P" + header, "P" + (header + excelPageSize - 1)).Value2 = netWeight;
+                worksheet.get_Range("Q" + header, "Q" + (header + excelPageSize - 1)).Value2 = grossWeight;
                 
 
             }
