@@ -584,17 +584,17 @@ namespace IOLibrary
         /// The file is assumes the data has been extracted from Tableau 
         /// and hence has a specific file format.
         /// Column  Field
-        ///  0      Origin
-        ///  1      Planned Destination
-        ///  2      Attachment Time
-        ///  3      Class
-        ///  4      Destination
-        ///  5      Detatchment Time
-        ///  6      Class Number
-        ///  7      Train Operator
-        ///  8      Train Date
-        ///  9      Train ID
-        ///  10     Train Type (Commodity)
+        ///  0      Commodity
+        ///  1      Origin
+        ///  2      Planned Destination
+        ///  3      Attachment Time
+        ///  4      Class
+        ///  5      Destination
+        ///  6      Detatchment Time
+        ///  7      Class Number
+        ///  8      Train Operator
+        ///  9      Train Date
+        ///  10      Train ID
         ///  11     Distance
         ///  12     Gross Mass
         ///  13     Move Count
@@ -626,7 +626,6 @@ namespace IOLibrary
 
             /* Validate the format of the first line of the file, ignoring the header information */
             bool validFormat = false;
-            bool validRecord = false;
             string[] fields = null;
 
             /* Read the first line of data - assum e first line has header information. */
@@ -655,25 +654,28 @@ namespace IOLibrary
                     string trainID = fields[10];
                     DateTime.TryParse(fields[9], out trainDate);
                     trainOperator trainOperator = Processing.getWagonOperator(fields[8]);
-                    trainCommodity commodity = Processing.getWagonCommodity(fields[0]);
+                    trainCommodity commodity = Processing.getWagonCommodity(fields[4]);
 
-                    /* Extract the wagon location information and validate the codes. */
-                    wagonID = fields[4] + " " + Regex.Replace(fields[7], ",", "");
-                    double wagonTest;
-                    if (double.TryParse(fields[4], out wagonTest))
-                        validRecord = false;
-                    else
-                        validRecord = true;
+                    /* Extract the wagon Identification. */
+                    wagonID = fields[3] + " " + Regex.Replace(fields[7], ",", "");
 
                     /* Wagon Origin. */
-                    origin = fields[1].ToUpper();
+                    origin = fields[0].ToUpper();
                     if (origin.Count() != 3)
-                        Tools.messageBox("Origin location code is unknown: {0} Unknown location code.", origin);
+                        Tools.messageBox("Origin location code is unknown: " + origin + " Unknown location code.");
+
+                    /* Wagon Destiantion */
+                    destination = fields[5].ToUpper();
 
                     /* Wagon planned destination. */
-                    plannedDestination = fields[2].ToUpper();
+                    plannedDestination = fields[1].ToUpper();
                     if (plannedDestination.Count() != 3)
-                        Tools.messageBox("Consigned Destination location code in unknown: {0} Unknown location code.", plannedDestination);
+                    {
+                        if (fields[5].Count() == 3)
+                            plannedDestination = fields[5].ToUpper();
+                        else
+                            Tools.messageBox("Consigned Destination location code in unknown: Train: "+ trainID+", location " + plannedDestination + " Unknown location code.");
+                    }
 
                     /* Wagon destination. */
                     destination = fields[5].ToUpper();
@@ -682,11 +684,11 @@ namespace IOLibrary
                         if (destination.Equals(""))
                             destination = plannedDestination;
                         else
-                            Tools.messageBox("Destination location code is unknown: {0} Unknown location code.", destination);
+                            Tools.messageBox("Destination location code is unknown: " + destination + " Unknown location code.");
                     }
 
                     /* Extract remaining wagon details. */
-                    DateTime.TryParse(fields[3], out attachmentTime);
+                    DateTime.TryParse(fields[2], out attachmentTime);
                     DateTime.TryParse(fields[6], out detachmentTime);
                     double.TryParse(fields[15], out tareWeight);
                     double.TryParse(fields[12], out grossWeight);
@@ -695,11 +697,9 @@ namespace IOLibrary
                     weight = grossWeight-tareWeight;
 
                     /* Construct the wagon object and add to the list. */
-                    if (validRecord)
-                    {
-                        wagonDetails data = new wagonDetails(trainID, trainDate, trainOperator, commodity, wagonID, origin, plannedDestination, destination, attachmentTime, detachmentTime, weight, grossWeight);
-                        wagon.Add(data);
-                    }
+                    wagonDetails data = new wagonDetails(trainID, trainDate, trainOperator, commodity, wagonID, origin, plannedDestination, destination, attachmentTime, detachmentTime, weight, grossWeight);
+                    wagon.Add(data);
+                    
                 }
             }
             /* Return the completed wagon List. */

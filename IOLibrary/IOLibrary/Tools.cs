@@ -221,15 +221,15 @@ namespace IOLibrary
                 
 
                 /* Validate Commodity */
-                if (fields[0].Count() == 4)
+                if (fields[4].Count() == 4)
                     validComodity = true;
                 
                 /* Validate Origin code */
-                if (fields[1].Count() == 3)
+                if (fields[0].Count() == 3)
                     validOriginCode = true;
                 
                 /* Validate Planned Destination code */
-                if (fields[2].Count() == 3)
+                if (fields[1].Count() == 3)
                     validPlannedDestinationCode = true;
                 
                 /* Validate Destination code */
@@ -238,7 +238,7 @@ namespace IOLibrary
                 
                 /* Validate Attachment Time. */
                 dateResult = DateTime.MinValue;
-                if (DateTime.TryParse(fields[3], out dateResult))
+                if (DateTime.TryParse(fields[2], out dateResult))
                 {
                     if (dateResult == DateTime.MinValue)
                         validAttachmentTime = false;
