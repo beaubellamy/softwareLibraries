@@ -2110,6 +2110,158 @@ namespace IOLibrary
         }
 
         /// <summary>
+        /// Write the volume data to an excel file categorised by the commodity for analysis.
+        /// </summary>
+        /// <param name="volume">The list of volume objects containing the final origin destination details.</param>
+        /// <param name="destinationFolder">The destination directory for the resulting file.</param>
+        public static void writeVolumeDataByCommodity(List<volumeMovement> volume, string destinationFolder)
+        {
+            /* Maximum number of rows in an excel worksheet is 1,048,576 (round down to a nice number) */
+            int maxExcelRows = 1048500;
+
+            /* Create the microsfot excel references. */
+            Microsoft.Office.Interop.Excel.Application excel = new Microsoft.Office.Interop.Excel.Application();
+            Workbook workbook;
+            Worksheet worksheet;
+
+            /* Get the reference to the new workbook. */
+            workbook = (Workbook)(excel.Workbooks.Add(""));
+
+            /* Create the header details. */
+            string[] headerString = { "Train ID", "Operator", "Commodity", "Wagon ID", 
+                                        "Origin", "Origin SA4", "Origin State", 
+                                        "Via", "Via SA4", "Via State", 
+                                        "Destination", "Destination SA4", "Destination State", 
+                                        "Attachment", "Detachment", "Net Weight", "Gross Weight" };
+                        
+            /* Get the page size of the excel worksheet. */
+            int header = 2;
+
+            /* Create a list of commodities. */
+            List<trainCommodity> commodities = volume.Select(v => v.commodity).Distinct().ToList();
+            List<volumeMovement> currentVolumeList = new List<volumeMovement>();
+
+            /* Cycle through each commodity */
+            for (int i = 0; i < commodities.Count; i++)
+            {
+                /* Get the current list of volume movements with the identified commodity. */
+                currentVolumeList = volume.Where(v => v.commodity == commodities[i]).ToList();
+
+                int excelPageSize = currentVolumeList.Count() - 1;
+                int excelPages = 1;
+
+                /* Set teh number of pages for each commodity. */
+                if (currentVolumeList.Count() > maxExcelRows)
+                {
+                    excelPageSize = 1000000;
+                    excelPages = (int)Math.Round((double)currentVolumeList.Count() / excelPageSize + 0.5);
+                }
+
+                /* Deconstruct the volume details into excel columns. */
+                string[,] trainID = new string[excelPageSize, 1];
+                string[,] trainOperator = new string[excelPageSize, 1];
+                string[,] commodity = new string[excelPageSize, 1];
+                string[,] wagonID = new string[excelPageSize, 1];
+                string[,] Orig = new string[excelPageSize, volume[0].Origin.Count()];
+                string[,] Via = new string[excelPageSize, volume[0].Via.Count()];
+                string[,] Dest = new string[excelPageSize, volume[0].Destination.Count()];
+                double[,] netWeight = new double[excelPageSize, 1];
+                double[,] grossWeight = new double[excelPageSize, 1];
+                DateTime[,] attachment = new DateTime[excelPageSize, 1];
+                DateTime[,] detachment = new DateTime[excelPageSize, 1];
+                
+                /* Loop through the excel pages. */
+                for (int excelPage = 0; excelPage < excelPages; excelPage++)
+                {
+                    /* Set the active worksheet. */
+                    worksheet = workbook.Sheets.Add(Type.Missing, Type.Missing, 1, Type.Missing) as Worksheet;
+                    if (excelPage == 0)
+                        worksheet.Name = commodities[i].ToString();
+                    else
+                        worksheet.Name = string.Format("{0} {1}",commodities[i].ToString(),excelPage.ToString());
+
+                    worksheet.get_Range("A1", "Q1").Value2 = headerString;
+
+                    /* Loop through the data for each excel page. */
+                    for (int j = 0; j < excelPageSize; j++)
+                    {
+                        /* Check we dont try to read more data than there really is. */
+                        int checkIdx = j + excelPage * excelPageSize;
+                        if (checkIdx < currentVolumeList.Count())
+                        {
+                            trainID[j, 0] = currentVolumeList[checkIdx].trainID;
+                            trainOperator[j, 0] = currentVolumeList[checkIdx].trainOperator.ToString();
+                            commodity[j, 0] = currentVolumeList[checkIdx].commodity.ToString();
+                            wagonID[j, 0] = currentVolumeList[checkIdx].wagonID;
+                            for (int locationIdx = 0; locationIdx < currentVolumeList[checkIdx].Origin.Count(); locationIdx++)
+                            {
+                                Orig[j, locationIdx] = currentVolumeList[checkIdx].Origin[locationIdx];
+                                Via[j, locationIdx] = currentVolumeList[checkIdx].Via[locationIdx];
+                                Dest[j, locationIdx] = currentVolumeList[checkIdx].Destination[locationIdx];
+                            }
+                            netWeight[j, 0] = currentVolumeList[checkIdx].netWeight;
+                            grossWeight[j, 0] = currentVolumeList[checkIdx].grossWeight;
+
+                            attachment[j, 0] = currentVolumeList[checkIdx].attachmentTime;
+                            detachment[j, 0] = currentVolumeList[checkIdx].detachmentTime;
+                        }
+                        else
+                        {
+                            /* The end of the data has been reached. Populate the remaining elements. */
+                            trainID[j, 0] = "";
+                            trainOperator[j, 0] = "";
+                            commodity[j, 0] = "";
+                            wagonID[j, 0] = "";
+                            for (int locationIdx = 0; locationIdx < currentVolumeList[0].Origin.Count(); locationIdx++)
+                            {
+                                Orig[j, locationIdx] = "";
+                                Via[j, locationIdx] = "";
+                                Dest[j, locationIdx] = "";
+                            }
+                            netWeight[j, 0] = 0;
+                            grossWeight[j, 0] = 0;
+
+                            attachment[j, 0] = DateTime.MinValue;
+                            detachment[j, 0] = DateTime.MinValue;
+                        }
+                    }
+
+                    /* Write the data to the active excel workseet. */
+                    worksheet.get_Range("A" + header, "A" + (header + excelPageSize - 1)).Value2 = trainID;
+                    worksheet.get_Range("B" + header, "B" + (header + excelPageSize - 1)).Value2 = trainOperator;
+                    worksheet.get_Range("C" + header, "C" + (header + excelPageSize - 1)).Value2 = commodity;
+                    worksheet.get_Range("D" + header, "D" + (header + excelPageSize - 1)).Value2 = wagonID;
+                    worksheet.get_Range("E" + header, "G" + (header + excelPageSize - 1)).Value2 = Orig;
+                    worksheet.get_Range("H" + header, "J" + (header + excelPageSize - 1)).Value2 = Via;
+                    worksheet.get_Range("K" + header, "M" + (header + excelPageSize - 1)).Value2 = Dest;
+                    worksheet.get_Range("N" + header, "N" + (header + excelPageSize - 1)).Value2 = attachment;
+                    worksheet.get_Range("O" + header, "O" + (header + excelPageSize - 1)).Value2 = detachment;
+                    worksheet.get_Range("P" + header, "P" + (header + excelPageSize - 1)).Value2 = netWeight;
+                    worksheet.get_Range("Q" + header, "Q" + (header + excelPageSize - 1)).Value2 = grossWeight;
+                    
+                }   // end of excel page loop
+                
+            }   // End of commodity loop
+
+
+            string saveFilename = destinationFolder + @"\volumeDetails_" + DateTime.Now.ToString("yyyyMMdd") + ".xlsx";
+
+            /* Check the file does not exist yet. */
+            if (File.Exists(saveFilename))
+                File.Delete(saveFilename);
+
+            /* Save the excel file. */
+            excel.UserControl = false;
+            workbook.SaveAs(saveFilename, XlFileFormat.xlWorkbookDefault, Type.Missing, Type.Missing,
+                false, false, XlSaveAsAccessMode.xlNoChange,
+                Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
+
+            workbook.Close();
+
+            return;
+        }
+
+        /// <summary>
         /// Determine the direction of travel based on the direction string. 
         /// The string must match the enumerated string values.
         /// </summary>
