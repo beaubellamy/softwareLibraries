@@ -16,7 +16,7 @@ namespace IOLibrary
     public class FileOperations
     {
         /* ARTC location code file */
-        public static string geoLocationFile = @"H:\ARTC GEO Location Details - under construction.csv";
+        public static string geoLocationFile = @"C:\Users\bbel1\Documents\ARTC GEO Location Details - under construction.csv";
         
         /* Create a dictionary of locations:
          * Key:     Location Code [3 letter code]
