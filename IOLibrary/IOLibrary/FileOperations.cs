@@ -696,6 +696,9 @@ namespace IOLibrary
                     /* Net weight */
                     weight = grossWeight-tareWeight;
 
+                    if (weight < 0)
+                        weight = 0;
+
                     /* Construct the wagon object and add to the list. */
                     wagonDetails data = new wagonDetails(trainID, trainDate, trainOperator, commodity, wagonID, origin, plannedDestination, destination, attachmentTime, detachmentTime, weight, grossWeight);
                     wagon.Add(data);
