@@ -22,7 +22,7 @@ namespace IOLibrary
          * Key:     Location Code [3 letter code]
          * Values:  Location Name, Location SA4 region, Location State.
          */
-        public static Dictionary<string, List<string>> locationDictioanry = new Dictionary<string, List<string>>();
+        public static Dictionary<string, List<string>> locationDictionary = new Dictionary<string, List<string>>();
 
         /// <summary>
         /// Read the data file and extract the neccessary information into a train record class.
@@ -664,7 +664,7 @@ namespace IOLibrary
                     if (origin.Count() != 3)
                         Tools.messageBox("Origin location code is unknown: " + origin + " Unknown location code.");
 
-                    /* Wagon Destiantion */
+                    /* Wagon Destination */
                     destination = fields[5].ToUpper();
 
                     /* Wagon planned destination. */
@@ -1999,10 +1999,10 @@ namespace IOLibrary
 
             /* Create the header details. */
             string[] headerString = { "Train ID", "Operator", "Commodity", "Wagon ID", 
-                                        "Origin", "Origin SA4", "Origin State", 
+                                        "Origin", "Origin SA4", "Origin State", "Origin Location",
                                         "Via", "Via SA4", "Via State", 
-                                        "Destination", "Destination SA4", "Destination State", 
-                                        "Attachment", "Detachment", "Net Weight", "Gross Weight" };
+                                        "Destination", "Destination SA4", "Destination State", "Destination Location",
+                                        "Attachment", "Detachment", "Origin-Destination", "Net Weight", "Gross Weight" };
 
             /* Get the page size of the excel worksheet. */
             int header = 2;
@@ -2025,6 +2025,8 @@ namespace IOLibrary
             string[,] Dest = new string[excelPageSize, volume[0].Destination.Count()];
             double[,] netWeight = new double[excelPageSize, 1];
             double[,] grossWeight = new double[excelPageSize, 1];
+            string[,] OriginDestination = new string[excelPageSize, 1];
+                
             DateTime[,] attachment = new DateTime[excelPageSize, 1];
             DateTime[,] detachment = new DateTime[excelPageSize, 1];
 
@@ -2033,7 +2035,7 @@ namespace IOLibrary
             {
                 /* Set the active worksheet. */
                 worksheet = workbook.Sheets.Add(Type.Missing, Type.Missing, 1, Type.Missing) as Worksheet;
-                worksheet.get_Range("A1", "Q1").Value2 = headerString;
+                worksheet.get_Range("A1", "T1").Value2 = headerString;
 
                 /* Loop through the data for each excel page. */
                 for (int j = 0; j < excelPageSize; j++)
@@ -2052,6 +2054,8 @@ namespace IOLibrary
                             Via[j, locationIdx] = volume[checkIdx].Via[locationIdx];
                             Dest[j, locationIdx] = volume[checkIdx].Destination[locationIdx];
                         }
+                        OriginDestination[j, 0] = volume[checkIdx].Origin[3] + " - " + volume[checkIdx].Destination[3] + " - " + volume[checkIdx].trainOperator;
+
                         netWeight[j, 0] = volume[checkIdx].netWeight;
                         grossWeight[j, 0] = volume[checkIdx].grossWeight;
 
@@ -2071,6 +2075,8 @@ namespace IOLibrary
                             Via[j, locationIdx] = "";
                             Dest[j, locationIdx] = "";
                         }
+                        OriginDestination[j, 0] = "";
+
                         netWeight[j, 0] = 0;
                         grossWeight[j, 0] = 0;
 
@@ -2084,13 +2090,14 @@ namespace IOLibrary
                 worksheet.get_Range("B" + header, "B" + (header + excelPageSize - 1)).Value2 = trainOperator;
                 worksheet.get_Range("C" + header, "C" + (header + excelPageSize - 1)).Value2 = commodity;
                 worksheet.get_Range("D" + header, "D" + (header + excelPageSize - 1)).Value2 = wagonID;
-                worksheet.get_Range("E" + header, "G" + (header + excelPageSize - 1)).Value2 = Orig;
-                worksheet.get_Range("H" + header, "J" + (header + excelPageSize - 1)).Value2 = Via;
-                worksheet.get_Range("K" + header, "M" + (header + excelPageSize - 1)).Value2 = Dest;
-                worksheet.get_Range("N" + header, "N" + (header + excelPageSize - 1)).Value2 = attachment;
-                worksheet.get_Range("O" + header, "O" + (header + excelPageSize - 1)).Value2 = detachment;
-                worksheet.get_Range("P" + header, "P" + (header + excelPageSize - 1)).Value2 = netWeight;
-                worksheet.get_Range("Q" + header, "Q" + (header + excelPageSize - 1)).Value2 = grossWeight;
+                worksheet.get_Range("E" + header, "H" + (header + excelPageSize - 1)).Value2 = Orig;
+                worksheet.get_Range("I" + header, "K" + (header + excelPageSize - 1)).Value2 = Via;
+                worksheet.get_Range("L" + header, "O" + (header + excelPageSize - 1)).Value2 = Dest;
+                worksheet.get_Range("P" + header, "P" + (header + excelPageSize - 1)).Value2 = attachment;
+                worksheet.get_Range("Q" + header, "Q" + (header + excelPageSize - 1)).Value2 = detachment;
+                worksheet.get_Range("R" + header, "R" + (header + excelPageSize - 1)).Value2 = OriginDestination;
+                worksheet.get_Range("S" + header, "S" + (header + excelPageSize - 1)).Value2 = netWeight;
+                worksheet.get_Range("T" + header, "T" + (header + excelPageSize - 1)).Value2 = grossWeight;
                 
 
             }
@@ -2111,7 +2118,7 @@ namespace IOLibrary
 
             return;
         }
-
+        
         /// <summary>
         /// Write the volume data to an excel file categorised by the commodity for analysis.
         /// </summary>
@@ -2132,10 +2139,10 @@ namespace IOLibrary
 
             /* Create the header details. */
             string[] headerString = { "Train ID", "Operator", "Commodity", "Wagon ID", 
-                                        "Origin", "Origin SA4", "Origin State", 
+                                        "Origin", "Origin SA4", "Origin State", "Origin Location", 
                                         "Via", "Via SA4", "Via State", 
-                                        "Destination", "Destination SA4", "Destination State", 
-                                        "Attachment", "Detachment", "Net Weight", "Gross Weight" };
+                                        "Destination", "Destination SA4", "Destination State", "Destination Location",
+                                        "Attachment", "Detachment", "Origin-Destination", "Net Weight", "Gross Weight" };
                         
             /* Get the page size of the excel worksheet. */
             int header = 2;
@@ -2168,6 +2175,8 @@ namespace IOLibrary
                 string[,] Orig = new string[excelPageSize, volume[0].Origin.Count()];
                 string[,] Via = new string[excelPageSize, volume[0].Via.Count()];
                 string[,] Dest = new string[excelPageSize, volume[0].Destination.Count()];
+                string[,] OriginDestination = new string[excelPageSize, 1];
+                
                 double[,] netWeight = new double[excelPageSize, 1];
                 double[,] grossWeight = new double[excelPageSize, 1];
                 DateTime[,] attachment = new DateTime[excelPageSize, 1];
@@ -2183,7 +2192,7 @@ namespace IOLibrary
                     else
                         worksheet.Name = string.Format("{0} {1}",commodities[i].ToString(),excelPage.ToString());
 
-                    worksheet.get_Range("A1", "Q1").Value2 = headerString;
+                    worksheet.get_Range("A1", "T1").Value2 = headerString;
 
                     /* Loop through the data for each excel page. */
                     for (int j = 0; j < excelPageSize; j++)
@@ -2202,6 +2211,8 @@ namespace IOLibrary
                                 Via[j, locationIdx] = currentVolumeList[checkIdx].Via[locationIdx];
                                 Dest[j, locationIdx] = currentVolumeList[checkIdx].Destination[locationIdx];
                             }
+                            OriginDestination[j, 0] = currentVolumeList[checkIdx].Origin[3] + " - " + currentVolumeList[checkIdx].Destination[3] + " - " + currentVolumeList[checkIdx].trainOperator;
+
                             netWeight[j, 0] = currentVolumeList[checkIdx].netWeight;
                             grossWeight[j, 0] = currentVolumeList[checkIdx].grossWeight;
 
@@ -2221,6 +2232,8 @@ namespace IOLibrary
                                 Via[j, locationIdx] = "";
                                 Dest[j, locationIdx] = "";
                             }
+                            OriginDestination[j, 0] = "";
+
                             netWeight[j, 0] = 0;
                             grossWeight[j, 0] = 0;
 
@@ -2234,13 +2247,14 @@ namespace IOLibrary
                     worksheet.get_Range("B" + header, "B" + (header + excelPageSize - 1)).Value2 = trainOperator;
                     worksheet.get_Range("C" + header, "C" + (header + excelPageSize - 1)).Value2 = commodity;
                     worksheet.get_Range("D" + header, "D" + (header + excelPageSize - 1)).Value2 = wagonID;
-                    worksheet.get_Range("E" + header, "G" + (header + excelPageSize - 1)).Value2 = Orig;
-                    worksheet.get_Range("H" + header, "J" + (header + excelPageSize - 1)).Value2 = Via;
-                    worksheet.get_Range("K" + header, "M" + (header + excelPageSize - 1)).Value2 = Dest;
-                    worksheet.get_Range("N" + header, "N" + (header + excelPageSize - 1)).Value2 = attachment;
-                    worksheet.get_Range("O" + header, "O" + (header + excelPageSize - 1)).Value2 = detachment;
-                    worksheet.get_Range("P" + header, "P" + (header + excelPageSize - 1)).Value2 = netWeight;
-                    worksheet.get_Range("Q" + header, "Q" + (header + excelPageSize - 1)).Value2 = grossWeight;
+                    worksheet.get_Range("E" + header, "H" + (header + excelPageSize - 1)).Value2 = Orig;
+                    worksheet.get_Range("I" + header, "K" + (header + excelPageSize - 1)).Value2 = Via;
+                    worksheet.get_Range("L" + header, "O" + (header + excelPageSize - 1)).Value2 = Dest;
+                    worksheet.get_Range("P" + header, "P" + (header + excelPageSize - 1)).Value2 = attachment;
+                    worksheet.get_Range("Q" + header, "Q" + (header + excelPageSize - 1)).Value2 = detachment;
+                    worksheet.get_Range("R" + header, "R" + (header + excelPageSize - 1)).Value2 = OriginDestination;
+                    worksheet.get_Range("S" + header, "S" + (header + excelPageSize - 1)).Value2 = netWeight;
+                    worksheet.get_Range("T" + header, "T" + (header + excelPageSize - 1)).Value2 = grossWeight;
                     
                 }   // end of excel page loop
                 

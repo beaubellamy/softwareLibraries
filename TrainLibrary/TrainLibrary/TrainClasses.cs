@@ -690,9 +690,9 @@ namespace TrainLibrary
         public trainOperator trainOperator;
         public trainCommodity commodity;
         public string wagonID;
-        public List<string> Origin;         /* Location name, location SA4 Region, Location State */
-        public List<string> Via;            /* Location name, location SA4 Region, Location State */
-        public List<string> Destination;    /* Location name, location SA4 Region, Location State */
+        public List<string> Origin;         /* Location name, location SA4 Region, Location State, Location Area */
+        public List<string> Via;            /* Location name, location SA4 Region, Location State, Location Area */
+        public List<string> Destination;    /* Location name, location SA4 Region, Location State, Location Area */
         public double netWeight;
         public double grossWeight;
         public DateTime attachmentTime;
@@ -709,9 +709,9 @@ namespace TrainLibrary
             this.trainOperator = volume.trainOperator;
             this.commodity = volume.commodity;
             this.wagonID = volume.wagonID;
-            this.Origin = new List<string> {volume.origin, null, null};
-            this.Via = new List<string> { volume.plannedDestination, null, null };
-            this.Destination = new List<string> { volume.destination, null, null };
+            this.Origin = new List<string> { volume.origin, null, null, null };
+            this.Via = new List<string> { volume.plannedDestination, null, null, null };
+            this.Destination = new List<string> { volume.destination, null, null, null };
             this.netWeight = volume.netWeight;
             this.grossWeight = volume.grossWeight;
             this.attachmentTime = volume.attachmentTime;
@@ -761,9 +761,9 @@ namespace TrainLibrary
             this.trainOperator = trainOperator;
             this.commodity = commodity;
             this.wagonID = wagonID;
-            this.Origin = new List<string> { Origin, null, null };
-            this.Via = new List<string> { plannedDestination, null, null };
-            this.Destination = new List<string> { Destination, null, null };
+            this.Origin = new List<string> { Origin, null, null, null };
+            this.Via = new List<string> { plannedDestination, null, null, null };
+            this.Destination = new List<string> { Destination, null, null, null };
             this.netWeight = netWeight;
             this.grossWeight = grossWeight;
             this.attachmentTime = attachmentTime;
@@ -788,9 +788,9 @@ namespace TrainLibrary
             this.trainOperator = trainOperator;
             this.commodity = commodity;
             this.wagonID = wagonID;
-            this.Origin = new List<string> { Origin, null, null };
-            this.Via = new List<string> { plannedDestination, null, null };
-            this.Destination = new List<string> { Destination, null, null };
+            this.Origin = new List<string> { Origin, null, null, null };
+            this.Via = new List<string> { plannedDestination, null, null, null };
+            this.Destination = new List<string> { Destination, null, null, null };
             this.netWeight = netWeight;
             this.grossWeight = grossWeight;
             this.attachmentTime = attachmentTime;
