@@ -1876,8 +1876,8 @@ namespace IOLibrary
             workbook = (Workbook)(excel.Workbooks.Add(""));
 
             /* Create the header details. */
-            string[] headerString = { "Train ID", "Operator", "Commodity", "Wagon ID", "Origin", "Planned Destiantion", "Destination", 
-                                  "Attatchment Time", "Detatchment Time", "Net Weight", "Gross Weight" };
+            string[] headerString = { "Train ID", "Operator", "Commodity", "Wagon ID", "Origin", "Planned Destination", "Destination", 
+                                  "Attatchment Time", "Detatchment Time", "Origin-Destination", "Net Weight", "Gross Weight" };
 
             /* Get the page size of the excel worksheet. */
             int header = 2;
@@ -1898,6 +1898,7 @@ namespace IOLibrary
             string[,] Orig = new string[excelPageSize, 1];
             string[,] Planned = new string[excelPageSize, 1];
             string[,] Dest = new string[excelPageSize, 1];
+            string[,] OrigDest = new string[excelPageSize, 1];
             DateTime[,] attatch = new DateTime[excelPageSize, 1];
             DateTime[,] detatch = new DateTime[excelPageSize, 1];
             double[,] netWeight = new double[excelPageSize, 1];
@@ -1909,11 +1910,16 @@ namespace IOLibrary
             {
                 /* Set the active worksheet. */
                 worksheet = workbook.Sheets.Add(Type.Missing, Type.Missing, 1, Type.Missing) as Worksheet;
-                worksheet.get_Range("A1", "K1").Value2 = headerString;
+                worksheet.get_Range("A1", "L1").Value2 = headerString;
 
                 /* Loop through the data for each excel page. */
                 for (int j = 0; j < excelPageSize; j++)
                 {
+                    string origin = "";
+                    string destination = "";
+                    List<string> Location = new List<string>();
+
+                    
                     /* Check we dont try to read more data than there really is. */
                     int checkIdx = j + excelPage * excelPageSize;
                     if (checkIdx < wagon.Count())
@@ -1927,6 +1933,15 @@ namespace IOLibrary
                         Dest[j, 0] = wagon[checkIdx].destination;
                         attatch[j, 0] = wagon[checkIdx].attachmentTime;
                         detatch[j, 0] = wagon[checkIdx].detachmentTime;
+
+                        if (locationDictionary.TryGetValue(wagon[checkIdx].origin, out Location))
+                            origin = Location[3];
+
+                        if (locationDictionary.TryGetValue(wagon[checkIdx].destination, out Location))
+                            destination = Location[3];
+
+                        OrigDest[j, 0] = origin+" - "+destination;
+                        
                         netWeight[j, 0] = wagon[checkIdx].netWeight;
                         grossWeight[j, 0] = wagon[checkIdx].grossWeight;
                     }
@@ -1942,6 +1957,7 @@ namespace IOLibrary
                         Dest[j, 0] = "";
                         attatch[j, 0] = DateTime.MinValue;
                         detatch[j, 0] = DateTime.MinValue;
+                        OrigDest[j, 0] = "";
                         netWeight[j, 0] = 0;
                         grossWeight[j, 0] = 0;
                     }
@@ -1957,8 +1973,9 @@ namespace IOLibrary
                 worksheet.get_Range("G" + header, "G" + (header + excelPageSize - 1)).Value2 = Dest;
                 worksheet.get_Range("H" + header, "H" + (header + excelPageSize - 1)).Value2 = attatch;
                 worksheet.get_Range("I" + header, "I" + (header + excelPageSize - 1)).Value2 = detatch;
-                worksheet.get_Range("J" + header, "J" + (header + excelPageSize - 1)).Value2 = netWeight;
-                worksheet.get_Range("K" + header, "K" + (header + excelPageSize - 1)).Value2 = grossWeight;
+                worksheet.get_Range("J" + header, "J" + (header + excelPageSize - 1)).Value2 = OrigDest;
+                worksheet.get_Range("K" + header, "K" + (header + excelPageSize - 1)).Value2 = netWeight;
+                worksheet.get_Range("L" + header, "L" + (header + excelPageSize - 1)).Value2 = grossWeight;
 
             }
 
