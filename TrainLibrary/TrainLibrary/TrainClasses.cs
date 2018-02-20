@@ -36,7 +36,7 @@ namespace TrainLibrary
     /// </summary>
     public enum trainCommodity
     {
-        GeneralFreight, Coal, Express,  Grain, Goods, Mineral, Shuttle, Steel, Shunt, Clinker, Intermodal, Passenger, TrailerRail, Work, GroupRemaining, Unknown
+        GeneralFreight, Coal, Express,  Grain, Goods, Mineral, Shuttle, Steel, Shunt, Clinker, Intermodal, Passenger, Interstate, TrailerRail, Work, GroupRemaining, Unknown
     };
 
     /// <summary>
@@ -51,7 +51,7 @@ namespace TrainLibrary
         MetroTrainsMelbourne, PacificNational, QUBE, QueenslandRail, RailTransportMuseum, RailCorp, SCT, SouthernShorthaulRail, SpecialistBulkRail,
         SydneyRailService, TheRailMotorService, Transport4NSW, VLinePassenger,  
         /* Commodities. */
-        GeneralFreight, Coal, Express, Goods, Mineral, Shuttle, Steel, Shunt, Clinker, Intermodal, Passenger, TrailerRailGrain, Work,
+        GeneralFreight, Coal, Express, Goods, Mineral, Shuttle, Steel, Shunt, Clinker, Intermodal, Passenger, Interstate, TrailerRailGrain, Work,
         /* Power to weight catagories. */
         Underpowered, Overpowered, Alternative,
         /* Other */
