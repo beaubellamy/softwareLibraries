@@ -20,7 +20,7 @@ namespace IOLibrary
         
         /* Create a dictionary of locations:
          * Key:     Location Code [3 letter code]
-         * Values:  Location Name, Location SA4 region, Location State.
+         * Values:  Location Code, Name, Location SA4 region, Location State.
          */
         public static Dictionary<string, List<string>> locationDictionary = new Dictionary<string, List<string>>();
 
@@ -900,6 +900,7 @@ namespace IOLibrary
                 XlSaveAsAccessMode.xlNoChange, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
 
             workbook.Close();
+            excel.Quit();
 
             return;
         }
@@ -1071,6 +1072,7 @@ namespace IOLibrary
                 XlSaveAsAccessMode.xlNoChange, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
 
             workbook.Close();
+            excel.Quit();
 
             return;
         }
@@ -1229,6 +1231,7 @@ namespace IOLibrary
                 XlSaveAsAccessMode.xlNoChange, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
 
             workbook.Close();
+            excel.Quit();
 
             return;
         }
@@ -1382,6 +1385,7 @@ namespace IOLibrary
                 Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
 
             workbook.Close();
+            excel.Quit();
 
             return;
 
@@ -1570,6 +1574,7 @@ namespace IOLibrary
             excel.UserControl = true;
             excel.Quit();
 
+            return;
         }
         
         /// <summary>
@@ -1649,6 +1654,7 @@ namespace IOLibrary
                 Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
 
             workbook.Close();
+            excel.Quit();
 
             return;
 
@@ -1749,6 +1755,7 @@ namespace IOLibrary
                 XlSaveAsAccessMode.xlNoChange, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
 
             workbook.Close();
+            excel.Quit();
 
             return;
         }
@@ -1853,6 +1860,7 @@ namespace IOLibrary
                 XlSaveAsAccessMode.xlNoChange, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
 
             workbook.Close();
+            excel.Quit();
 
             return;
         }
@@ -1992,6 +2000,7 @@ namespace IOLibrary
                 Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
 
             workbook.Close();
+            excel.Quit();
 
             return;
         }
@@ -2132,6 +2141,7 @@ namespace IOLibrary
                 Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
 
             workbook.Close();
+            excel.Quit();
 
             return;
         }
@@ -2291,6 +2301,7 @@ namespace IOLibrary
                 Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
 
             workbook.Close();
+            excel.Quit();
 
             return;
         }
