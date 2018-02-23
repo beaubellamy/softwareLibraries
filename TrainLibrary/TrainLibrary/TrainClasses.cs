@@ -842,7 +842,7 @@ namespace TrainLibrary
             this.grossWeight = wagon.grossWeight;
 
             /* Fix the known issues with the location codes. */
-            fixIssues(this.plannedDestination, this.destination);
+            fixIssues(this.origin, this.plannedDestination, this.destination);
         }
 
         /// <summary>
@@ -871,7 +871,7 @@ namespace TrainLibrary
             this.grossWeight = grossWeight;
 
             /* Fix the known issues with the location codes. */
-            fixIssues(this.plannedDestination, this.destination);
+            fixIssues(this.origin, this.plannedDestination, this.destination);
         }
 
         /// <summary>
@@ -902,7 +902,7 @@ namespace TrainLibrary
             this.grossWeight = grossWeight;
 
             /* Fix the known issues with the location codes. */
-            fixIssues(this.plannedDestination, this.destination);
+            fixIssues(this.origin, this.plannedDestination, this.destination);
         }
 
         /// <summary>
@@ -910,7 +910,7 @@ namespace TrainLibrary
         /// </summary>
         /// <param name="plannedDestination">The planned destination code of the wagon.</param>
         /// <param name="destination">The destination code of the wagon.</param>
-        private void fixIssues(string plannedDestination, string destination)
+        private void fixIssues(string origin, string plannedDestination, string destination)
         {
             /* Issue 1:
              * The location code 'LAV' does not exist. It is assumed that this refers to SCT-Laverton 
@@ -929,13 +929,16 @@ namespace TrainLibrary
                 this.destination = "PGM";
 
             /* Issue 3:
-             * Successive wagon records can occaisionally represent movements that do not match 
-             * the time stamp and movement through locations. Ignore the wagon record, when the 
-             * weight is the same between successive wagon movements and the travel time of the 
-             * second wagon and the difference between attachments of each wagon is less than 2 
-             * min.
+             * The location codes 'SDY' (South Dynon) and 'CNL' (Canal Yard [A.K.A. NRC Steel]) refer 
+             * to locations that are only a few km apart. when these two location appear in successive 
+             * wagon movements there is typically no indication of how the wagon was moved between 
+             * locations. Therefore these locations are consisdered the same, ie SDY.
              */
-            // Need access to the attachment and detatchment time.
+            if (origin.Equals("CNL"))
+                this.origin = "SDY";
+
+            if (destination.Equals("CNL"))
+                this.destination = "SDY";
 
 
         }
