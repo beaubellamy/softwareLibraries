@@ -1885,9 +1885,9 @@ namespace TrainLibrary
             /* Initialise the commodity arrays with known commodity codes. */
             string[] Clinker = { "CLS" , "CLNK"};
             string[] Coal = { "CLE", "CLD" , "COLD", "COLE"};
-            string[] Freight = { "FRE", "GEN" ,"SUP", "GENF"};
+            //string[] Freight = { "FRE", "GEN" ,"SUP", "GENF"};
             //string[] Express = { "EXP", "XPT", "CONT" };
-            string[] Interstate = { "EXP", "XPT", "CONT", "INT", "INTM", "STL", "STEL" };
+            string[] Interstate = { "FRE", "GEN" ,"SUP", "GENF", "EXP", "XPT", "CONT", "INT", "INTM", "STL", "STEL" };
             string[] Grain = { "GRN", "GRAN" };
             string[] Goods = { "GDS" };
             //string[] Intermodal = { "INT", "INTM" };
@@ -1904,8 +1904,8 @@ namespace TrainLibrary
                 return trainCommodity.Clinker;
             else if (Coal.Contains(commodity))
                 return trainCommodity.Coal;
-            else if (Freight.Contains(commodity))
-                return trainCommodity.GeneralFreight;
+            //else if (Freight.Contains(commodity))
+            //    return trainCommodity.GeneralFreight;
             else if (Interstate.Contains(commodity))
                 return trainCommodity.Interstate;
             else if (Grain.Contains(commodity))

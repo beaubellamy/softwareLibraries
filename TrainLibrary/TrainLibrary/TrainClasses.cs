@@ -693,6 +693,7 @@ namespace TrainLibrary
         public List<string> Origin;         /* Location name, location SA4 Region, Location State, Location Area */
         public List<string> Via;            /* Location name, location SA4 Region, Location State, Location Area */
         public List<string> Destination;    /* Location name, location SA4 Region, Location State, Location Area */
+        public string OriginDestination;
         public double netWeight;
         public double grossWeight;
         public DateTime attachmentTime;
@@ -712,6 +713,30 @@ namespace TrainLibrary
             this.Origin = new List<string> { volume.origin, null, null, null };
             this.Via = new List<string> { volume.plannedDestination, null, null, null };
             this.Destination = new List<string> { volume.destination, null, null, null };
+            this.OriginDestination = this.Origin[0] + "-" + this.Destination[0];
+            this.netWeight = volume.netWeight;
+            this.grossWeight = volume.grossWeight;
+            this.attachmentTime = volume.attachmentTime;
+            this.detachmentTime = volume.detachmentTime;
+
+            this.hasBeenCounted = false;
+
+        }
+
+        /// <summary>
+        /// VolumeMovement constructor.
+        /// </summary>
+        /// <param name="volume">Base volume object.</param>
+        public volumeMovement(volumeMovement volume)
+        {
+            this.trainID = volume.trainID;
+            this.trainOperator = volume.trainOperator;
+            this.commodity = volume.commodity;
+            this.wagonID = volume.wagonID;
+            this.Origin = new List<string> { volume.Origin[0], null, null, null };
+            this.Via = new List<string> { volume.Via[0], null, null, null };
+            this.Destination = new List<string> { volume.Destination[0], null, null, null };
+            this.OriginDestination = this.Origin[0] + "-" + this.Destination[0];
             this.netWeight = volume.netWeight;
             this.grossWeight = volume.grossWeight;
             this.attachmentTime = volume.attachmentTime;
@@ -738,6 +763,7 @@ namespace TrainLibrary
             this.Origin = Origin;
             this.Via = plannedDestination;
             this.Destination = Destination;
+            this.OriginDestination = this.Origin[0] + "-" + this.Destination[0];
             this.netWeight = netWeight;
             this.grossWeight = grossWeight;
             this.attachmentTime = attachmentTime;
@@ -764,6 +790,7 @@ namespace TrainLibrary
             this.Origin = new List<string> { Origin, null, null, null };
             this.Via = new List<string> { plannedDestination, null, null, null };
             this.Destination = new List<string> { Destination, null, null, null };
+            this.OriginDestination = this.Origin[0] + "-" + this.Destination[0];
             this.netWeight = netWeight;
             this.grossWeight = grossWeight;
             this.attachmentTime = attachmentTime;
@@ -791,6 +818,7 @@ namespace TrainLibrary
             this.Origin = new List<string> { Origin, null, null, null };
             this.Via = new List<string> { plannedDestination, null, null, null };
             this.Destination = new List<string> { Destination, null, null, null };
+            this.OriginDestination = this.Origin[0] + "-" + this.Destination[0];
             this.netWeight = netWeight;
             this.grossWeight = grossWeight;
             this.attachmentTime = attachmentTime;
@@ -916,8 +944,14 @@ namespace TrainLibrary
              * The location code 'LAV' does not exist. It is assumed that this refers to SCT-Laverton 
              * as the next origin location is 'SCT' (SCT-Laverton). 
              */
+            if (origin.Equals("LAV"))
+                this.origin = "SCT";
+
             if (plannedDestination.Equals("LAV"))
                 this.plannedDestination = "SCT";
+
+            if (destination.Equals("LAV"))
+                this.destination = "SCT";
 
             /* Issue 2:
              * When the location code 'CNM' appears in the destination, the next origin location is 'PGM'.
@@ -925,6 +959,12 @@ namespace TrainLibrary
              * transported between these locations. Therefore, it is assumed that the two locations 
              * are the same. The 'PGM' location has been chosen to be the reference location. 
              */
+            if (origin.Equals("CNM"))
+                this.origin = "PGM";
+
+            if (plannedDestination.Equals("CNM"))
+                this.plannedDestination = "PGM";
+
             if (destination.Equals("CNM"))
                 this.destination = "PGM";
 
@@ -937,8 +977,43 @@ namespace TrainLibrary
             if (origin.Equals("CNL"))
                 this.origin = "SDY";
 
+            if (plannedDestination.Equals("CNL"))
+                this.plannedDestination = "SDY";
+
             if (destination.Equals("CNL"))
                 this.destination = "SDY";
+
+            /* Issue 4:
+             * The Melbourne Operations Terminal (MOT) is adjacent to South Dynon (SDY). Occaissionally, 
+             * the wagon is mioved from MOT to SDY without a train movement. The locations are within 
+             * 1 km, therefore are considered to be the same location. SDY is used as teh reference.
+             */
+            if (origin.Equals("MOT"))
+                this.origin = "SDY";
+
+            if (plannedDestination.Equals("MOT"))
+                this.plannedDestination = "SDY";
+
+            if (destination.Equals("MOT"))
+                this.destination = "SDY";
+
+            /* Issue 5:
+             * When the location code 'DYS' appears in the destination, occasionally the next origin 
+             * location is 'SCT'. These locations are approximtly 20 km apart, with no indication of how 
+             * the wagon was transported between these locations. The assumption is that the trains are 
+             * typically SCT trains transporting from DYS to SCT - Laverton, with these movements not 
+             * recorded. Therefore, it is assumed that the two locations are the same. The 'DYS' location 
+             * has been chosen to be the reference location because it is the common location for all 
+             * trains, North Dynon. 
+             */
+            //if (origin.Equals("SCT"))
+            //    this.origin = "DYS";
+
+            //if (plannedDestination.Equals("SCT"))
+            //    this.plannedDestination = "DYS";
+
+            //if (destination.Equals("SCT"))
+            //    this.destination = "DYS";
 
 
         }

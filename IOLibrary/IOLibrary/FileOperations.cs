@@ -2238,7 +2238,8 @@ namespace IOLibrary
                                 Via[j, locationIdx] = currentVolumeList[checkIdx].Via[locationIdx];
                                 Dest[j, locationIdx] = currentVolumeList[checkIdx].Destination[locationIdx];
                             }
-                            OriginDestination[j, 0] = currentVolumeList[checkIdx].Origin[3] + " - " + currentVolumeList[checkIdx].Destination[3] + " - " + currentVolumeList[checkIdx].trainOperator;
+                            //OriginDestination[j, 0] = currentVolumeList[checkIdx].Origin[3] + " - " + currentVolumeList[checkIdx].Destination[3] + " - " + currentVolumeList[checkIdx].trainOperator;
+                            OriginDestination[j, 0] = currentVolumeList[checkIdx].OriginDestination + " - " + currentVolumeList[checkIdx].trainOperator;
 
                             netWeight[j, 0] = currentVolumeList[checkIdx].netWeight;
                             grossWeight[j, 0] = currentVolumeList[checkIdx].grossWeight;
