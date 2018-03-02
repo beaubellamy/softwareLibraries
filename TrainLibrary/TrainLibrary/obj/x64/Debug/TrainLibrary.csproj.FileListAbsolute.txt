@@ -1,0 +1,4 @@
+S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\TrainLibrary\TrainLibrary\bin\x64\Debug\TrainLibrary.dll
+S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\TrainLibrary\TrainLibrary\bin\x64\Debug\TrainLibrary.pdb
+S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\TrainLibrary\TrainLibrary\obj\x64\Debug\TrainLibrary.dll
+S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\TrainLibrary\TrainLibrary\obj\x64\Debug\TrainLibrary.pdb

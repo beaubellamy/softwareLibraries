@@ -1,0 +1,7 @@
+S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\Statistics\Statistics\bin\x64\Release\Statistics.dll
+S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\Statistics\Statistics\bin\x64\Release\Statistics.pdb
+S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\Statistics\Statistics\bin\x64\Release\TrainLibrary.dll
+S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\Statistics\Statistics\bin\x64\Release\TrainLibrary.pdb
+S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\Statistics\Statistics\obj\x64\Release\Statistics.dll
+S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\Statistics\Statistics\obj\x64\Release\Statistics.pdb
+S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\Statistics\Statistics\obj\x64\Release\Statistics.csprojResolveAssemblyReference.cache
