@@ -940,6 +940,7 @@ namespace TrainLibrary
         /// <param name="destination">The destination code of the wagon.</param>
         private void fixIssues(string origin, string plannedDestination, string destination)
         {
+
             /* Issue 1:
              * The location code 'LAV' does not exist. It is assumed that this refers to SCT-Laverton 
              * as the next origin location is 'SCT' (SCT-Laverton). 
