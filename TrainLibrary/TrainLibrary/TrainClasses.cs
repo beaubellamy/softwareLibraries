@@ -916,6 +916,7 @@ namespace TrainLibrary
             string wagonID, string origin, string plannedDestination, string destination, DateTime attachmentTime, DateTime detachmentTime, double netWeight, double grossWeight)
         {
             this.TrainID = TrainID;
+
             this.trainDate = trainDate;
             this.trainOperator = trainOperator;
             this.commodity = commodity;
