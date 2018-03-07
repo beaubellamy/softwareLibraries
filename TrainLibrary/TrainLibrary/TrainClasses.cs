@@ -12,7 +12,7 @@ namespace TrainLibrary
      */
 
     /* A list of available analysis seperation Categories. */
-    public enum analysisCategory { TrainOperator, TrainCommodity, TrainPowerToWeight, Unknown };
+    public enum analysisCategory { TrainOperator, TrainCommodity, TrainType, TrainPowerToWeight, Unknown };
 
     /// <summary>
     /// Enumerated direction of the train km's.
@@ -36,12 +36,22 @@ namespace TrainLibrary
     /// </summary>
     public enum trainCommodity
     {
-        GeneralFreight, Coal, Express,  Grain, Goods, Mineral, Shuttle, Steel, Shunt, Clinker, Intermodal, Passenger, Interstate, TrailerRail, Work, GroupRemaining, Unknown
+        GeneralFreight, Coal, Express,  Grain, Goods, Mineral, Shuttle, Steel, Shunt, Clinker, Intermodal, Passenger, Interstate, TrailerRail, Work,
+        GroupRemaining, Unknown
+    };
+
+    /// <summary>
+    /// A list of available train types.
+    /// </summary>
+    public enum trainType
+    {
+        AdelaideMelbourne, AdelaidePerth, AdelaideSydney, AdeliadeBrisbane, BrisbaneMelbourne, BrisbanePerth, BrisbaneSydney, GP, PX,
+        MelbournePerth, MelbourneSydney, PerthSydney, NonStandard, Simulated, GroupRemaining, Unknown
     };
 
     /// <summary>
     /// A list of analysis Categories, comprising of train operators, power to weight ratios.
-    /// {TrainOperator List, TrainCommodity, power to weight Categories}
+    /// {TrainOperator List, TrainCommodity, TrainType, power to weight Categories}
     /// </summary>
     public enum Category
     {
@@ -52,10 +62,13 @@ namespace TrainLibrary
         SydneyRailService, TheRailMotorService, Transport4NSW, VLinePassenger,  
         /* Commodities. */
         GeneralFreight, Coal, Express, Goods, Mineral, Shuttle, Steel, Shunt, Clinker, Intermodal, Passenger, Interstate, TrailerRailGrain, Work,
+        /* Train Types */
+        AdelaideMelbourne, AdelaidePerth, AdelaideSydney, AdeliadeBrisbane, BrisbaneMelbourne, BrisbanePerth, BrisbaneSydney, GP, PX,
+        MelbournePerth, MelbourneSydney, PerthSydney,
         /* Power to weight catagories. */
         Underpowered, Overpowered, Alternative,
         /* Other */
-        GroupRemaining, Combined, Actual, Simulated, Unknown
+        NonStandard, GroupRemaining, Combined, Actual, Simulated, Unknown
     };
 
     /*
@@ -69,6 +82,7 @@ namespace TrainLibrary
     {
         public Category Category;
         public string trainID;
+        public trainType trainType;
         public string locoID;
         public trainOperator trainOperator;
         public trainCommodity commodity;
@@ -95,10 +109,11 @@ namespace TrainLibrary
                 return false;
             
             /* Ignore the comparison of the train journey, when comparing trains to avoid the 
-             * differences between an interpoalted trains with gaps and interpoalting 
+             * differences between an interpolated trains with gaps and interpolating 
              * through the gaps for the utilisation. */
             return (train1.Category == train2.Category &&
                 train1.trainID == train2.trainID &&
+                train1.trainType == train2.trainType &&
                 train1.locoID == train2.locoID &&
                 train1.trainOperator == train2.trainOperator &&
                 train1.commodity == train2.commodity &&
@@ -137,6 +152,7 @@ namespace TrainLibrary
              * through the gaps for the utilisation. */
             return (Category.Equals(other.Category) &&
                 trainID.Equals(other.trainID) &&
+                trainType.Equals(other.trainType) &&
                 locoID.Equals(other.locoID) &&
                 trainOperator.Equals(other.trainOperator) &&
                 commodity.Equals(other.commodity) &&
@@ -171,6 +187,7 @@ namespace TrainLibrary
             /* Return the hash codes for the relevant components of the train object. */
             return Category.GetHashCode() +
                 trainID.GetHashCode() +
+                trainType.GetHashCode() +
                 locoID.GetHashCode() +
                 trainOperator.GetHashCode() +
                 commodity.GetHashCode() +
@@ -187,6 +204,7 @@ namespace TrainLibrary
         {
             this.Category = Category.Unknown;
             this.trainID = "none";
+            this.trainType = trainType.Unknown;
             this.locoID = "none";
             this.trainOperator = trainOperator.Unknown;
             this.commodity = trainCommodity.Unknown;
@@ -208,10 +226,11 @@ namespace TrainLibrary
         /// <param name="journey">The list of journey details describing the points along the trains journey.</param>
         /// <param name="direction">The direction of travel indicated by the direction the kilometreage is progressing.</param>
         /// <param name="include">A flag indicating if the train is to be include in the analysis.</param>
-        public Train(Category Category, string trainId, string locoID, trainOperator trainOperator, trainCommodity commodity, double power, List<TrainJourney> journey, direction direction, bool include)
+        public Train(Category Category, string trainId, trainType trainType, string locoID, trainOperator trainOperator, trainCommodity commodity, double power, List<TrainJourney> journey, direction direction, bool include)
         {
             this.Category = Category;
             this.trainID = trainId;
+            this.trainType = trainType;
             this.locoID = locoID;
             this.trainOperator = trainOperator;
             this.commodity = commodity;
@@ -232,11 +251,12 @@ namespace TrainLibrary
         /// <param name="power">The power to weight ratio of the train.</param>
         /// <param name="journey">The list of journey details describing the points along the trains journey.</param>
         /// <param name="direction">The direction of travel indicated by the direction the kilometreage is progressing.</param>
-        public Train(Category Category, string trainId, string locoID, trainOperator trainOperator, trainCommodity commodity, double power, List<TrainJourney> journey, direction direction)
+        public Train(Category Category, string trainId, trainType trainType, string locoID, trainOperator trainOperator, trainCommodity commodity, double power, List<TrainJourney> journey, direction direction)
         {
             /* Designed for interpolated train */
             this.Category = Category;
             this.trainID = trainId;
+            this.trainType = trainType;
             this.locoID = locoID;
             this.trainOperator = trainOperator;
             this.commodity = commodity;
@@ -256,6 +276,7 @@ namespace TrainLibrary
         {
             this.Category = Category;
             this.trainID = "Simulated";
+            this.trainType = trainType.Simulated;
             this.locoID = "Simulated";
             this.trainOperator = trainOperator.Simulated;
             this.commodity = trainCommodity.Unknown;

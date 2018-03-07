@@ -516,10 +516,10 @@ namespace TrainLibrary
                             timeChange = true;
 
                 }
-
+                
                 /* Add the interpolated list to the list of new train objects. */
-                Train trainItem = new Train(trains[trainIdx].Category, trains[trainIdx].trainID, trains[trainIdx].locoID,
-                    trains[trainIdx].trainOperator, trains[trainIdx].commodity, trains[trainIdx].powerToWeight,
+                Train trainItem = new Train(trains[trainIdx].Category, trains[trainIdx].trainID, trains[trainIdx].trainType, 
+                    trains[trainIdx].locoID, trains[trainIdx].trainOperator, trains[trainIdx].commodity, trains[trainIdx].powerToWeight,
                     interpolatedJourney, trains[trainIdx].trainDirection);
 
                 newTrainList.Add(trainItem);
@@ -647,8 +647,8 @@ namespace TrainLibrary
                 }
 
                 /* Add the interpolated list to the list of new train objects. */
-                Train trainItem = new Train(trains[trainIdx].Category, trains[trainIdx].trainID, trains[trainIdx].locoID,
-                    trains[trainIdx].trainOperator, trains[trainIdx].commodity, trains[trainIdx].powerToWeight,
+                Train trainItem = new Train(trains[trainIdx].Category, trains[trainIdx].trainID, trains[trainIdx].trainType, 
+                    trains[trainIdx].locoID, trains[trainIdx].trainOperator, trains[trainIdx].commodity, trains[trainIdx].powerToWeight,
                     interpolatedJourney, trains[trainIdx].trainDirection);
 
                 newTrainList.Add(trainItem);
@@ -1168,8 +1168,10 @@ namespace TrainLibrary
                          */
                         item.trainID = record[trainIndex - 1].trainID;
                         item.locoID = record[trainIndex - 1].locoID;
+                        item.trainType = getTrainType(item.trainID);
                         item.trainOperator = record[trainIndex - 1].trainOperator;
                         item.commodity = record[trainIndex - 1].commodity;
+                        
                         item.powerToWeight = record[trainIndex - 1].powerToWeight;
 
                         /* Determine the analysis Category. */
@@ -1186,6 +1188,10 @@ namespace TrainLibrary
                         else if (analysisCategory == analysisCategory.TrainOperator)
                         {
                             item.Category = convertTrainOperatorToCategory(item.trainOperator);
+                        }
+                        else if (analysisCategory == analysisCategory.TrainType)
+                        {
+                            item.Category = convertTrainTypeToCategory(item.trainType);
                         }
                         else
                         {
@@ -1247,6 +1253,7 @@ namespace TrainLibrary
                     {
                         lastItem.trainID = record[trainIndex - 1].trainID;
                         lastItem.locoID = record[trainIndex - 1].locoID;
+                        lastItem.trainType = getTrainType(lastItem.trainID);
                         lastItem.trainOperator = record[trainIndex - 1].trainOperator;
                         lastItem.commodity = record[trainIndex - 1].commodity;
                         lastItem.powerToWeight = record[trainIndex - 1].powerToWeight;
@@ -1265,6 +1272,10 @@ namespace TrainLibrary
                         else if (analysisCategory == analysisCategory.TrainOperator)
                         {
                             lastItem.Category = convertTrainOperatorToCategory(lastItem.trainOperator);
+                        }
+                        else if (analysisCategory == analysisCategory.TrainType)
+                        {
+                            lastItem.Category = convertTrainTypeToCategory(lastItem.trainType);
                         }
                         else
                         {
@@ -1675,6 +1686,28 @@ namespace TrainLibrary
         }
 
         /// <summary>
+        /// Convert the train category to train type
+        /// </summary>
+        /// <param name="Category">The train type corresponding to the analysis Category</param>
+        /// <returns></returns>
+        public static trainType convertCategoryToTrainType(Category Category)
+        {
+            trainType trainCommodity = trainType.Unknown;
+
+            /* Extract the list of train operators. */
+            List<trainType> typeList = Enum.GetValues(typeof(trainType)).Cast<trainType>().ToList();
+
+            /* Match the opertor to the Category. */
+            foreach (trainType trainType in typeList)
+            {
+                if (trainType.ToString().Equals(Category.ToString()))
+                    trainCommodity = trainType;
+            }
+
+            return trainCommodity;
+        }
+
+        /// <summary>
         /// Convert the train operator to the analysis Category.
         /// </summary>
         /// <param name="trainOperator">The train operator.</param>
@@ -1712,6 +1745,28 @@ namespace TrainLibrary
             foreach (Category cat in CategoryList)
             {
                 if (cat.ToString().Equals(commodity.ToString()))
+                    trainCategory = cat;
+            }
+
+            return trainCategory;
+        }
+
+        /// <summary>
+        /// Convert the train type to the analysis category
+        /// </summary>
+        /// <param name="trainType">The Train Type</param>
+        /// <returns>The analysis Category corresponding to the train type</returns>
+        public static Category convertTrainTypeToCategory(trainType trainType)
+        {
+            Category trainCategory = Category.Unknown;
+
+            /* Extract the list of Categories. */
+            List<Category> CategoryList = Enum.GetValues(typeof(Category)).Cast<Category>().ToList();
+
+            /* Match the Category to the Train Type. */
+            foreach (Category cat in CategoryList)
+            {
+                if (cat.ToString().Equals(trainType.ToString()))
                     trainCategory = cat;
             }
 
@@ -1771,6 +1826,57 @@ namespace TrainLibrary
             }
 
             return new AverageTrain(trainCategory, direction, trainCount, kilometreage, elevation, averageSpeed, isInLoopBoundary, isInTSRboundary);
+        }
+
+        /// <summary>
+        /// Convert the trainID to the trainType class for aggregation
+        /// </summary>
+        /// <param name="trainID">The train ID </param>
+        /// <returns>The train Type</returns>
+        private static trainType getTrainType(string trainID)
+        {
+            string train = string.Concat(trainID.Substring(1, 2).OrderBy(t => t));
+            double trainNumber;
+
+            if (double.TryParse(train, out trainNumber))
+                return trainType.NonStandard;
+            else
+            {
+                if (train.Equals("AM"))
+                    return trainType.AdelaideMelbourne;
+                else if (train.Equals("AP"))
+                    return trainType.AdelaidePerth;
+                else if (train.Equals("AS"))
+                    return trainType.AdelaideSydney;
+                else if (train.Equals("AB"))
+                    return trainType.AdeliadeBrisbane;
+                else if (train.Equals("BM"))
+                    return trainType.BrisbaneMelbourne;
+                else if (train.Equals("BP"))
+                    return trainType.BrisbanePerth;
+                else if (train.Equals("BS"))
+                    return trainType.BrisbaneSydney;
+                else if (train.Equals("GP"))
+                    return trainType.GP;
+                else if (train.Equals("PX"))
+                    return trainType.PX;
+                else if (train.Equals("MP"))
+                    return trainType.MelbournePerth;
+                else if (train.Equals("MS"))
+                    return trainType.MelbourneSydney;
+                else if (train.Equals("PS"))
+                    return trainType.PerthSydney;
+                else if (train.Equals("im"))
+                    if (trainID.Equals("Simulated"))
+                        return trainType.Simulated;
+                    else
+                        return trainType.Unknown;
+                else
+                    return trainType.Unknown;
+                
+            }
+
+
         }
 
         /// <summary>
