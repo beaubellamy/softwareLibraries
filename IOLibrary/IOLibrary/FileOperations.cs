@@ -56,8 +56,7 @@ namespace IOLibrary
             double latitude = 0.0;
             double longitude = 0.0;
             DateTime dateTime = DateTime.MinValue;
-            Category Category = Category.Unknown;
-
+            
             bool header = true;
             bool includeTrain = true;
 
@@ -153,8 +152,7 @@ namespace IOLibrary
             double latitude = 0.0;
             double longitude = 0.0;
             DateTime dateTime = DateTime.MinValue;
-            Category Category = Category.Unknown;
-
+            
             bool header = true;
             bool includeTrain = true;
 
@@ -752,8 +750,8 @@ namespace IOLibrary
 
                     region = fields[0];
                     /* needs to perform tests */
-                    DateTime.TryParse(fields[1], out issueDate);
-                    DateTime.TryParse(fields[2], out liftedDate);
+                    DateTime.TryParse(fields[8], out issueDate);
+                    DateTime.TryParse(fields[9], out liftedDate);
                     double.TryParse(fields[10], out startKm);
                     double.TryParse(fields[11], out endKm);
                     double.TryParse(fields[5], out speed);
@@ -884,7 +882,7 @@ namespace IOLibrary
             }
 
             /* Generate the resulting file name and location to save to. */
-            string saveFilename = aggregatedDestination + @"\ICEData_InterpolatedTrains" + DateTime.Now.ToString("yyyyMMdd") + ".xlsx";
+            string saveFilename = aggregatedDestination + @"\ICEData_InterpolatedTrains" + DateTime.Now.ToString("yyyyMMdd_HHmm") + ".xlsx";
 
             /* Check the file does not exist yet. */
             if (File.Exists(saveFilename))
@@ -1369,7 +1367,7 @@ namespace IOLibrary
             worksheet.get_Range(topLeft, bottomRight).Value2 = isTSRhere;
 
             /* Generate the resulting file name and location to save to. */
-            string saveFilename = aggregatedDestination + @"\AverageSpeed_" + DateTime.Now.ToString("yyyyMMdd") + ".xlsx";
+            string saveFilename = aggregatedDestination + @"\AverageSpeed_" + DateTime.Now.ToString("yyyyMMdd_HHmm") + ".xlsx";
 
             /* Check the file does not exist yet. */
             if (File.Exists(saveFilename))

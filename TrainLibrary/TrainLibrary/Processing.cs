@@ -1169,7 +1169,7 @@ namespace TrainLibrary
                          */
                         item.trainID = record[trainIndex - 1].trainID;
                         item.locoID = record[trainIndex - 1].locoID;
-                        item.trainType = getTrainType2(item.trainID);
+                        item.trainType = getTrainType(item.trainID);
                         item.trainOperator = record[trainIndex - 1].trainOperator;
                         item.commodity = record[trainIndex - 1].commodity;
                         
@@ -1254,7 +1254,7 @@ namespace TrainLibrary
                     {
                         lastItem.trainID = record[trainIndex - 1].trainID;
                         lastItem.locoID = record[trainIndex - 1].locoID;
-                        lastItem.trainType = getTrainType2(lastItem.trainID);
+                        lastItem.trainType = getTrainType(lastItem.trainID);
                         lastItem.trainOperator = record[trainIndex - 1].trainOperator;
                         lastItem.commodity = record[trainIndex - 1].commodity;
                         lastItem.powerToWeight = record[trainIndex - 1].powerToWeight;
@@ -1363,7 +1363,7 @@ namespace TrainLibrary
                     item.trainDirection = getTrainDirection(item);
 
                     item.trainID = record[trainIndex - 1].trainID;
-                    item.trainType = getTrainType2(item.trainID);
+                    item.trainType = getTrainType(item.trainID);
                     item.locoID = record[trainIndex - 1].locoID;
                     item.trainOperator = record[trainIndex - 1].trainOperator;
                     item.commodity = record[trainIndex - 1].commodity;
@@ -1437,7 +1437,7 @@ namespace TrainLibrary
                     if (journeyDistance > minimumJourneyDistance)
                     {
                         lastItem.trainID = record[trainIndex - 1].trainID;
-                        lastItem.trainType = getTrainType2(lastItem.trainID);
+                        lastItem.trainType = getTrainType(lastItem.trainID);
                         lastItem.locoID = record[trainIndex - 1].locoID;
                         lastItem.trainOperator = record[trainIndex - 1].trainOperator;
                         lastItem.commodity = record[trainIndex - 1].commodity;
@@ -1837,52 +1837,6 @@ namespace TrainLibrary
         /// <param name="trainID">The train ID </param>
         /// <returns>The train Type</returns>
         private static trainType getTrainType(string trainID)
-        {
-            string train = string.Concat(trainID.Substring(1, 2).OrderBy(t => t));
-            double trainNumber;
-
-            if (double.TryParse(train, out trainNumber))
-                return trainType.NonStandard;
-            else
-            {
-                if (train.Equals("AM"))
-                    return trainType.AdelaideMelbourne;
-                else if (train.Equals("AP"))
-                    return trainType.AdelaidePerth;
-                else if (train.Equals("AS"))
-                    return trainType.AdelaideSydney;
-                else if (train.Equals("AB"))
-                    return trainType.AdeliadeBrisbane;
-                else if (train.Equals("BM"))
-                    return trainType.BrisbaneMelbourne;
-                else if (train.Equals("BP"))
-                    return trainType.BrisbanePerth;
-                else if (train.Equals("BS"))
-                    return trainType.BrisbaneSydney;
-                else if (train.Equals("GP"))
-                    return trainType.GP;
-                else if (train.Equals("PX"))
-                    return trainType.PX;
-                else if (train.Equals("MP"))
-                    return trainType.MelbournePerth;
-                else if (train.Equals("MS"))
-                    return trainType.MelbourneSydney;
-                else if (train.Equals("PS"))
-                    return trainType.PerthSydney;
-                else if (train.Equals("im"))
-                    if (trainID.Equals("Simulated"))
-                        return trainType.Simulated;
-                    else
-                        return trainType.Unknown;
-                else
-                    return trainType.Unknown;
-                
-            }
-
-
-        }
-
-        private static trainType getTrainType2(string trainID)
         {
             string train = trainID.Substring(1);
 
