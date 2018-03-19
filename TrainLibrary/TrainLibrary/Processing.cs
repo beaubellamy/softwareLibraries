@@ -779,11 +779,12 @@ namespace TrainLibrary
                 else
                 {
                     /* Calculate the average speed at each location. */
-                    if (speed.Count() == 0 || sum == 0)
+                    if (speed.Count() == 0 || sum == 0 ||
+                        speed.Where(x => x > 0.0).Count() == 0)
                         aveSpeed = 0;
                     else
                         aveSpeed = speed.Where(x => x > 0.0).Average();
-
+                        
                     TSRBoundary = false;
                 }
 
@@ -1168,7 +1169,7 @@ namespace TrainLibrary
                          */
                         item.trainID = record[trainIndex - 1].trainID;
                         item.locoID = record[trainIndex - 1].locoID;
-                        item.trainType = getTrainType(item.trainID);
+                        item.trainType = getTrainType2(item.trainID);
                         item.trainOperator = record[trainIndex - 1].trainOperator;
                         item.commodity = record[trainIndex - 1].commodity;
                         
@@ -1253,7 +1254,7 @@ namespace TrainLibrary
                     {
                         lastItem.trainID = record[trainIndex - 1].trainID;
                         lastItem.locoID = record[trainIndex - 1].locoID;
-                        lastItem.trainType = getTrainType(lastItem.trainID);
+                        lastItem.trainType = getTrainType2(lastItem.trainID);
                         lastItem.trainOperator = record[trainIndex - 1].trainOperator;
                         lastItem.commodity = record[trainIndex - 1].commodity;
                         lastItem.powerToWeight = record[trainIndex - 1].powerToWeight;
@@ -1362,6 +1363,7 @@ namespace TrainLibrary
                     item.trainDirection = getTrainDirection(item);
 
                     item.trainID = record[trainIndex - 1].trainID;
+                    item.trainType = getTrainType2(item.trainID);
                     item.locoID = record[trainIndex - 1].locoID;
                     item.trainOperator = record[trainIndex - 1].trainOperator;
                     item.commodity = record[trainIndex - 1].commodity;
@@ -1435,6 +1437,7 @@ namespace TrainLibrary
                     if (journeyDistance > minimumJourneyDistance)
                     {
                         lastItem.trainID = record[trainIndex - 1].trainID;
+                        lastItem.trainType = getTrainType2(lastItem.trainID);
                         lastItem.locoID = record[trainIndex - 1].locoID;
                         lastItem.trainOperator = record[trainIndex - 1].trainOperator;
                         lastItem.commodity = record[trainIndex - 1].commodity;
@@ -1879,6 +1882,75 @@ namespace TrainLibrary
 
         }
 
+        private static trainType getTrainType2(string trainID)
+        {
+            string train = trainID.Substring(1);
+
+            double trainNumber;
+
+            if (double.TryParse(train, out trainNumber))
+                return trainType.NonStandard;
+            else
+            {
+                if (train.Equals("AP1"))
+                    return trainType.AP1;
+                if (train.Equals("AP2"))
+                    return trainType.AP2;
+                if (train.Equals("AP8"))
+                    return trainType.AP8;
+                if (train.Equals("GP1"))
+                    return trainType.GP1;
+                if (train.Equals("MP1"))
+                    return trainType.MP1;
+                if (train.Equals("MP2"))
+                    return trainType.MP2;
+                if (train.Equals("MP4"))
+                    return trainType.MP4;
+                if (train.Equals("MP5"))
+                    return trainType.MP5;
+                if (train.Equals("MP7"))
+                    return trainType.MP7;
+                if (train.Equals("MP9"))
+                    return trainType.MP9;
+                if (train.Equals("PA8"))
+                    return trainType.PA8;
+                if (train.Equals("PG1"))
+                    return trainType.PG1;
+                if (train.Equals("PM1"))
+                    return trainType.PM1;
+                if (train.Equals("PM4"))
+                    return trainType.PM4;
+                if (train.Equals("PM5"))
+                    return trainType.PM5;
+                if (train.Equals("PM6"))
+                    return trainType.PM6;
+                if (train.Equals("PM7"))
+                    return trainType.PM7;
+                if (train.Equals("PM9"))
+                    return trainType.PM9;
+                if (train.Equals("PS5"))
+                    return trainType.PS5;
+                if (train.Equals("PS6"))
+                    return trainType.PS6;
+                if (train.Equals("PS7"))
+                    return trainType.PS7;
+                if (train.Equals("PX4"))
+                    return trainType.PX4;
+                if (train.Equals("SP5"))
+                    return trainType.SP5;
+                if (train.Equals("SP7"))
+                    return trainType.SP7;
+                else if (train.Equals("imu"))
+                    if (trainID.Equals("Simulated"))
+                        return trainType.Simulated;
+                    else
+                        return trainType.Unknown;
+                else
+                    return trainType.Unknown;
+            }
+
+        }
+       
         /// <summary>
         /// Convert the opertor string to the trainOperator class
         /// </summary>

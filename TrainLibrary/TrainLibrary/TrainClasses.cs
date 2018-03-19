@@ -46,7 +46,10 @@ namespace TrainLibrary
     public enum trainType
     {
         AdelaideMelbourne, AdelaidePerth, AdelaideSydney, AdeliadeBrisbane, BrisbaneMelbourne, BrisbanePerth, BrisbaneSydney, GP, PX,
-        MelbournePerth, MelbourneSydney, PerthSydney, NonStandard, Simulated, GroupRemaining, Unknown
+        MelbournePerth, MelbourneSydney, PerthSydney, NonStandard, Simulated, GroupRemaining, Unknown,
+
+        AP1, AP2, AP8, GP1, MP1, MP2, MP4, MP5, MP7, MP9, 
+        PA8, PG1, PM1, PM4, PM5, PM6, PM7, PM9, PS5, PS6, PS7, PX4, SP5, SP7
     };
 
     /// <summary>
@@ -68,7 +71,10 @@ namespace TrainLibrary
         /* Power to weight catagories. */
         Underpowered, Overpowered, Alternative,
         /* Other */
-        NonStandard, GroupRemaining, Combined, Actual, Simulated, Unknown
+        NonStandard, GroupRemaining, Combined, Actual, Simulated, Unknown,
+
+        AP1, AP2, AP8, GP1, MP1, MP2, MP4, MP5, MP7, MP9,
+        PA8, PG1, PM1, PM4, PM5, PM6, PM7, PM9, PS5, PS6, PS7, PX4, SP5, SP7
     };
 
     /*

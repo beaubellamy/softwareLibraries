@@ -25,6 +25,12 @@ namespace Statistics
         /// </summary>
         public TrainStatistics()
         {
+            this.Category = "Empty";
+            this.numberOfTrains = 0;
+            this.averageDistanceTravelled = 0;
+            this.averageSpeed = 0;
+            this.averagePowerToWeightRatio = 0;
+            this.standardDeviationP2W = 0;
         }
 
         /// <summary>
@@ -37,14 +43,7 @@ namespace Statistics
             TrainStatistics stats = new TrainStatistics();
 
             if (trains.Count() == 0)
-            {
-                stats.Category = "Empty";
-                stats.numberOfTrains = 0;
-                stats.averageDistanceTravelled = 0;
-                stats.averageSpeed = 0;
-                stats.averagePowerToWeightRatio = 0;
-                stats.standardDeviationP2W = 0;
-            }
+                return stats;
             else
             {
 
@@ -90,10 +89,10 @@ namespace Statistics
                 if (power2Weight.Count() > 0)
                 {
                     stats.averagePowerToWeightRatio = power2Weight.Average();
-                    double sum = power2Weight.Sum(p => Math.Pow(p - stats.averagePowerToWeightRatio,2));
+                    double sum = power2Weight.Sum(p => Math.Pow(p - stats.averagePowerToWeightRatio, 2));
 
                     /* Calculate the standard deviation of the power to weight ratios. */
-                    stats.standardDeviationP2W = Math.Sqrt(sum / (power2Weight.Count()-1));
+                    stats.standardDeviationP2W = Math.Sqrt(sum / (power2Weight.Count() - 1));
                 }
                 else
                 {
@@ -115,6 +114,9 @@ namespace Statistics
         public static TrainStatistics generateStats(Train train)
         {
             TrainStatistics stats = new TrainStatistics();
+
+            if (train.journey.Where(t => t.speed > 0).Count() == 0)
+                return stats;
 
             stats.Category = train.Category.ToString() + " " + train.trainDirection.ToString();
 
