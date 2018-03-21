@@ -61,7 +61,7 @@ namespace Statistics
                 {
                     /* Calculate the distance travelled for each train */
                     double distanceTravelled = 0;
-                    if (train.journey.Where(t => t.speed > 0).Count() != 0)
+                    if (train.journey.Where(t => t.speed > 0).Count() > 0)
                     {
                         distanceTravelled = (train.journey.Where(t => t.speed > 0).Max(t => t.kilometreage) - train.journey.Where(t => t.speed > 0).Min(t => t.kilometreage));
                         /* Calculate the average speed of the train journey. */
@@ -86,7 +86,7 @@ namespace Statistics
                 else
                     stats.averageDistanceTravelled = 0;
 
-                if (power2Weight.Count() > 0)
+                if (power2Weight.Count() > 1)
                 {
                     stats.averagePowerToWeightRatio = power2Weight.Average();
                     double sum = power2Weight.Sum(p => Math.Pow(p - stats.averagePowerToWeightRatio, 2));
