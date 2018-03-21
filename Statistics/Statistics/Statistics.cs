@@ -125,14 +125,16 @@ namespace Statistics
 
             /* Calculate the distance travelled for each train */
             double distanceTravelled = 0;
-            if (train.journey.Where(t => t.speed > 0).Count() != 0)
+            double averageSpeed = 0;
+            if (train.journey.Where(t => t.speed > 0).Count() > 0)
             {
                 distanceTravelled = (train.journey.Where(t => t.speed > 0).Max(t => t.kilometreage) - train.journey.Where(t => t.speed > 0).Min(t => t.kilometreage));
                 /* Calculate the average speed of the train journey. */
+                averageSpeed = train.journey.Where(t => t.speed > 0).Average(t => t.speed);
             }
 
-            /* Calculate the averages. */
-            stats.averageSpeed = train.journey.Where(t => t.speed > 0).Average(t => t.speed);
+            /* Populate the averages. */
+            stats.averageSpeed = averageSpeed;
             stats.averageDistanceTravelled = distanceTravelled;
             
             stats.averagePowerToWeightRatio = train.powerToWeight;
