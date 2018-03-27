@@ -8,7 +8,8 @@ using System.Threading.Tasks;
 namespace TrainLibrary
 {
     /// <summary>
-    /// Summary description for Class1
+    /// A class containing several methods to provide data processing from cleaning, interpolation and aggregation 
+    /// for mutliple custom types of data.
     /// </summary>
     public class Processing
     {
@@ -270,7 +271,7 @@ namespace TrainLibrary
              */
 
             /* Determine the distance and sign from the first point to the last point */
-            double journeyDistance = train.journey[train.journey.Count() - 1].kmPost - train.journey[0].kmPost;
+            double journeyDistance = train.journey[train.journey.Count() - 1].kilometreage - train.journey[0].kilometreage;
 
             if (journeyDistance > 0)
                 return direction.IncreasingKm;
@@ -283,7 +284,7 @@ namespace TrainLibrary
         /// <summary>
         /// Function determines the direction of the train using the first and last km posts.
         /// </summary>
-        /// <param name="jounrye">The defiend journey of the train</param>
+        /// <param name="journey">The defiend journey of the train</param>
         /// <returns>Enumerated direction of the train km's.</returns>
         public static direction getTrainDirection(List<TrainJourney> journey)
         {
@@ -294,7 +295,7 @@ namespace TrainLibrary
              */
 
             /* Determine the distance and sign from the first point to the last point */
-            double journeyDistance = journey[journey.Count() - 1].kmPost - journey[0].kmPost;
+            double journeyDistance = journey[journey.Count() - 1].kilometreage - journey[0].kilometreage;
 
             if (journeyDistance > 0)
                 return direction.IncreasingKm;
