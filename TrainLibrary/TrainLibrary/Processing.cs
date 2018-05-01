@@ -131,7 +131,9 @@ namespace TrainLibrary
 
             /* Set the kmPosts to the closest points on the geometry alignment. */
             track.matchTrainLocationToTrackGeometry(journey, trackGeometry);
-
+            /* Keep only the items in the list where there is a unique kilometreage, 
+             * to exclude those points that cluster when a train stops. */
+            journey = journey.GroupBy(j => j.kilometreage).Select(g => g.First()).ToList();
 
             start = 0;
 
@@ -141,7 +143,7 @@ namespace TrainLibrary
                 distance = journey[journeyIdx + numPoints].kilometreage - journey[journeyIdx].kilometreage;
                 movingAverage = distance / numPoints;
 
-                /* Ensure the time between points doesn exceed 60 minutes to catch the trains that appear 
+                /* Ensure the time between points doesn't exceed 60 minutes to catch the trains that appear 
                  * to sit in a loop for several hours between crew change and change in direction. 
                  */
                 timeBetweenPoints = Math.Abs((journey[journeyIdx + numPoints].dateTime - journey[journeyIdx].dateTime).TotalMinutes);
@@ -232,7 +234,7 @@ namespace TrainLibrary
         }
 
         /// <summary>
-        /// Calcualte the single train journey length.
+        /// Calculate the single train journey length.
         /// </summary>
         /// <param name="journey">The journey points for the train.</param>
         /// <returns>The total distance travelled in metres.</returns>
@@ -444,7 +446,6 @@ namespace TrainLibrary
             /* Cycle through each train to interpolate between points. */
             for (int trainIdx = 0; trainIdx < trains.Count(); trainIdx++)
             {
-
                 /* Create a new journey list of interpolated values. */
                 List<TrainJourney> interpolatedJourney = new List<TrainJourney>();
 
@@ -456,7 +457,6 @@ namespace TrainLibrary
                                 
                 while (currentKm < endKm)
                 {
-
                     /* Find the closest kilometerage markers either side of the current interpolation point. */
                     index0 = findClosestLowerKm(currentKm, journey);
                     index1 = findClosestGreaterKm(currentKm, journey);
@@ -824,6 +824,180 @@ namespace TrainLibrary
             {
                 if (isInTSRboundary[index] || trackSlowTrains[index])
                     averageSpeed[index] = proRataTSRRatio * CategorySim[index].speed;
+            }
+
+            /* Create the new average train object. */
+            AverageTrain averageTrain = new AverageTrain(trains[0].Category, trains[0].trainDirection, trains.Count(), kilometreage, elevation, averageSpeed, isInLoopBoundary, isInTSRboundary);
+
+            return averageTrain;
+
+        }
+
+        /// <summary>
+        /// Calculate the aggregated average speed of all trains, while removing the section
+        /// of a train journey that is affected by a TSR or those trains that go straight through a loop.
+        /// ie. keeping only the trains that stop at a loop.
+        /// </summary>
+        /// <param name="trains">A list of trains to be aggregated in a single group.</param>
+        /// <param name="CategorySim">The simulted train for the specified analysis Category.</param>
+        /// <param name="trackGeometry">The track alignment information for the train journey.</param>
+        /// <returns>An average train containing information about the average speed at each location.</returns>
+        public static AverageTrain averageTrainStoppingAtLoops(List<Train> trains, List<TrainJourney> CategorySim, List<TrackGeometry> trackGeometry,
+            double startKm, double endKm, double interpolationInterval, double loopSpeedThreshold, double loopBoundaryThreshold, double TSRwindowBoundary)
+        {
+
+            bool loopBoundary = false;
+            bool TSRBoundary = false;
+            bool fastTrainsOrTSR = false;
+            List<bool> TSRList = new List<bool>();
+            List<bool> fastTrains = new List<bool>();
+            double actualTime = 0;
+            double simulatedTime = 0;
+
+            /* Set up the average train journey lists. */
+            List<double> kilometreage = new List<double>();
+            List<double> elevation = new List<double>();
+            List<double> averageSpeed = new List<double>();
+            List<bool> isInLoopBoundary = new List<bool>();
+            List<bool> isInTSRboundary = new List<bool>();
+            List<bool> trackFastTrains = new List<bool>();
+
+            double kmPost = 0;
+            double altitude = 0;
+            List<double> speed = new List<double>();
+            double sum = 0;
+            double aveSpeed = 0;
+
+            /* Determine the number of points in the average train journey. */
+            int size = (int)((endKm - startKm) / (interpolationInterval * metresToKilometers));
+
+            TrainJourney journey = new TrainJourney();
+
+            /* Cycle through each location to average the valid values. */
+            for (int journeyIdx = 0; journeyIdx < size; journeyIdx++)
+            {
+                /* Determine the current location and elevation of the alignemnt at this point. */
+                kmPost = startKm + interpolationInterval * metresToKilometers * journeyIdx;
+                altitude = trackGeometry[track.findClosestTrackGeometryPoint(trackGeometry, kmPost)].elevation;
+
+                speed.Clear();
+                TSRList.Clear();
+                fastTrains.Clear();
+                sum = 0;
+
+                /* Cycle through each train in the list. */
+                foreach (Train train in trains)
+                {
+                    journey = train.journey[journeyIdx];
+                    /* Assume a loop boundary does not apply until we check. */
+                    loopBoundary = false;
+
+                    /* Does a TSR apply */
+                    if (!withinTemporarySpeedRestrictionBoundaries(train, journey.kilometreage, startKm, endKm, TSRwindowBoundary))
+                    {
+                        TSRList.Add(false);
+                        /* Is the train within a loop boundary */
+                        if (!isTrainInLoopBoundary(train, journey.kilometreage, startKm, endKm, interpolationInterval, loopBoundaryThreshold))
+                        {
+                            fastTrains.Add(false);
+
+                            speed.Add(journey.speed);
+                            sum = sum + journey.speed;
+                        }
+                        else
+                        {
+                            loopBoundary = true;
+
+                            if (journey.speed > 0 && journey.speed < (loopSpeedThreshold * CategorySim[journeyIdx].speed))
+                            {
+                                fastTrains.Add(false);
+
+                                speed.Add(journey.speed);
+                                sum = sum + journey.speed;
+                            }
+                            else
+                            {
+                                /* The train is too fast through the loop to include in the analysis. */
+                                fastTrains.Add(true); // Or the train data has not started
+                            }
+                        }
+
+                    }
+                    else
+                    {
+                        /* We dont want to include the speed in the aggregation if the train is within the
+                         * bundaries of a TSR and is forced to slow down.  
+                         */
+                        TSRList.Add(true);
+                        fastTrains.Add(true);
+
+                        /* Keep track of the loop boundary for later inspection, if neccessary. */
+                        if (isTrainInLoopBoundary(train, journey.kilometreage, startKm, endKm, interpolationInterval, loopBoundaryThreshold))
+                            loopBoundary = true;
+
+                    }
+
+                }
+
+                /* If all trains passing a loop were too slow, track this to allow applying the simulation speed at these locations. */
+                if (fastTrains.Where(t => t == true).Count() == trains.Count())
+                    fastTrainsOrTSR = true;
+                else
+                    fastTrainsOrTSR = false;
+
+                /* If the TSR applied for the whole analysis period, the simulation speed is used. */
+                if (TSRList.Where(t => t == true).Count() == trains.Count())
+                {
+                    aveSpeed = 0;
+                    TSRBoundary = true;
+                }
+                else
+                {
+                    /* Calculate the average speed at each location. */
+                    if (speed.Count() == 0 || sum == 0 ||
+                        speed.Where(x => x > 0.0).Count() == 0)
+                        aveSpeed = 0;
+                    else
+                        aveSpeed = speed.Where(x => x > 0.0).Average();
+
+                    TSRBoundary = false;
+                }
+
+                /* Add to each list for this location. */
+                kilometreage.Add(kmPost);
+                elevation.Add(altitude);
+                averageSpeed.Add(aveSpeed);
+                isInLoopBoundary.Add(loopBoundary);
+                isInTSRboundary.Add(TSRBoundary);
+
+                trackFastTrains.Add(fastTrainsOrTSR);
+
+                /* Accumulate the transit time. */
+                if (!TSRBoundary || !fastTrainsOrTSR)
+                {
+                    if (aveSpeed > 0 && CategorySim[journeyIdx].speed > 0)
+                    {
+                        actualTime = actualTime + ((interpolationInterval * metresToKilometers) / aveSpeed);
+                        simulatedTime = simulatedTime + ((interpolationInterval * metresToKilometers) / CategorySim[journeyIdx].speed);
+                    }
+                }
+
+
+            }
+
+            /* Calculate the pro-rata ratio for applying the simulated speeds. */
+            double proRataTSRRatio = actualTime / simulatedTime;
+
+            /* Make sure the ratio is less than 1. */
+            if (proRataTSRRatio > 1)
+                proRataTSRRatio = 1 / proRataTSRRatio;
+
+            /* Re-assign the pro-rata speeds to the TSR locations or the slow train locations. */
+            for (int index = 0; index < averageSpeed.Count(); index++)
+            {
+                if (isInTSRboundary[index] || trackFastTrains[index])
+                    averageSpeed[index] = proRataTSRRatio * CategorySim[index].speed;
+                
             }
 
             /* Create the new average train object. */
@@ -1528,7 +1702,7 @@ namespace TrainLibrary
         /// extract the longest part of the journey.
         /// This aims to identify where there are extended periods of no movement at the beginning 
         /// or end of a journey. This is assumed to represent a train path that has stopped and the 
-        /// transponder has not been rest properly.
+        /// transponder has not been reset properly.
         /// </summary>
         /// <param name="journey">The list of Journey objects describing the trains full journey.</param>
         /// <param name="direction">Direction the train is travelling.</param>
