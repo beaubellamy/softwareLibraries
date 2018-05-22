@@ -2194,15 +2194,15 @@ namespace TrainLibrary
             string[] Coal = { "CLE", "CLD" , "COLD", "COLE"};
             //string[] Freight = { "FRE", "GEN" ,"SUP", "GENF"};
             //string[] Express = { "EXP", "XPT", "CONT" };
-            string[] Interstate = { "FRE", "GEN" ,"SUP", "GENF", "EXP", "XPT", "CONT", "INT", "INTM", "STL", "STEL" };
+            string[] Interstate = { "FRE", "GEN", "SUP", "GENF", "EXP", "XPT", "CONT"}; //, "INT", "INTM", "STL", "STEL" };
             string[] Grain = { "GRN", "GRAN" };
             string[] Goods = { "GDS" };
-            //string[] Intermodal = { "INT", "INTM" };
+            string[] Intermodal = { "INT", "INTM" };
             string[] Minerals = { "MIN", "MINL"};
             string[] Passenger = { "PAS", "PASS"};
             string[] Shunt = { "SHT" };
             string[] Shuttle = { "SHT" };
-            //string[] Steel = { "STL", "STEL" };
+            string[] Steel = { "STL", "STEL" };
             string[] TrailerRail = { "TRL" };
             string[] Work = { "WRK" };
             
@@ -2219,8 +2219,8 @@ namespace TrainLibrary
                 return trainCommodity.Grain;
             else if (Goods.Contains(commodity))
                 return trainCommodity.Goods;
-            //else if (Intermodal.Contains(commodity))
-            //    return trainCommodity.Intermodal;
+            else if (Intermodal.Contains(commodity))
+                return trainCommodity.Intermodal;
             else if (Minerals.Contains(commodity))
                 return trainCommodity.Mineral;
             else if (Passenger.Contains(commodity))
@@ -2229,8 +2229,8 @@ namespace TrainLibrary
                 return trainCommodity.Shunt;
             else if (Shuttle.Contains(commodity))
                 return trainCommodity.Shuttle;
-            //else if (Steel.Contains(commodity))
-            //    return trainCommodity.Steel;
+            else if (Steel.Contains(commodity))
+                return trainCommodity.Steel;
             else if (TrailerRail.Contains(commodity))
                 return trainCommodity.TrailerRail;
             else if (Work.Contains(commodity))

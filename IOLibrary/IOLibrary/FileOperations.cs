@@ -592,7 +592,7 @@ namespace IOLibrary
         ///  7      Class Number
         ///  8      Train Operator
         ///  9      Train Date
-        ///  10      Train ID
+        ///  10     Train ID
         ///  11     Distance
         ///  12     Gross Mass
         ///  13     Move Count
@@ -602,7 +602,7 @@ namespace IOLibrary
         /// <param name="filename">The wagon data file.</param>
         /// <param name="grossTonnes">A flag indicating if the prefered weight values should be gross tonnes or net weight.</param>
         /// <returns>The list of wagon objects.</returns>
-        public static List<wagonDetails> readWagonDataFile(string filename)
+        public static List<wagonDetails> readWagonDataFile(string filename, bool combineIntermodalAndSteel = false)
         {
             /* Read the all lines of the text file. */
             char[] delimiters = { '\t' };
@@ -653,6 +653,11 @@ namespace IOLibrary
                     DateTime.TryParse(fields[9], out trainDate);
                     trainOperator trainOperator = Processing.getWagonOperator(fields[8]);
                     trainCommodity commodity = Processing.getWagonCommodity(fields[4]);
+
+                    /* Include Intermodal and Steel commodity into the Interstate commodity, when required. */
+                    if (combineIntermodalAndSteel)
+                        if (commodity.Equals(trainCommodity.Intermodal) || commodity.Equals(trainCommodity.Steel))
+                            commodity = trainCommodity.Interstate;
 
                     /* Extract the wagon Identification. */
                     wagonID = fields[3] + " " + Regex.Replace(fields[7], ",", "");
