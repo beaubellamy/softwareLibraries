@@ -6,6 +6,9 @@
 *.cache
 /TrainLibrary/.vs/TrainLibrary/v15/Server/sqlite3
 *.suo
+*.dll
+*.pdb
 /IOLibrary/.vs/IOLibrary/v15/Server/sqlite3
 /IOLibrary/.vs/IOLibrary/v15/Server/sqlite3
 /IOLibrary/.vs/IOLibrary/v15/Server/sqlite3
+
