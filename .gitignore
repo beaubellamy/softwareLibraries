@@ -3,3 +3,9 @@
 ################################################################################
 
 *.CopyComplete
+*.cache
+/TrainLibrary/.vs/TrainLibrary/v15/Server/sqlite3
+*.suo
+/IOLibrary/.vs/IOLibrary/v15/Server/sqlite3
+/IOLibrary/.vs/IOLibrary/v15/Server/sqlite3
+/IOLibrary/.vs/IOLibrary/v15/Server/sqlite3

@@ -213,7 +213,8 @@ namespace TrainLibrary
 
             /* Create a list to store the new journey. */
             List<TrainJourney> newJourney = new List<TrainJourney>();
-                        
+            newJourney.Add(journey[0]);
+
             /* Loop through the train journey. */
             for (int index = 1; index < journey.Count(); index++)
             {
@@ -446,6 +447,7 @@ namespace TrainLibrary
             /* Cycle through each train to interpolate between points. */
             for (int trainIdx = 0; trainIdx < trains.Count(); trainIdx++)
             {
+                
                 /* Create a new journey list of interpolated values. */
                 List<TrainJourney> interpolatedJourney = new List<TrainJourney>();
 
@@ -717,7 +719,7 @@ namespace TrainLibrary
                     journey = train.journey[journeyIdx];
                     /* Assume a loop boundary does not apply until we check. */
                     loopBoundary = false;
-
+                                      
                     /* Does a TSR apply */
                     if (!withinTemporarySpeedRestrictionBoundaries(train, journey.kilometreage, startKm, endKm, TSRwindowBoundary))
                     {
@@ -1150,7 +1152,7 @@ namespace TrainLibrary
 
             /* Find the indecies of the boundaries of the loop. */
             double lookBack = targetLocation - TSRwindowBoundary;
-            double lookForward = targetLocation + TSRwindowBoundary;
+            double lookForward = targetLocation; // + TSRwindowBoundary; // only look forward to the length of the train.
             /* Add the train length to the forward direction to mimic the fact that 
              * the train can not start to accelerate until it has cleared the boundary. 
              */
@@ -1197,7 +1199,7 @@ namespace TrainLibrary
 
             /* Extract a sub list containung the journey prior to the target location. */
             List<TrainJourney> valuesBelow = journey.Where(j => j.kilometreage < target).ToList();
-
+            
             if (valuesBelow.Count() > 0)
             {
                 /* Find the location with the shortest distance to the target. */
@@ -1312,15 +1314,32 @@ namespace TrainLibrary
                 }
                 else
                 {
+
                     /* Check uni directionality of the train */
                     journey = longestDistanceTravelledInOneDirection(journey, trackGeometry);
-                    
+
                     /* Remove any significant change in direction of the journey */
+                    int prevSize = journey.Count;
                     journey = changeDetection(journey, getTrainDirection(journey));
+                    int size = journey.Count;
 
+                    while (prevSize != size)
+                    {
+                        prevSize = journey.Count;
+                        journey = changeDetection(journey, getTrainDirection(journey));
+                        size = journey.Count;
+                    }
+                    
                     /* Remove any individual changes in direction. */
+                    prevSize = journey.Count;
                     journey = removeIndividualChangesInDirection(journey, getTrainDirection(journey));
-
+                    size = journey.Count;
+                    while (prevSize != size)
+                    {
+                        prevSize = journey.Count;
+                        journey = removeIndividualChangesInDirection(journey, getTrainDirection(journey));
+                        size = journey.Count;
+                    }
                     /* If the journey has been lost due to direction variation, skip to the next iteration. */
                     if (journey.Count() == 0)
                         continue;
@@ -1722,7 +1741,7 @@ namespace TrainLibrary
             /* Threshold for the confidence of a change in the data. */
             int confidenceThreshold = 90;
 
-            /* Only need to perform the cahgne point analysis if there is more than one poin in the journey. */
+            /* Only need to perform the change point analysis if there is more than one point in the journey. */
             if (journey.Count() > 1)
             {
 
@@ -1735,13 +1754,13 @@ namespace TrainLibrary
                 /* Set the cumulative sum to 0. */
                 cumulativeSum[0] = 0;
 
-                /* Calcaulte the differences between susccesive kilometreage points. */
+                /* Calcalute the differences between susccesive kilometreage points. */
                 difference.AddRange(journey.Zip(journey.Skip(1), (x, y) => x.kilometreage - y.kilometreage).ToList());
                 
-                /* Calcualte average */
+                /* Calculate average */
                 double average = difference.Average(); 
 
-                /* Calcualte the cumulative sum of the variance. */
+                /* Calculate the cumulative sum of the variance. */
                 for (int index = 1; index < difference.Count(); index++)
                     cumulativeSum[index] = cumulativeSum[index - 1] + difference[index] - average;
 
@@ -1758,23 +1777,23 @@ namespace TrainLibrary
                     /* Resample the data without replacement. ie, randomise the order. */
                     List<double> resampleData = difference.OrderBy(r => Guid.NewGuid()).ToList();
 
-                    /* Create a list for teh resampled cumulative sum */
+                    /* Create a list for the resampled cumulative sum */
                     List<double> resampledCumulativeSum = new List<double>(new double[resampleData.Count()]);
                     resampledCumulativeSum[0] = 0;
 
-                    /*  Calcualte cumulative sum of the variance of the resampled data. */
+                    /*  Calculate cumulative sum of the variance of the resampled data. */
                     for (int cSumIdx = 1; cSumIdx < resampleData.Count(); cSumIdx++)
                         resampledCumulativeSum[cSumIdx] = resampledCumulativeSum[cSumIdx - 1] + resampleData[cSumIdx] - average;
 
-                    /*  Determine therange of the cumulative sum. */
+                    /*  Determine the range of the cumulative sum. */
                     double resampledRange = resampledCumulativeSum.Max() - resampledCumulativeSum.Min();
 
-                    /* compare the difference in the ranges of teh resampled data to the original time-ordered 
-                     * data to determine if there is a chagne in direction. */
+                    /* Compare the difference in the ranges of the resampled data to the original time-ordered 
+                     * data to determine if there is a change in direction. */
                     if (Math.Abs(resampledRange - cumulativeSumRange) > changeThreshold)
-                        /* Increment the count to determine the confidence of the change. */
-                        changeCount++;
-                    
+                            /* Increment the count to determine the confidence of the change. */
+                            changeCount++;
+                
                 }
                 
                 /* Determine the confidence of the change based on the number of times a change was identified 
@@ -1797,7 +1816,7 @@ namespace TrainLibrary
                     List<TrainJourney> beforeChange = journey.GetRange(0, changePoint);
                     List<TrainJourney> afterChange = journey.GetRange(changePoint, journey.Count() - changePoint - 1);
                     
-                    /* If the change point was at either of of the journey, just return the original journey. */
+                    /* If the change point was at either end of the journey, just return the original journey. */
                     if (beforeChange.Count() == 0 || afterChange.Count() == 0)
                         return journey;
 
@@ -1810,7 +1829,7 @@ namespace TrainLibrary
 
                 }
 
-                /* There was no chagne detected. */
+                /* There was no change detected. */
                 return journey;
             }
             else
@@ -2027,8 +2046,16 @@ namespace TrainLibrary
                     return trainType.AP2;
                 if (train.Equals("AP8"))
                     return trainType.AP8;
+                if (train.Equals("BM4"))
+                    return trainType.BM4;
+                if (train.Equals("BM7"))
+                    return trainType.BM7;
                 if (train.Equals("GP1"))
                     return trainType.GP1;
+                if (train.Equals("MB4"))
+                    return trainType.MB4;
+                if (train.Equals("MB7"))
+                    return trainType.MB7;
                 if (train.Equals("MP1"))
                     return trainType.MP1;
                 if (train.Equals("MP2"))
@@ -2065,6 +2092,8 @@ namespace TrainLibrary
                     return trainType.PS7;
                 if (train.Equals("PX4"))
                     return trainType.PX4;
+                if (train.Equals("SB1"))
+                    return trainType.SB1;
                 if (train.Equals("SP5"))
                     return trainType.SP5;
                 if (train.Equals("SP7"))

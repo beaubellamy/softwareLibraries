@@ -43,6 +43,11 @@ namespace IOLibrary
 
             /* Minimum length of the operator string to distinguisg between them. */
             int operatorStringLength = 6;
+            /* Set maximum speed values
+             * There are occasionally datapoints that indicate the train is going faster than phyically possible 
+             */
+            double maxPassengerSpeed = 170;
+            double maxFreightSpeed = 120;
 
             /* Initialise the fields of interest. */
             string TrainID = "none";
@@ -114,6 +119,18 @@ namespace IOLibrary
                             includeTrain = true;
                     }
 
+                    /* Validate the speed data */
+                    if (commodity.Equals(trainCommodity.Passenger))
+                    {
+                        if (speed < 0 || speed > maxPassengerSpeed)
+                            includeTrain = false;
+                    }
+                    else
+                    {
+                        if (speed < 0 || speed > maxFreightSpeed)
+                            includeTrain = false;
+                    }
+
                     if (dateTime >= dateRange[0] && dateTime < dateRange[1] &&
                         includeTrain)
                     {
@@ -128,7 +145,7 @@ namespace IOLibrary
             return IceRecord;
         }
 
-        public static List<TrainRecord> readICEData2(string filename, List<string> trainList, bool excludeListOfTrains, DateTime[] dateRange)
+        public static List<TrainRecord> readAzureICEData(string filename, List<string> trainList, bool excludeListOfTrains, DateTime[] dateRange)
         {
 
             /* Read all the lines of the data file. */
@@ -139,6 +156,11 @@ namespace IOLibrary
 
             /* Minimum length of the operator string to distinguisg between them. */
             int operatorStringLength = 6;
+            /* Set maximum speed values
+             * There are occasionally datapoints that indicate the train is going faster than phyically possible 
+             */
+            double maxPassengerSpeed = 170;
+            double maxFreightSpeed = 120;
 
             /* Initialise the fields of interest. */
             string TrainID = "none";
@@ -152,7 +174,7 @@ namespace IOLibrary
             double latitude = 0.0;
             double longitude = 0.0;
             DateTime dateTime = DateTime.MinValue;
-            
+
             bool header = true;
             bool includeTrain = true;
 
@@ -172,14 +194,14 @@ namespace IOLibrary
                     TrainID = fields[6];
                     locoID = fields[1];
 
-                    if (fields[5].Count() >= operatorStringLength)
-                        subOperator = fields[5].Substring(0, operatorStringLength);
+                    if (fields[4].Count() >= operatorStringLength)
+                        subOperator = fields[4].Substring(0, operatorStringLength);
                     else
-                        subOperator = fields[5].PadRight(operatorStringLength);
+                        subOperator = fields[4].PadRight(operatorStringLength);
 
                     trainOperator = getOperator(subOperator);
 
-                    commodity = getCommodity(fields[4]);
+                    commodity = getCommodity(fields[5]);
 
                     /* Ensure values are valid while reading them out. */
                     double.TryParse(fields[9], out speed);
@@ -210,6 +232,18 @@ namespace IOLibrary
                             includeTrain = true;
                     }
 
+                    /* Validate the speed data */
+                    if (commodity.Equals(trainCommodity.Passenger))
+                    {
+                        if (speed < 0 || speed > maxPassengerSpeed)
+                            includeTrain = false;
+                    }
+                    else
+                    {
+                        if (speed < 0 || speed > maxFreightSpeed)
+                            includeTrain = false;
+                    }
+
                     if (dateTime >= dateRange[0] && dateTime < dateRange[1] &&
                         includeTrain)
                     {
@@ -223,7 +257,7 @@ namespace IOLibrary
             /* Return the list of records. */
             return IceRecord;
         }
-        
+
         /// <summary>
         /// This function reads the Traxim simulation files and populates the simualtedTrain 
         /// data for comparison to the averaged ICE data.
@@ -755,8 +789,8 @@ namespace IOLibrary
 
                     region = fields[0];
                     /* needs to perform tests */
-                    DateTime.TryParse(fields[8], out issueDate);
-                    DateTime.TryParse(fields[9], out liftedDate);
+                    DateTime.TryParse(fields[1], out issueDate);
+                    DateTime.TryParse(fields[2], out liftedDate);
                     double.TryParse(fields[10], out startKm);
                     double.TryParse(fields[11], out endKm);
                     double.TryParse(fields[5], out speed);
@@ -807,13 +841,14 @@ namespace IOLibrary
                                      { "", "Date:", "" },
                                      { "", "Power to Weight Ratio:", "" },
                                      { "", "Commodity:", "" },
+                                     { "", "Operator", ""},
                                      { "", "Direction:", "" }};
 
 
             /* Pagenate the data for writing to excel. */
             int excelPageSize = 1000000;        /* Page size of the excel worksheet. */
             int excelPages = 1;                 /* Number of Excel pages to write. */
-            int headerOffset = 9;
+            int headerOffset = 10;
 
             /* Adjust the excel page size or the number of pages to write. */
             if (trainRecords.Count() < excelPageSize)
@@ -826,6 +861,7 @@ namespace IOLibrary
             string[,] LocoID = new string[1, trainRecords.Count()];
             double[,] powerToWeight = new double[1, trainRecords.Count()];
             string[,] commodity = new string[1, trainRecords.Count()];
+            string[,] trainOperator = new string[1, trainRecords.Count()];
             string[,] direction = new string[1, trainRecords.Count()];
             DateTime[,] dateTime = new DateTime[1, trainRecords.Count()];
             double[,] kilometerage = new double[trainRecords[0].journey.Count(), 1];
@@ -862,6 +898,8 @@ namespace IOLibrary
 
                     commodity[0, trainIdx] = trainRecords[trainIdx].commodity.ToString();
 
+                    trainOperator[0, trainIdx] = trainRecords[trainIdx].trainOperator.ToString();
+
                     direction[0, trainIdx] = trainRecords[trainIdx].trainDirection.ToString();
 
                     for (int journeyIdx = 0; journeyIdx < trainRecords[trainIdx].journey.Count(); journeyIdx++)
@@ -879,7 +917,8 @@ namespace IOLibrary
                 worksheet.Range[worksheet.Cells[4, 3], worksheet.Cells[4, trainRecords.Count() + 2]].Value2 = dateTime;
                 worksheet.Range[worksheet.Cells[5, 3], worksheet.Cells[5, trainRecords.Count() + 2]].Value2 = powerToWeight;
                 worksheet.Range[worksheet.Cells[6, 3], worksheet.Cells[6, trainRecords.Count() + 2]].Value2 = commodity;
-                worksheet.Range[worksheet.Cells[7, 3], worksheet.Cells[7, trainRecords.Count() + 2]].Value2 = direction;
+                worksheet.Range[worksheet.Cells[7, 3], worksheet.Cells[7, trainRecords.Count() + 2]].Value2 = trainOperator;
+                worksheet.Range[worksheet.Cells[8, 3], worksheet.Cells[8, trainRecords.Count() + 2]].Value2 = direction;
 
                 worksheet.Range[worksheet.Cells[headerOffset, 1], worksheet.Cells[headerOffset + trainRecords[0].journey.Count() - 1, 1]].Value2 = kilometerage;
                 worksheet.Range[worksheet.Cells[headerOffset, 3], worksheet.Cells[headerOffset + trainRecords[0].journey.Count() - 1, 3 + trainRecords.Count() - 1]].Value2 = speed;
