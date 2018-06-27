@@ -534,6 +534,8 @@ namespace TrainLibrary
         }
 
         ///  Interpolate the train speed to a specified interval using a linear interpolation.
+        ///  This algorithm does not interpolate through the gaps of data which are identified 
+        ///  by the interpolation flag in the Train object.
         /// </summary>
         /// <param name="trains">List of train objects containing the parameters for each train journey.</param>
         /// <param name="trackGeometry">The list of Track geometry data to align the train location.</param>
