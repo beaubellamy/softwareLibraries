@@ -290,6 +290,112 @@ namespace IOLibrary
 
         }
 
+        public static bool validateAzureFileFormat(string[] fields)
+        {
+            /* Initialise the validation parameters. */
+            bool validWagonNumber = false;
+            bool validTrainDate = false;
+            bool validComodity = false;
+            bool validOriginCode = false;
+            bool validPlannedDestinationCode = false;
+            bool validActualDestinationCode = false;
+            bool validAttachmentTime = false;
+            bool validDetachmentTime = false;
+            bool validTareWeight = false;
+            bool validGrossWeight = false;
+            
+            /* Check the number of fields */
+            if (fields.Count() != 17)
+            {
+                messageBox("Incorrect number of fields detected in text file.", "Invalid number of fields.");
+                return false;
+            }
+            else
+            {
+                /* Clean the Fields from escape characters. */
+                char[] newDelimeters = { '\'', '"' };
+
+                /* Check each field and validate. */
+                double result = 0;
+
+                /* Wagon class can be a 4 character string or upto 4 numbers. */
+                /* This is covered during data extraction. */
+
+                /* Validate Wagon Number */
+                result = 0;
+                if (double.TryParse(fields[11], out result))
+                    validWagonNumber = true;
+
+                /* Validate Train Date */
+                DateTime dateResult = DateTime.MinValue;
+                if (DateTime.TryParse(fields[8], out dateResult))
+                {
+                    if (dateResult == DateTime.MinValue)
+                        validTrainDate = false;
+                    else
+                        validTrainDate = true;
+                }
+
+
+                /* Validate Commodity */
+                if (fields[6].Count() > 3)
+                    validComodity = true;
+
+                /* Validate Origin code */
+                if (fields[4].Count() == 3)
+                    validOriginCode = true;
+
+                /* Validate Planned Destination code */
+                if (fields[5].Count() == 3)
+                    validPlannedDestinationCode = true;
+
+                /* Validate Destination code */
+                if (fields[1].Count() == 3)
+                    validActualDestinationCode = true;
+
+                /* Validate Attachment Time. */
+                dateResult = DateTime.MinValue;
+                if (DateTime.TryParse(fields[0], out dateResult))
+                {
+                    if (dateResult == DateTime.MinValue)
+                        validAttachmentTime = false;
+                    else
+                        validAttachmentTime = true;
+                }
+
+                /* Validate Dettachment Time */
+                dateResult = DateTime.MinValue;
+                if (DateTime.TryParse(fields[2], out dateResult))
+                {
+                    if (dateResult == DateTime.MinValue)
+                        validDetachmentTime = false;
+                    else
+                        validDetachmentTime = true;
+                }
+
+
+                /* Validate Tare Weight */
+                result = 0;
+                if (double.TryParse(fields[16], out result))
+                    validTareWeight = true;
+
+                /* Validate Gross Weight */
+                result = 0;
+                if (double.TryParse(fields[13], out result))
+                    validGrossWeight = true;
+
+            }
+
+            /* If all the fields are validated, the file format is valid.  */
+            if (validWagonNumber && validTrainDate && validComodity && validOriginCode &&
+                validPlannedDestinationCode && validActualDestinationCode && validAttachmentTime &&
+                validDetachmentTime && validTareWeight && validGrossWeight)
+                return true;
+            else
+                return false;
+
+        }
+
         /// <summary>
         /// Display a message box with details about an error or information about some properties.
         /// </summary>

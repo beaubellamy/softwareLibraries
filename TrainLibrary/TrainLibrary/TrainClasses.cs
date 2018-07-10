@@ -25,7 +25,7 @@ namespace TrainLibrary
     public enum trainOperator
     {
         ARCInfrastructure, ARTC, Aurizon, AustralianRailGroup, AustralianRailwaysHistoricalSociety, AustralianTransportNetwork, AvailableRollingStock, 
-        CityRail, Countrylink, Freightliner, GenesseeWyoming, GreatSouthernRail, Interail, JohnHollandRail, LauchlanValleyRailSociety, Limited3801, 
+        CityRail, Countrylink, ElZorroTransport, Freightliner, GenesseeWyoming, GreatSouthernRail, Interail, JohnHollandRail, LauchlanValleyRailSociety, Limited3801, 
         MetroTrainsMelbourne, PacificNational, QUBE, QueenslandRail, RailTransportMuseum, RailCorp, SCT, SouthernShorthaulRail, SpecialistBulkRail,
         SydneyRailService, TheRailMotorService, Transport4NSW, VLinePassenger, GroupRemaining, Combined, Simulated, Unknown
     };
@@ -60,7 +60,7 @@ namespace TrainLibrary
     {
         /* Train Operators. */
         ARCInfrastructure, ARTC, Aurizon, AustralianRailGroup, AustralianRailwaysHistoricalSociety, AustralianTransportNetwork, AvailableRollingStock, 
-        CityRail, Countrylink, Freightliner, GenesseeWyoming, GreatSouthernRail, Interail, JohnHollandRail, LauchlanValleyRailSociety, Limited3801, 
+        CityRail, Countrylink, ElZorroTransport, Freightliner, GenesseeWyoming, GreatSouthernRail, Interail, JohnHollandRail, LauchlanValleyRailSociety, Limited3801, 
         MetroTrainsMelbourne, PacificNational, QUBE, QueenslandRail, RailTransportMuseum, RailCorp, SCT, SouthernShorthaulRail, SpecialistBulkRail,
         SydneyRailService, TheRailMotorService, Transport4NSW, VLinePassenger,  
         /* Commodities. */
@@ -102,7 +102,7 @@ namespace TrainLibrary
         /// </summary>
         /// <param name="train1">The initial train object.</param>
         /// <param name="train2">The train object to compare with</param>
-        /// <returns>Retrns True if the objects are the same trains.</returns>
+        /// <returns>Returns True if the objects are the same trains.</returns>
         public static bool operator ==(Train train1, Train train2)
         {
             if (ReferenceEquals(train1, train2))
@@ -134,7 +134,7 @@ namespace TrainLibrary
         /// </summary>
         /// <param name="train1">The initial train object.</param>
         /// <param name="train2">The train object to compare with</param>
-        /// <returns>Retrns True if the objects are the same trains.</returns>
+        /// <returns>Returns True if the objects are the same trains.</returns>
         public static bool operator !=(Train train1, Train train2)
         {
             return !(train1 == train2);
@@ -144,7 +144,7 @@ namespace TrainLibrary
         /// Overloaded Equals method
         /// </summary>
         /// <param name="other">The train object to compare.</param>
-        /// <returns>Retrns True if the objects are the same trains.</returns>
+        /// <returns>Returns True if the objects are the same trains.</returns>
         public bool Equals(Train other)
         {
             if (ReferenceEquals(null, other))
@@ -171,7 +171,7 @@ namespace TrainLibrary
         /// Override Equals method
         /// </summary>
         /// <param name="obj">System object to compare</param>
-        /// <returns>Retrns True if the objects are the same trains.</returns>
+        /// <returns>Returns True if the objects are the same trains.</returns>
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(null, obj))
@@ -1044,6 +1044,117 @@ namespace TrainLibrary
             //if (destination.Equals("SCT"))
             //    this.destination = "DYS";
 
+
+        }
+
+        /// <summary>
+        /// Overloaded Equal operator
+        /// </summary>
+        /// <param name="wagon1">The initial wagon object.</param>
+        /// <param name="wagon2">The wagon object to compare with</param>
+        /// <returns>Returns True if the objects are the same wagons.</returns>
+        public static bool operator ==(wagonDetails wagon1, wagonDetails wagon2)
+        {
+            if (ReferenceEquals(wagon1, wagon2))
+                return true;
+
+            if (ReferenceEquals(wagon1, null))
+                return false;
+
+            if (ReferenceEquals(wagon2, null))
+                return false;
+
+            /* Compare all the parameters of the wagon. */
+            return (wagon1.TrainID == wagon2.TrainID &&
+                wagon1.trainDate == wagon2.trainDate &&
+                wagon1.trainOperator == wagon2.trainOperator &&
+                wagon1.commodity == wagon2.commodity&&
+                wagon1.wagonID == wagon2.wagonID &&
+                wagon1.origin == wagon2.origin &&
+                wagon1.plannedDestination == wagon2.plannedDestination &&
+                wagon1.destination == wagon2.destination &&
+                wagon1.attachmentTime == wagon2.attachmentTime &&
+                wagon1.detachmentTime == wagon2.detachmentTime &&
+                wagon1.netWeight == wagon2.netWeight &&
+                wagon1.grossWeight == wagon2.grossWeight);
+
+        }
+
+        /// <summary>
+        /// Overloaded Not Equal operator
+        /// </summary>
+        /// <param name="wagon1">The initial wagon object.</param>
+        /// <param name="wagon2">The wagon object to compare with</param>
+        /// <returns>Returns True if the objects are the same trains.</returns>
+        public static bool operator !=(wagonDetails wagon1, wagonDetails wagon2)
+        {
+            return !(wagon1 == wagon2);
+        }
+
+        /// <summary>
+        /// Overloaded Equals method
+        /// </summary>
+        /// <param name="other">The wagon object to compare.</param>
+        /// <returns>Returns True if the objects are the same wagons.</returns>
+        public bool Equals(wagonDetails other)
+        {
+            if (ReferenceEquals(null, other))
+                return false;
+
+            if (ReferenceEquals(this, other))
+                return true;
+
+            /* Compare all the parameters of the wagon. */
+            return (TrainID.Equals(other.TrainID) &&
+                trainDate.Equals(other.trainDate) &&
+                trainOperator.Equals(other.trainOperator) &&
+                commodity.Equals(other.commodity) &&
+                wagonID.Equals(other.wagonID) &&
+                origin.Equals(other.origin) &&
+                plannedDestination.Equals(other.plannedDestination) &&
+                destination.Equals(other.destination) &&
+                attachmentTime.Equals(other.attachmentTime) &&
+                detachmentTime.Equals(other.detachmentTime) &&
+                netWeight.Equals(other.netWeight) &&
+                grossWeight.Equals(other.grossWeight));
+        }
+
+        /// <summary>
+        /// Override Equals method
+        /// </summary>
+        /// <param name="obj">System object to compare</param>
+        /// <returns>Returns True if the objects are the same wagons.</returns>
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj))
+                return false;
+
+            if (ReferenceEquals(this, obj))
+                return true;
+
+            /* Ensure the objects are the same type and that they can be cast to the train object. */
+            return obj.GetType() == GetType() && Equals((wagonDetails)obj);
+        }
+
+        /// <summary>
+        /// Implementation of custom HashCode for the equals methods.
+        /// </summary>
+        /// <returns>returns a hashcode for the wagon opbject.</returns>
+        public override int GetHashCode()
+        {
+            /* Return the hash codes for the all components of the wagon object. */
+            return TrainID.GetHashCode() +
+                trainDate.GetHashCode() +
+                trainOperator.GetHashCode() +
+                commodity.GetHashCode() +
+                wagonID.GetHashCode() +
+                origin.GetHashCode() +
+                plannedDestination.GetHashCode() +
+                destination.GetHashCode() +
+                attachmentTime.GetHashCode() +
+                detachmentTime.GetHashCode() +
+                netWeight.GetHashCode() +
+                grossWeight.GetHashCode();
 
         }
     }

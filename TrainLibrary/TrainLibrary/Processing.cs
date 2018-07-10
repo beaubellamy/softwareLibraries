@@ -2127,20 +2127,21 @@ namespace TrainLibrary
             string[] AustralianTransportNetwork = { "ATN" };
             string[] AvailableRollingStock = { "AVA" };
             string[] CityRail = { "CTY" }; 
-            string[] Countrylink = { "CLK" }; 
+            string[] Countrylink = { "CLK" };
+            string[] ElZorroTransport = { "ELZ" };
             string[] Freightliner = { "FLN", "FLK" }; 
-            string[] GenesseeWyoming = { "GWI","ASG", "ASR"}; 
+            string[] GenesseeWyoming = { "GWI", "ASG", "ASR"}; 
             string[] GreatSouthernRail = { "GSR" ,"GNR"};
             string[] Interail = { "INT" };
             string[] JohnHollandRail = { "LSM", "LRM"}; 
-            string[] LauchlanValleyRailSociety = { "LVR" };
+            string[] LauchlanValleyRailSociety = { "LVR", "LVF"};
             string[] Limited3801 = { "380" };
             string[] MetroTrainsMelbourne = { "MTM" };
             string[] PacificNational = { "FAL", "FAB", "GCP", "NRC", "PAG", "PAT", "PNB", "PNC", "PND", "PNG", "PNH", "PNL", "PNT" }; 
             string[] QUBE = { "QUB", "QUG", "SPS", "ST"};
             string[] QueenslandRail = { "QRN" };
             string[] RailTransportMuseum = { "RTM" }; 
-            string[] RailCorp = { "RCP" }; 
+            string[] RailCorp = { "RCP", "RC" }; 
             string[] SCT = { "SCT" }; 
             string[] SouthernShorthaulRail = { "SSR", "SSG" };
             string[] SpecialistBulkRail = { "SBR" };
@@ -2168,6 +2169,8 @@ namespace TrainLibrary
                 return trainOperator.CityRail;
             else if (Countrylink.Contains(Operator))
                 return trainOperator.Countrylink;
+            else if (ElZorroTransport.Contains(Operator))
+                return trainOperator.ElZorroTransport;
             else if (Freightliner.Contains(Operator))
                 return trainOperator.Freightliner;
             else if (GenesseeWyoming.Contains(Operator))
@@ -2221,19 +2224,19 @@ namespace TrainLibrary
         public static trainCommodity getWagonCommodity(string commodity)
         {
             /* Initialise the commodity arrays with known commodity codes. */
-            string[] Clinker = { "CLS" , "CLNK"};
-            string[] Coal = { "CLE", "CLD" , "COLD", "COLE"};
+            string[] Clinker = { "Clinker", "CLS" , "CLNK"};
+            string[] Coal = { "Coal Domestic", "Coal Export", "CLE", "CLD" , "COLD", "COLE"};
             //string[] Freight = { "FRE", "GEN" ,"SUP", "GENF"};
             //string[] Express = { "EXP", "XPT", "CONT" };
-            string[] Interstate = { "FRE", "GEN", "SUP", "GENF", "EXP", "XPT", "CONT"}; //, "INT", "INTM", "STL", "STEL" };
-            string[] Grain = { "GRN", "GRAN" };
+            string[] Interstate = { "General Freight", "FRE", "GEN", "SUP", "GENF", "EXP", "XPT", "CONT"}; //, "INT", "INTM", "STL", "STEL" };
+            string[] Grain = { "Grain", "GRN", "GRAN" };
             string[] Goods = { "GDS" };
-            string[] Intermodal = { "INT", "INTM" };
-            string[] Minerals = { "MIN", "MINL"};
-            string[] Passenger = { "PAS", "PASS"};
+            string[] Intermodal = { "Intermodal", "INT", "INTM" };
+            string[] Minerals = { "Mineral", "MIN", "MINL"};
+            string[] Passenger = { "Passenger", "PAS", "PASS"};
             string[] Shunt = { "SHT" };
             string[] Shuttle = { "SHT" };
-            string[] Steel = { "STL", "STEL" };
+            string[] Steel = { "Steel", "STL", "STEL" };
             string[] TrailerRail = { "TRL" };
             string[] Work = { "WRK" };
             

@@ -145,6 +145,17 @@ namespace IOLibrary
             return IceRecord;
         }
 
+        /// <summary>
+        /// Read the Azure data file and extract the neccessary information into a train record class.
+        /// The data file is assumed to be created from accessing the data through Azure datawarehouse, which produces a new format.
+        /// This will apply to any data collected after 01/07/2018.
+        /// ------------------------------------------------------
+        /// </summary>
+        /// <param name="filename">Filename of the data file.</param>
+        /// <param name="trainList">List of trains to exclude.</param>
+        /// <param name="excludeListOfTrains">Boolean flag to indicate if the list of trains should be excluded or exclusively included.</param>
+        /// <param name="dateRange">The dates between which to keep the data</param>
+        /// <returns>List of train records describing each point in a trains journey.</returns>
         public static List<TrainRecord> readAzureICEData(string filename, List<string> trainList, bool excludeListOfTrains, DateTime[] dateRange)
         {
 
@@ -613,7 +624,7 @@ namespace IOLibrary
 
         /// <summary>
         /// Read the wagon data file.
-        /// The file is assumes the data has been extracted from Tableau 
+        /// The file assumes the data has been extracted from Tableau 
         /// and hence has a specific file format.
         /// Column  Field
         ///  0      Commodity
@@ -634,7 +645,8 @@ namespace IOLibrary
         ///  15     Tare Mass
         /// </summary>
         /// <param name="filename">The wagon data file.</param>
-        /// <param name="grossTonnes">A flag indicating if the prefered weight values should be gross tonnes or net weight.</param>
+        /// <param name="combineIntermodalAndSteel">A flag indicating if the Intermodal and Steel commodities should be combined 
+        /// into an interstate commodity for analysis.</param>
         /// <returns>The list of wagon objects.</returns>
         public static List<wagonDetails> readWagonDataFile(string filename, bool combineIntermodalAndSteel = false)
         {
@@ -745,7 +757,124 @@ namespace IOLibrary
             /* Return the completed wagon List. */
             return wagon;
         }
-        
+
+        /// <summary>
+        /// Read the wagon data file that is assumed to be collected from the Azure datawarehouse.
+        /// This will have a difference format than previous data collection, and is likley to apply to 
+        /// any data collected after 01/07/2018.
+        /// </summary>
+        /// <param name="filename">The wagon data file.</param>
+        /// <param name="combineIntermodalAndSteel">A flag indicating if the Intermodal and Steel commodities should be combined 
+        /// into an interstate commodity for analysis.</param>
+        /// <returns>The list of wagon objects.</returns>
+        public static List<wagonDetails> readAzureWagonDataFile(string filename, bool combineIntermodalAndSteel = false)
+        {
+            /* Read the all lines of the text file. */
+            char[] delimiters = { '\t' };
+            bool header = true;
+
+            DateTime trainDate = DateTime.MinValue;
+            DateTime attachmentTime = DateTime.MinValue;
+            DateTime detachmentTime = DateTime.MinValue;
+            double tareWeight = 0;
+            double grossWeight = 0;
+            string wagonID = null;
+            string origin = null;
+            string plannedDestination = null;
+            string destination = null;
+            double weight = 0;
+
+            /* Create the list of wagon objects. */
+            List<wagonDetails> wagon = new List<wagonDetails>();
+
+            /* Validate the format of the first line of the file, ignoring the header information */
+            bool validFormat = false;
+            string[] fields = null;
+
+            /* Read the first line of data - assum e first line has header information. */
+            fields = System.IO.File.ReadLines(filename).Skip(1).First().Split(delimiters);
+
+            validFormat = Tools.validateAzureFileFormat(fields);
+            if (!validFormat)
+            {
+                /* The file format is invalid, return the empty wagon object. */
+                throw new IOException("Data file has an invalid format.");
+            }
+
+            /* Extract the wagon details from the data file. */
+            foreach (string line in System.IO.File.ReadLines(filename))
+            {
+                if (header)
+                {
+                    header = false;
+                }
+                else
+                {
+                    /* Split the line into the fields */
+                    fields = line.Split(delimiters);
+
+                    /* Extract the train related information. */
+                    string trainID = fields[7];
+                    DateTime.TryParse(fields[8], out trainDate);
+                    trainOperator trainOperator = Processing.getWagonOperator(fields[3]);
+                    trainCommodity commodity = Processing.getWagonCommodity(fields[6]);
+
+                    /* Include Intermodal and Steel commodity into the Interstate commodity, when required. */
+                    if (combineIntermodalAndSteel)
+                        if (commodity.Equals(trainCommodity.Intermodal) || commodity.Equals(trainCommodity.Steel))
+                            commodity = trainCommodity.Interstate;
+
+                    /* Extract the wagon Identification. */
+                    wagonID = fields[9] + " " + Regex.Replace(fields[11], ",", "");
+
+                    /* Wagon Origin. */
+                    origin = fields[4].ToUpper();
+                    if (origin.Count() != 3)
+                        Tools.messageBox("Origin location code is unknown: " + origin + " Unknown location code.");
+
+                    /* Wagon planned destination. */
+                    plannedDestination = fields[5].ToUpper();
+                    if (plannedDestination.Count() != 3)
+                    {
+                        if (fields[1].Count() == 3)
+                            plannedDestination = fields[1].ToUpper();
+                        else
+                            Tools.messageBox("Consigned Destination location code in unknown: Train: " + trainID + ", location " + plannedDestination + " Unknown location code.");
+                    }
+
+                    /* Wagon destination. */
+                    destination = fields[1].ToUpper();
+                    if (destination.Count() != 3)
+                    {   /* If the destination field is empty or set to -1, assume the wagon reaches the planned destination. */
+                        if (destination.Equals("") || destination.Equals("-1"))
+                            destination = plannedDestination;
+                        else
+                            Tools.messageBox("Destination location code is unknown: " + destination + " Unknown location code.");
+                    }
+                   
+                    /* Extract remaining wagon details. */
+                    DateTime.TryParse(fields[0], out attachmentTime);
+                    DateTime.TryParse(fields[2], out detachmentTime);
+                    double.TryParse(fields[16], out tareWeight);
+                    double.TryParse(fields[13], out grossWeight);
+
+                    /* Net weight */
+                    weight = grossWeight - tareWeight;
+
+                    if (weight < 0)
+                        weight = 0;
+
+                    /* Construct the wagon object and add to the list. */
+                    wagonDetails data = new wagonDetails(trainID, trainDate, trainOperator, commodity, wagonID, origin, plannedDestination, destination, attachmentTime, detachmentTime, weight, grossWeight);
+                    wagon.Add(data);
+
+                }
+            }
+            /* Return the completed wagon List. */
+            return wagon;
+        }
+
+
         /// <summary>
         /// Read the file containing the temporary speed restriction information and 
         /// store in a manalgable list of TSR objects, which contain all neccessary 
