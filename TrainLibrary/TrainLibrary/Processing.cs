@@ -2228,17 +2228,17 @@ namespace TrainLibrary
             string[] Coal = { "Coal Domestic", "Coal Export", "CLE", "CLD" , "COLD", "COLE"};
             //string[] Freight = { "FRE", "GEN" ,"SUP", "GENF"};
             //string[] Express = { "EXP", "XPT", "CONT" };
-            string[] Interstate = { "General Freight", "FRE", "GEN", "SUP", "GENF", "EXP", "XPT", "CONT"}; //, "INT", "INTM", "STL", "STEL" };
+            string[] Interstate = { "General Freight", "FRE", "GEN", "SUP", "GENF", "Express", "EXP", "XPT", "Containers", "CONT"}; //, "INT", "INTM", "STL", "STEL" };
             string[] Grain = { "Grain", "GRN", "GRAN" };
             string[] Goods = { "GDS" };
             string[] Intermodal = { "Intermodal", "INT", "INTM" };
-            string[] Minerals = { "Mineral", "MIN", "MINL"};
+            string[] Minerals = { "Minerals", "MIN", "MINL"};
             string[] Passenger = { "Passenger", "PAS", "PASS"};
             string[] Shunt = { "SHT" };
-            string[] Shuttle = { "SHT" };
+            string[] Shuttle = { "Shuttle", "SHT" };
             string[] Steel = { "Steel", "STL", "STEL" };
             string[] TrailerRail = { "TRL" };
-            string[] Work = { "WRK" };
+            string[] Work = { "Work", "WRK" };
             
             /* Return the appropriate commodity. */
             if (Clinker.Contains(commodity))

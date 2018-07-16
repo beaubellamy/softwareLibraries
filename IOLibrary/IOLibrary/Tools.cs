@@ -311,7 +311,7 @@ namespace IOLibrary
                 return false;
             }
             else
-            {
+            {                
                 /* Clean the Fields from escape characters. */
                 char[] newDelimeters = { '\'', '"' };
 
@@ -336,7 +336,6 @@ namespace IOLibrary
                         validTrainDate = true;
                 }
 
-
                 /* Validate Commodity */
                 if (fields[6].Count() > 3)
                     validComodity = true;
@@ -350,7 +349,7 @@ namespace IOLibrary
                     validPlannedDestinationCode = true;
 
                 /* Validate Destination code */
-                if (fields[1].Count() == 3)
+                if (fields[1].Equals("-1") || fields[1].Count() == 3)
                     validActualDestinationCode = true;
 
                 /* Validate Attachment Time. */
@@ -363,6 +362,8 @@ namespace IOLibrary
                         validAttachmentTime = true;
                 }
 
+               
+
                 /* Validate Dettachment Time */
                 dateResult = DateTime.MinValue;
                 if (DateTime.TryParse(fields[2], out dateResult))
@@ -372,7 +373,11 @@ namespace IOLibrary
                     else
                         validDetachmentTime = true;
                 }
-
+                else if (fields[2].Equals(""))
+                {
+                    dateResult = DateTime.Now;
+                    validDetachmentTime = true;
+                }
 
                 /* Validate Tare Weight */
                 result = 0;

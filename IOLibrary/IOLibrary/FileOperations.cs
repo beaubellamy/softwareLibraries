@@ -804,6 +804,7 @@ namespace IOLibrary
             /* Extract the wagon details from the data file. */
             foreach (string line in System.IO.File.ReadLines(filename))
             {
+               
                 if (header)
                 {
                     header = false;
@@ -831,7 +832,7 @@ namespace IOLibrary
                     origin = fields[4].ToUpper();
                     if (origin.Count() != 3)
                         Tools.messageBox("Origin location code is unknown: " + origin + " Unknown location code.");
-
+                    
                     /* Wagon planned destination. */
                     plannedDestination = fields[5].ToUpper();
                     if (plannedDestination.Count() != 3)
@@ -839,7 +840,7 @@ namespace IOLibrary
                         if (fields[1].Count() == 3)
                             plannedDestination = fields[1].ToUpper();
                         else
-                            Tools.messageBox("Consigned Destination location code in unknown: Train: " + trainID + ", location " + plannedDestination + " Unknown location code.");
+                            Tools.messageBox("Consigned Destination location code is unknown: Train: " + trainID + ", location " + plannedDestination + " Unknown location code.");
                     }
 
                     /* Wagon destination. */
@@ -867,6 +868,7 @@ namespace IOLibrary
                     /* Construct the wagon object and add to the list. */
                     wagonDetails data = new wagonDetails(trainID, trainDate, trainOperator, commodity, wagonID, origin, plannedDestination, destination, attachmentTime, detachmentTime, weight, grossWeight);
                     wagon.Add(data);
+                    
 
                 }
             }
