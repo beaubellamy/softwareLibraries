@@ -1415,7 +1415,7 @@ namespace IOLibrary
         /// <param name="averageTrains">List of aggregated train journies.</param>
         /// <param name="stats">The statstics generated for each average train</param>
         /// <param name="aggregatedDestination">The destination directory for the resulting file.</param>
-        public static void wrtieAverageData(List<AverageTrain> averageTrains, List<TrainStatistics> stats, string aggregatedDestination)
+        public static void writeAverageData(List<AverageTrain> averageTrains, List<TrainStatistics> stats, string aggregatedDestination)
         {
             /* Start Excel and get the references to the workbook and worksheet. */
             Microsoft.Office.Interop.Excel.Application excel = new Microsoft.Office.Interop.Excel.Application();
@@ -1756,7 +1756,7 @@ namespace IOLibrary
         /// <param name="averageTrains">List of aggregated train journies.</param>
         /// <param name="stats">The statstics generated for each average train</param>
         /// <param name="aggregatedDestination">The destination directory for the resulting file.</param>
-        public static void wrtieTrainPairStatistics(List<TrainPairStatistics> stats, string aggregatedDestination)
+        public static void writeTrainPairStatistics(List<TrainPairStatistics> stats, string aggregatedDestination)
         {
             /* Create the microsoft excel references. */
             Microsoft.Office.Interop.Excel.Application excel = new Microsoft.Office.Interop.Excel.Application();
