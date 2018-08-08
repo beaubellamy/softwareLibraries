@@ -46,7 +46,7 @@ namespace IOLibrary
             /* Set maximum speed values
              * There are occasionally datapoints that indicate the train is going faster than phyically possible 
              */
-            double maxPassengerSpeed = 170;
+            double maxPassengerSpeed = 180;
             double maxFreightSpeed = 120;
 
             /* Initialise the fields of interest. */
@@ -202,25 +202,25 @@ namespace IOLibrary
                     /* Seperate each record into each field */
                     fields = line.Split(delimeters);
 
-                    TrainID = fields[6];
-                    locoID = fields[1];
-
+                    TrainID = fields[8];
+                    locoID = fields[3];
+                    
                     if (fields[4].Count() >= operatorStringLength)
-                        subOperator = fields[4].Substring(0, operatorStringLength);
+                        subOperator = fields[6].Substring(0, operatorStringLength);
                     else
-                        subOperator = fields[4].PadRight(operatorStringLength);
+                        subOperator = fields[6].PadRight(operatorStringLength);
 
                     trainOperator = getOperator(subOperator);
 
                     commodity = getCommodity(fields[5]);
-
+                    
                     /* Ensure values are valid while reading them out. */
-                    double.TryParse(fields[9], out speed);
-                    double.TryParse(fields[8], out kmPost);
-                    double.TryParse(fields[0], out latitude);
-                    double.TryParse(fields[2], out longitude);
-                    DateTime.TryParse(fields[3], out dateTime);
-                    double.TryParse(fields[7], out powerToWeight);
+                    double.TryParse(fields[14], out speed);
+                    double.TryParse(fields[12], out kmPost);
+                    double.TryParse(fields[2], out latitude);
+                    double.TryParse(fields[4], out longitude);
+                    DateTime.TryParse(fields[0], out dateTime);
+                    double.TryParse(fields[11], out powerToWeight);
 
                     /* Possible TSR information as well*/
                     /* TSR region

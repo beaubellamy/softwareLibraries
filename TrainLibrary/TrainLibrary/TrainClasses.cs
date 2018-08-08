@@ -64,7 +64,7 @@ namespace TrainLibrary
         MetroTrainsMelbourne, PacificNational, QUBE, QueenslandRail, RailTransportMuseum, RailCorp, SCT, SouthernShorthaulRail, SpecialistBulkRail,
         SydneyRailService, TheRailMotorService, Transport4NSW, VLinePassenger,  
         /* Commodities. */
-        GeneralFreight, Coal, Express, Goods, Mineral, Shuttle, Steel, Shunt, Clinker, Intermodal, Passenger, Interstate, TrailerRailGrain, Work,
+        GeneralFreight, Coal, Express, Grain, Goods, Mineral, Shuttle, Steel, Shunt, Clinker, Intermodal, Passenger, Interstate, TrailerRailGrain, Work,
         /* Train Types */
         AdelaideMelbourne, AdelaidePerth, AdelaideSydney, AdeliadeBrisbane, BrisbaneMelbourne, BrisbanePerth, BrisbaneSydney, GP, PX,
         MelbournePerth, MelbourneSydney, PerthSydney,
