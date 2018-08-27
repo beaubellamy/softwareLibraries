@@ -162,7 +162,7 @@ namespace IOLibrary
             /* Read all the lines of the data file. */
             Tools.isFileOpen(filename);
 
-            char[] delimeters = { '\t' };
+            char[] delimeters = { '\t', ',' };
             string[] fields = null;
 
             /* Minimum length of the operator string to distinguisg between them. */
@@ -191,9 +191,9 @@ namespace IOLibrary
 
             /* List of all valid train data. */
             List<TrainRecord> IceRecord = new List<TrainRecord>();
-
+            
             foreach (string line in System.IO.File.ReadLines(filename))
-            {
+            {                
                 if (header)
                     /* Ignore the header line. */
                     header = false;
@@ -202,35 +202,31 @@ namespace IOLibrary
                     /* Seperate each record into each field */
                     fields = line.Split(delimeters);
 
-                    TrainID = fields[8];
-                    locoID = fields[3];
+                    /* Validate the length of the line */
+                    if (fields.Count() != 25)
+                        continue;
+
+                    TrainID = fields[11];
+                    locoID = fields[9];
                     
-                    if (fields[4].Count() >= operatorStringLength)
-                        subOperator = fields[6].Substring(0, operatorStringLength);
+                    if (fields[24].Count() >= operatorStringLength)
+                        subOperator = fields[24].Substring(0, operatorStringLength);
                     else
-                        subOperator = fields[6].PadRight(operatorStringLength);
+                        subOperator = fields[24].PadRight(operatorStringLength);
 
                     trainOperator = getOperator(subOperator);
 
-                    commodity = getCommodity(fields[5]);
+                    commodity = getCommodity(fields[23]);
                     
                     /* Ensure values are valid while reading them out. */
-                    double.TryParse(fields[14], out speed);
+                    double.TryParse(fields[13], out speed);
                     double.TryParse(fields[12], out kmPost);
-                    double.TryParse(fields[2], out latitude);
-                    double.TryParse(fields[4], out longitude);
-                    DateTime.TryParse(fields[0], out dateTime);
-                    double.TryParse(fields[11], out powerToWeight);
+                    kmPost /= 1000;
 
-                    /* Possible TSR information as well*/
-                    /* TSR region
-                     * Start km
-                     * end km
-                     * TSR issue Data
-                     * TSR lift date
-                     * 
-                     * This would need to be added to the trainRecord class.
-                     */
+                    double.TryParse(fields[15], out latitude);
+                    double.TryParse(fields[16], out longitude);
+                    DateTime.TryParse(fields[8], out dateTime);
+                    double.TryParse(fields[19], out powerToWeight);
 
                     /* Check if the train is in the exclude list */
                     if (excludeListOfTrains)
