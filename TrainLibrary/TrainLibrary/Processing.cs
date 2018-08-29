@@ -697,7 +697,7 @@ namespace TrainLibrary
             List<double> speed = new List<double>();
             double sum = 0;
             double aveSpeed = 0;
-
+            
             /* Determine the number of points in the average train journey. */
             int size = (int)((endKm - startKm) / (interpolationInterval * metresToKilometers));
 
@@ -811,8 +811,8 @@ namespace TrainLibrary
                         actualTime = actualTime + ((interpolationInterval * metresToKilometers) / aveSpeed);
                         simulatedTime = simulatedTime + ((interpolationInterval * metresToKilometers) / CategorySim[journeyIdx].speed);
                     }
-                }
 
+                }                
 
             }
 
@@ -822,7 +822,7 @@ namespace TrainLibrary
             /* Make sure the ratio is less than 1. */
             if (proRataTSRRatio > 1)
                 proRataTSRRatio = 1 / proRataTSRRatio;
-
+                        
             /* Re-assign the pro-rata speeds to the TSR locations or the slow train locations. */
             for (int index = 0; index < averageSpeed.Count(); index++)
             {

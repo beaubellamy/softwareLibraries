@@ -206,8 +206,8 @@ namespace IOLibrary
                     if (fields.Count() != 25)
                         continue;
 
-                    TrainID = fields[11];
-                    locoID = fields[9];
+                    TrainID = fields[15];
+                    locoID = fields[6];
                     
                     if (fields[24].Count() >= operatorStringLength)
                         subOperator = fields[24].Substring(0, operatorStringLength);
@@ -227,7 +227,122 @@ namespace IOLibrary
                     double.TryParse(fields[16], out longitude);
                     DateTime.TryParse(fields[8], out dateTime);
                     double.TryParse(fields[19], out powerToWeight);
+                  
+                    /* Check if the train is in the exclude list */
+                    if (excludeListOfTrains)
+                        includeTrain = !trainList.Contains(TrainID);
+                    else
+                    {
+                        if (trainList.Count() > 0)
+                            includeTrain = trainList.Contains(TrainID);
+                        else
+                            includeTrain = true;
+                    }
 
+                    /* Validate the speed data */
+                    if (commodity.Equals(trainCommodity.Passenger))
+                    {
+                        if (speed < 0 || speed > maxPassengerSpeed)
+                            includeTrain = false;
+                    }
+                    else
+                    {
+                        if (speed < 0 || speed > maxFreightSpeed)
+                            includeTrain = false;
+                    }
+
+                    if (dateTime >= dateRange[0] && dateTime < dateRange[1] &&
+                        includeTrain)
+                    {
+                        TrainRecord record = new TrainRecord(TrainID, locoID, dateTime, new GeoLocation(latitude, longitude), trainOperator, commodity, kmPost, speed, powerToWeight);
+                        IceRecord.Add(record);
+                    }
+
+                }
+            }
+
+            /* Return the list of records. */
+            return IceRecord;
+        }
+
+        /// <summary>
+        /// Read the Azure data file and extract the neccessary information into a train record class.
+        /// The data file is assumed to be created accessing the data through Azure datawarehouse, and then filtering out neccessary data points in Tableau.
+        /// This process creates a new format different to the original datawarehouse.
+        /// ------------------------------------------------------
+        /// </summary>
+        /// <param name="filename">Filename of the data file.</param>
+        /// <param name="trainList">List of trains to exclude.</param>
+        /// <param name="excludeListOfTrains">Boolean flag to indicate if the list of trains should be excluded or exclusively included.</param>
+        /// <param name="dateRange">The dates between which to keep the data</param>
+        /// <returns>List of train records describing each point in a trains journey.</returns>
+        public static List<TrainRecord> readAzureExtractICEData(string filename, List<string> trainList, bool excludeListOfTrains, DateTime[] dateRange)
+        {
+
+            /* Read all the lines of the data file. */
+            Tools.isFileOpen(filename);
+
+            char[] delimeters = { '\t' };
+            string[] fields = null;
+
+            /* Minimum length of the operator string to distinguisg between them. */
+            int operatorStringLength = 6;
+            /* Set maximum speed values
+             * There are occasionally datapoints that indicate the train is going faster than phyically possible 
+             */
+            double maxPassengerSpeed = 170;
+            double maxFreightSpeed = 120;
+
+            /* Initialise the fields of interest. */
+            string TrainID = "none";
+            string locoID = "none";
+            string subOperator = "";
+            trainOperator trainOperator = trainOperator.Unknown;
+            trainCommodity commodity = trainCommodity.Unknown;
+            double powerToWeight = 0.0;
+            double speed = 0.0;
+            double kmPost = 0.0;
+            double latitude = 0.0;
+            double longitude = 0.0;
+            DateTime dateTime = DateTime.MinValue;
+
+            bool header = true;
+            bool includeTrain = true;
+
+            /* List of all valid train data. */
+            List<TrainRecord> IceRecord = new List<TrainRecord>();
+
+            foreach (string line in System.IO.File.ReadLines(filename))
+            {
+                if (header)
+                    /* Ignore the header line. */
+                    header = false;
+                else
+                {
+                    /* Seperate each record into each field */
+                    fields = line.Split(delimeters);
+                    
+                    TrainID = fields[15];
+                    locoID = fields[6];
+
+                    if (fields[8].Count() >= operatorStringLength)
+                        subOperator = fields[8].Substring(0, operatorStringLength);
+                    else
+                        subOperator = fields[8].PadRight(operatorStringLength);
+
+                    trainOperator = getOperator(subOperator);
+
+                    commodity = getCommodity(fields[9]);
+
+                    /* Ensure values are valid while reading them out. */
+                    double.TryParse(fields[23], out speed);
+                    double.TryParse(fields[21], out kmPost);
+                    kmPost /= 1000;
+                    double.TryParse(fields[5], out latitude);
+                    double.TryParse(fields[7], out longitude);
+                    DateTime.TryParse(fields[4], out dateTime);
+                    double.TryParse(fields[20], out powerToWeight);
+                    
                     /* Check if the train is in the exclude list */
                     if (excludeListOfTrains)
                         includeTrain = !trainList.Contains(TrainID);
