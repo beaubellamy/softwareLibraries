@@ -36,7 +36,7 @@ namespace TrainLibrary
     /// </summary>
     public enum trainCommodity
     {
-        GeneralFreight, Coal, Express,  Grain, Goods, Mineral, Shuttle, Steel, Shunt, Clinker, Intermodal, Passenger, Interstate, TrailerRail, Work,
+        Clinker, Coal, Express, GeneralFreight, Grain, Goods, Intermodal, Interstate, Mineral, Passenger, Shuttle, Shunt, Steel, TrailerRail, Work,
         GroupRemaining, Unknown
     };
 
@@ -420,7 +420,7 @@ namespace TrainLibrary
         /// <param name="kmPost">The closest kilometreage marker to the current position.</param>
         /// <param name="kilometreage">The calaculated kilometreage of the current train position.</param>
         /// <param name="elevation">The elevation of the train at the current location, this is taken from the geometry information.</param>
-        /// <param name="loop">Identification of the presence of a loop at the current position.</param>
+        /// <param name="loop">Identification of the presence of a loop or signal at the current position.</param>
         /// <param name="TSR">Identification of the presence of a TSR at the current position.</param>
         public TrainJourney(GeoLocation location, DateTime date, double speed, double kmPost, double kilometreage, double elevation, bool loop, bool TSR)
         {
@@ -443,7 +443,7 @@ namespace TrainLibrary
         /// <param name="kmPost">The closest kilometreage marker to the current position.</param>
         /// <param name="kilometreage">The calaculated kilometreage of the current train position.</param>
         /// <param name="elevation">The elevation of the train at the current location, this is taken from the geometry information.</param>
-        /// <param name="loop">Identification of the presence of a loop at the current position.</param>
+        /// <param name="loop">Identification of the presence of a loop or signal at the current position.</param>
         /// <param name="TSR">Identification of the presence of a TSR at the current position.</param>
         public TrainJourney(DateTime date, double speed, double kmPost, double virtualKm, double elevation, bool loop, bool TSR)
         {
@@ -467,7 +467,7 @@ namespace TrainLibrary
         /// <param name="kmPost">The closest kilometreage marker to the current position.</param>
         /// <param name="kilometreage">The calaculated kilometreage of the current train position.</param>
         /// <param name="elevation">The elevation of the train at the current location, this is taken from the geometry information.</param>
-        /// <param name="loop">Identification of the presence of a loop at the current position.</param>
+        /// <param name="loop">Identification of the presence of a loop or signal at the current position.</param>
         /// <param name="TSR">Identification of the presence of a TSR at the current position.</param>
         /// <param name="interpolate">Flag indicating if interpolation of this point was conducted.</param>
         public TrainJourney(DateTime date, double speed, double kmPost, double virtualKm, double elevation, bool loop, bool TSR, bool interpolate)
@@ -1160,7 +1160,7 @@ namespace TrainLibrary
     }
 
     /// <summary>
-    /// A class defining the loop location by kilometreage.
+    /// A class defining the loop or signal location by kilometreage.
     /// </summary>
     public class LoopLocation
     {

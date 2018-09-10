@@ -332,7 +332,7 @@ namespace TrainLibrary
         }
 
         /// <summary>
-        /// Populate the loop location information for each point in the train journey.
+        /// Populate the loop or signal location information for each point in the train journey.
         /// </summary>
         /// <param name="train">A train object containing the journey details.</param>
         /// <param name="trackGeometry">The track geometry object indicating the location of the loops.</param>
@@ -1102,7 +1102,7 @@ namespace TrainLibrary
         }
 
         /// <summary>
-        /// Determine if the train is approaching, leaving or within a loop.
+        /// Determine if the train is approaching, leaving or within a loop or signal.
         /// </summary>
         /// <param name="train">The train object containing the journey details.</param>
         /// <param name="targetLocation">The specific location being considered.</param>

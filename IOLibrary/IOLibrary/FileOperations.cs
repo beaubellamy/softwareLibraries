@@ -206,8 +206,8 @@ namespace IOLibrary
                     if (fields.Count() != 25)
                         continue;
 
-                    TrainID = fields[15];
-                    locoID = fields[6];
+                    TrainID = fields[11];
+                    locoID = fields[9];
                     
                     if (fields[24].Count() >= operatorStringLength)
                         subOperator = fields[24].Substring(0, operatorStringLength);
@@ -681,7 +681,7 @@ namespace IOLibrary
                     double.TryParse(fields[4], out kilometreage);
                     loop = fields[6];
 
-                    if (loop.Equals("loop", StringComparison.OrdinalIgnoreCase) || loop.Equals("true", StringComparison.OrdinalIgnoreCase))
+                    if (loop.Equals("loop", StringComparison.OrdinalIgnoreCase) || loop.Equals("signal", StringComparison.OrdinalIgnoreCase))
                         isLoopHere = true;
                     else
                         isLoopHere = false;
@@ -1600,7 +1600,7 @@ namespace IOLibrary
                 kilometerage[i, 0] = averageTrains[0].kilometreage[i];
                 elevation[i, 0] = averageTrains[0].elevation[i];
 
-                /* Identify where the loops and TSR are. */
+                /* Identify where the loops or signal and TSR are. */
                 if (averageTrains[0].isInLoopBoundary[i])
                     isLoophere[i, 0] = "Loop Boundary";
 
@@ -1680,7 +1680,7 @@ namespace IOLibrary
         /// displayed for future analysis and investigation.
         /// </summary>
         /// <param name="pair">A list of train pairs.</param>
-        /// <param name="loopLocations">A list of loop locations.</param>
+        /// <param name="loopLocations">A list of loop or signal locations.</param>
         /// <param name="aggregatedDestination">The destination directory.</param>
         public static void writeTrainPairs(List<TrainPair> pair, List<LoopLocation> loopLocations, string aggregatedDestination)
         {
