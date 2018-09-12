@@ -308,12 +308,12 @@ namespace IOLibrary
 
             bool header = true;
             bool includeTrain = true;
-
+            
             /* List of all valid train data. */
             List<TrainRecord> IceRecord = new List<TrainRecord>();
 
             foreach (string line in System.IO.File.ReadLines(filename))
-            {
+            {               
                 if (header)
                     /* Ignore the header line. */
                     header = false;
@@ -321,7 +321,11 @@ namespace IOLibrary
                 {
                     /* Seperate each record into each field */
                     fields = line.Split(delimeters);
-                    
+
+                    /* EOF reached early */
+                    if (fields[0].Equals(""))
+                        return IceRecord;
+
                     TrainID = fields[15];
                     locoID = fields[6];
 
@@ -335,13 +339,13 @@ namespace IOLibrary
                     commodity = getCommodity(fields[9]);
 
                     /* Ensure values are valid while reading them out. */
-                    double.TryParse(fields[23], out speed);
-                    double.TryParse(fields[21], out kmPost);
+                    double.TryParse(fields[22], out speed);
+                    double.TryParse(fields[20], out kmPost);
                     kmPost /= 1000;
                     double.TryParse(fields[5], out latitude);
                     double.TryParse(fields[7], out longitude);
                     DateTime.TryParse(fields[4], out dateTime);
-                    double.TryParse(fields[20], out powerToWeight);
+                    double.TryParse(fields[19], out powerToWeight);
                     
                     /* Check if the train is in the exclude list */
                     if (excludeListOfTrains)
