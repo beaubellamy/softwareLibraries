@@ -683,6 +683,7 @@ namespace TrainLibrary
             List<bool> slowTrains = new List<bool>();
             double actualTime = 0;
             double simulatedTime = 0;
+            double speedStDev = 0;
 
             /* Set up the average train journey lists. */
             List<double> kilometreage = new List<double>();
@@ -691,11 +692,14 @@ namespace TrainLibrary
             List<bool> isInLoopBoundary = new List<bool>();
             List<bool> isInTSRboundary = new List<bool>();
             List<bool> trackSlowTrains = new List<bool>();
+            List<double> sampleStDev = new List<double>();
+            List<int> sampleCount = new List<int>();
 
             double kmPost = 0;
             double altitude = 0;
             List<double> speed = new List<double>();
             double sum = 0;
+            double sumSD = 0;
             double aveSpeed = 0;
             
             /* Determine the number of points in the average train journey. */
@@ -714,7 +718,7 @@ namespace TrainLibrary
                 TSRList.Clear();
                 slowTrains.Clear();
                 sum = 0;
-                
+
                 /* Cycle through each train in the list. */
                 foreach (Train train in trains)
                 {
@@ -733,6 +737,7 @@ namespace TrainLibrary
 
                             speed.Add(journey.speed);
                             sum = sum + journey.speed;
+
                         }
                         else
                         {
@@ -740,10 +745,12 @@ namespace TrainLibrary
 
                             if (journey.speed > (loopSpeedThreshold * CategorySim[journeyIdx].speed))
                             {
+                                /* The train is not affected by the TSR */
                                 slowTrains.Add(false);
 
                                 speed.Add(journey.speed);
                                 sum = sum + journey.speed;
+                                
                             }
                             else
                             {
@@ -779,6 +786,7 @@ namespace TrainLibrary
                 if (TSRList.Where(t => t == true).Count() == trains.Count())
                 {
                     aveSpeed = 0;
+                    speedStDev = 0;
                     TSRBoundary = true;
                 }
                 else
@@ -786,10 +794,21 @@ namespace TrainLibrary
                     /* Calculate the average speed at each location. */
                     if (speed.Count() == 0 || sum == 0 ||
                         speed.Where(x => x > 0.0).Count() == 0)
+                    {
                         aveSpeed = 0;
+                        speedStDev = 0;
+                    }
                     else
+                    {
                         aveSpeed = speed.Where(x => x > 0.0).Average();
-                        
+                        /* Calculate the standard deviation of the speed. */
+                        sumSD = speed.Sum(p => Math.Pow(p - aveSpeed, 2));
+
+                        if (slowTrains.Where(t => t == false).Count() == 1)
+                            speedStDev = 0;
+                        else
+                            speedStDev = Math.Sqrt(sumSD / (slowTrains.Where(t => t == false).Count() - 1));
+                    }   
                     TSRBoundary = false;
                 }
 
@@ -797,8 +816,10 @@ namespace TrainLibrary
                 kilometreage.Add(kmPost);
                 elevation.Add(altitude);
                 averageSpeed.Add(aveSpeed);
+                sampleStDev.Add(speedStDev);
                 isInLoopBoundary.Add(loopBoundary);
                 isInTSRboundary.Add(TSRBoundary);
+                sampleCount.Add(slowTrains.Where(t => t == false).Count());
 
                 trackSlowTrains.Add(slowTrainsOrTSR);
 
@@ -831,7 +852,7 @@ namespace TrainLibrary
             }
 
             /* Create the new average train object. */
-            AverageTrain averageTrain = new AverageTrain(trains[0].Category, trains[0].trainDirection, trains.Count(), kilometreage, elevation, averageSpeed, isInLoopBoundary, isInTSRboundary);
+            AverageTrain averageTrain = new AverageTrain(trains[0].Category, trains[0].trainDirection, trains.Count(), kilometreage, elevation, averageSpeed, isInLoopBoundary, isInTSRboundary, sampleStDev, sampleCount);
 
             return averageTrain;
 
@@ -857,6 +878,7 @@ namespace TrainLibrary
             List<bool> fastTrains = new List<bool>();
             double actualTime = 0;
             double simulatedTime = 0;
+            double speedStDev = 0;
 
             /* Set up the average train journey lists. */
             List<double> kilometreage = new List<double>();
@@ -865,11 +887,14 @@ namespace TrainLibrary
             List<bool> isInLoopBoundary = new List<bool>();
             List<bool> isInTSRboundary = new List<bool>();
             List<bool> trackFastTrains = new List<bool>();
+            List<int> sampleCount = new List<int>();
+            List<double> sampleStDev = new List<double>();
 
             double kmPost = 0;
             double altitude = 0;
             List<double> speed = new List<double>();
             double sum = 0;
+            double sumSD = 0;
             double aveSpeed = 0;
 
             /* Determine the number of points in the average train journey. */
@@ -953,6 +978,7 @@ namespace TrainLibrary
                 if (TSRList.Where(t => t == true).Count() == trains.Count())
                 {
                     aveSpeed = 0;
+                    speedStDev = 0;
                     TSRBoundary = true;
                 }
                 else
@@ -960,10 +986,22 @@ namespace TrainLibrary
                     /* Calculate the average speed at each location. */
                     if (speed.Count() == 0 || sum == 0 ||
                         speed.Where(x => x > 0.0).Count() == 0)
+                    {
                         aveSpeed = 0;
+                        speedStDev = 0;
+                    }
                     else
+                    {
                         aveSpeed = speed.Where(x => x > 0.0).Average();
+                        /* Calculate the standard deviation of the speed. */
+                        sumSD = speed.Sum(p => Math.Pow(p - aveSpeed, 2));
+                        
+                        if (fastTrains.Where(t => t == false).Count() == 1)
+                            speedStDev = 0;
+                        else
+                            speedStDev = Math.Sqrt(sumSD / (fastTrains.Where(t => t == false).Count() - 1));
 
+                    }
                     TSRBoundary = false;
                 }
 
@@ -971,8 +1009,10 @@ namespace TrainLibrary
                 kilometreage.Add(kmPost);
                 elevation.Add(altitude);
                 averageSpeed.Add(aveSpeed);
+                sampleStDev.Add(speedStDev);
                 isInLoopBoundary.Add(loopBoundary);
                 isInTSRboundary.Add(TSRBoundary);
+                sampleCount.Add(fastTrains.Where(t => t == false).Count());
 
                 trackFastTrains.Add(fastTrainsOrTSR);
 
@@ -1005,7 +1045,7 @@ namespace TrainLibrary
             }
 
             /* Create the new average train object. */
-            AverageTrain averageTrain = new AverageTrain(trains[0].Category, trains[0].trainDirection, trains.Count(), kilometreage, elevation, averageSpeed, isInLoopBoundary, isInTSRboundary);
+            AverageTrain averageTrain = new AverageTrain(trains[0].Category, trains[0].trainDirection, trains.Count(), kilometreage, elevation, averageSpeed, isInLoopBoundary, isInTSRboundary, sampleStDev, sampleCount);
 
             return averageTrain;
 
@@ -2011,8 +2051,10 @@ namespace TrainLibrary
             List<double> kilometreage = new List<double>(size);
             List<double> elevation = new List<double>(size);
             List<double> averageSpeed = new List<double>(size);
+            List<double> sampleStDev = new List<double>(size);
             List<bool> isInLoopBoundary = new List<bool>(size);
             List<bool> isInTSRboundary = new List<bool>(size);
+            List<int> sampleCount = new List<int>();
 
             /* Set all properties to 0 or false. */
             for (int index = 0; index < size; index++)
@@ -2022,9 +2064,11 @@ namespace TrainLibrary
                 averageSpeed.Add(0);
                 isInLoopBoundary.Add(false);
                 isInTSRboundary.Add(false);
+                sampleStDev.Add(0);
+                sampleCount.Add(0);
             }
 
-            return new AverageTrain(trainCategory, direction, trainCount, kilometreage, elevation, averageSpeed, isInLoopBoundary, isInTSRboundary);
+            return new AverageTrain(trainCategory, direction, trainCount, kilometreage, elevation, averageSpeed, isInLoopBoundary, isInTSRboundary, sampleStDev, sampleCount);
         }
 
         /// <summary>

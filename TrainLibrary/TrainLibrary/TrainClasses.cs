@@ -8,11 +8,18 @@ namespace TrainLibrary
 {
     /*
      * Enumerated types to assit in giving the train classes appropriate 
-     * descriptions for detailed analyis.
+     * descriptions for detailed analysis.
      */
 
-    /* A list of available analysis seperation Categories. */
+    /// <summary>
+    /// A list of available analysis seperation Categories. 
+    /// </summary>
     public enum analysisCategory { TrainOperator, TrainCommodity, TrainType, TrainPowerToWeight, Unknown };
+
+    /// <summary>
+    /// Data Source type
+    /// </summary>
+    public enum dataSource { StandardIceData, AzureData, AzureExtractData };
 
     /// <summary>
     /// Enumerated direction of the train km's.
@@ -337,6 +344,8 @@ namespace TrainLibrary
                 averageSimulation.averageSpeed.Add(this.journey[index].speed);
                 averageSimulation.isInLoopBoundary.Add(this.journey[index].isLoopHere);
                 averageSimulation.isInTSRboundary.Add(this.journey[index].isTSRHere);
+                averageSimulation.speedStDev.Add(0);
+                averageSimulation.sampleCount.Add(1);
             }
 
             return averageSimulation;
@@ -581,6 +590,8 @@ namespace TrainLibrary
         public List<double> averageSpeed;
         public List<bool> isInLoopBoundary;
         public List<bool> isInTSRboundary;
+        public List<double> speedStDev;
+        public List<int> sampleCount;
 
         /// <summary>
         /// Default average train constructor.
@@ -595,6 +606,8 @@ namespace TrainLibrary
             this.averageSpeed = new List<double>();
             this.isInLoopBoundary = new List<bool>();
             this.isInTSRboundary = new List<bool>();
+            this.speedStDev = new List<double>();
+            this.sampleCount = new List<int>();
         }
 
         /// <summary>
@@ -608,7 +621,9 @@ namespace TrainLibrary
         /// <param name="averageSpeed">The calculted average speed of the train at each kilometreage.</param>
         /// <param name="loop">Identification if the a loop is withing the boundary threshold of the current position.</param>
         /// <param name="TSR">Identification if the a TSR is withing the boundary threshold of the current position.</param>
-        public AverageTrain(Category Category, direction direction, int count, List<double> kilometreage, List<double> elevation, List<double> averageSpeed, List<bool> loop, List<bool> TSR)
+        /// <param name="speedStDev">The standard deviation of the speed at each data point location.</param>
+        /// <param name="sampleCount">A count of the number of samples used in the aggregation of the each data point.</param>
+        public AverageTrain(Category Category, direction direction, int count, List<double> kilometreage, List<double> elevation, List<double> averageSpeed, List<bool> loop, List<bool> TSR, List<double> speedStDev, List<int> sampleCount)
         {
             this.trainCategory = Category;
             this.direction = direction;
@@ -618,6 +633,8 @@ namespace TrainLibrary
             this.averageSpeed = averageSpeed;
             this.isInLoopBoundary = loop;
             this.isInTSRboundary = TSR;
+            this.speedStDev = speedStDev;
+            this.sampleCount = sampleCount;
         }
 
     }

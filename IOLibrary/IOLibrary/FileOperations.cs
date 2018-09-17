@@ -93,6 +93,7 @@ namespace IOLibrary
                     /* Ensure values are valid while reading them out. */
                     double.TryParse(fields[9], out speed);
                     double.TryParse(fields[8], out kmPost);
+                    kmPost /= 1000;
                     double.TryParse(fields[0], out latitude);
                     double.TryParse(fields[2], out longitude);
                     DateTime.TryParse(fields[3], out dateTime);
@@ -322,9 +323,9 @@ namespace IOLibrary
                     /* Seperate each record into each field */
                     fields = line.Split(delimeters);
 
-                    /* EOF reached early */
+                    /* Empty line reached */
                     if (fields[0].Equals(""))
-                        return IceRecord;
+                        continue;
 
                     TrainID = fields[15];
                     locoID = fields[6];
@@ -1539,11 +1540,11 @@ namespace IOLibrary
 
             /* Extract the statistics */
             /* Note: there is no check to confimr the order in which the statistics values are listed. */
-            string[,] statisticsHeader = { { "Statistics:" }, 
-                                         { "Number Of Trains" }, 
-                                         { "Average Distance Travelled" }, 
+            string[,] statisticsHeader = { { "Statistics:" },
+                                         { "Number Of Trains" },
+                                         { "Average Distance Travelled" },
                                          { "Average Speed" },
-                                         { "Average P/W Ratio" }, 
+                                         { "Average P/W Ratio" },
                                          { "P/W standard Deviation" } };
             string[,] totalStatistics = new string[statisticsHeader.GetLength(0), 0];
 
@@ -1577,8 +1578,31 @@ namespace IOLibrary
                 directionHeader.Add(averageTrains[trainIdx].direction.ToString());
                 headerString.Add(averageTrains[trainIdx].trainCategory.ToString());
             }
+
+            directionHeader.Add("");
+            directionHeader.Add("");
             headerString.Add("Loops");
             headerString.Add("TSRs");
+
+            /* Add headers for standard devaitons */
+            directionHeader.AddRange(new List<string>(new string[] { "", "" }));
+            headerString.AddRange(new List<string>(new string[] { "", "" }));
+
+            for (int trainIdx = 0; trainIdx < averageTrains.Count(); trainIdx++)
+            {
+                directionHeader.Add(averageTrains[trainIdx].direction.ToString());
+                headerString.Add(averageTrains[trainIdx].trainCategory.ToString() + " StDev");
+            }
+
+            /* Add headers for sample counts */
+            directionHeader.AddRange(new List<string>(new string[] { "", "" }));
+            headerString.AddRange(new List<string>(new string[] { "", "" }));
+
+            for (int trainIdx = 0; trainIdx < averageTrains.Count(); trainIdx++)
+            {
+                directionHeader.Add(averageTrains[trainIdx].direction.ToString());
+                headerString.Add(averageTrains[trainIdx].trainCategory.ToString() + " sample");
+            }
 
             /* Pagenate the data for writing to excel. */
             int numberOfPoints = averageTrains[0].kilometreage.Count();
@@ -1591,6 +1615,8 @@ namespace IOLibrary
             string[,] isTSRhere = new string[numberOfPoints, 1];
 
             double[,] averageSpeedArray = new double[numberOfPoints, averageTrains.Count()];
+            int[,] sampleCountArray = new int[numberOfPoints, averageTrains.Count()];
+            double[,] sampleStandarDeviation = new double[numberOfPoints, averageTrains.Count()];
 
 
             /* Set the active worksheet. */
@@ -1615,6 +1641,8 @@ namespace IOLibrary
                 for (int j = 0; j < averageTrains.Count(); j++)
                 {
                     averageSpeedArray[i, j] = averageTrains[j].averageSpeed[i];
+                    sampleStandarDeviation[i, j] = averageTrains[j].speedStDev[i];
+                    sampleCountArray[i, j] = averageTrains[j].sampleCount[i];
                 }
 
             }
@@ -1630,11 +1658,11 @@ namespace IOLibrary
 
             /* Set the data header. */
             topLeft = worksheet.Cells[headerOffset, 1];
-            bottomRight = worksheet.Cells[headerOffset, averageTrains.Count() + 2];
+            bottomRight = worksheet.Cells[headerOffset, directionHeader.Count()];
             worksheet.get_Range(topLeft, bottomRight).Value2 = directionHeader.ToArray();
-
+            
             topLeft = worksheet.Cells[headerOffset + 1, 1];
-            bottomRight = worksheet.Cells[headerOffset + 1, averageTrains.Count() + 4];
+            bottomRight = worksheet.Cells[headerOffset + 1, headerString.Count()];
             worksheet.get_Range(topLeft, bottomRight).Value2 = headerString.ToArray();
 
             int dataOffset = headerOffset + 2;
@@ -1642,19 +1670,31 @@ namespace IOLibrary
             worksheet.get_Range("A" + dataOffset, "A" + (dataOffset + numberOfPoints - 1)).Value2 = kilometerage;
             worksheet.get_Range("B" + dataOffset, "B" + (dataOffset + numberOfPoints - 1)).Value2 = elevation;
 
+            /* Identify range of cells for average speed. */
             topLeft = worksheet.Cells[dataOffset, column];
             bottomRight = worksheet.Cells[dataOffset + numberOfPoints - 1, column + averageTrains.Count() - 1];
             worksheet.get_Range(topLeft, bottomRight).Value2 = averageSpeedArray;
 
-            /* Increment the column for loop data. */
+            /* Identify range of cells for impact by loops. */
             topLeft = worksheet.Cells[dataOffset, column + averageTrains.Count()];
             bottomRight = worksheet.Cells[dataOffset + numberOfPoints - 1, column + averageTrains.Count()];
             worksheet.get_Range(topLeft, bottomRight).Value2 = isLoophere;
 
-            /* Increment the column for TSR data. */
+            /* Identify range of cells for impact by TSR's. */
             topLeft = worksheet.Cells[dataOffset, column + averageTrains.Count() + 1];
             bottomRight = worksheet.Cells[dataOffset + numberOfPoints - 1, column + averageTrains.Count() + 1];
             worksheet.get_Range(topLeft, bottomRight).Value2 = isTSRhere;
+
+            /* Identify range of cells for standard deviation. */
+            topLeft = worksheet.Cells[dataOffset, column + averageTrains.Count() + 4];
+            bottomRight = worksheet.Cells[dataOffset + numberOfPoints - 1, column + averageTrains.Count() * 2 + 3];
+            worksheet.get_Range(topLeft, bottomRight).Value2 = sampleStandarDeviation;
+
+            /* Identify range of cells for sample size. */
+            topLeft = worksheet.Cells[dataOffset, column + averageTrains.Count() * 2 + 6];
+            bottomRight = worksheet.Cells[dataOffset + numberOfPoints - 1, headerString.Count()];
+            worksheet.get_Range(topLeft, bottomRight).Value2 = sampleCountArray;
+
 
             /* Generate the resulting file name and location to save to. */
             string saveFilename = aggregatedDestination + @"\AverageSpeed_" + DateTime.Now.ToString("yyyyMMdd_HHmm") + ".xlsx";
