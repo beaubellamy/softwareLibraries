@@ -802,12 +802,13 @@ namespace TrainLibrary
                     {
                         aveSpeed = speed.Where(x => x > 0.0).Average();
                         /* Calculate the standard deviation of the speed. */
-                        sumSD = speed.Sum(p => Math.Pow(p - aveSpeed, 2));
+                        sumSD = speed.Where(x => x > 0.0).Sum(p => Math.Pow(p - aveSpeed, 2));
 
                         if (slowTrains.Where(t => t == false).Count() == 1)
                             speedStDev = 0;
-                        else
+                        else                        
                             speedStDev = Math.Sqrt(sumSD / (slowTrains.Where(t => t == false).Count() - 1));
+                        
                     }   
                     TSRBoundary = false;
                 }
