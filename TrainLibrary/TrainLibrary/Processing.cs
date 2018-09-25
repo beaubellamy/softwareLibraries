@@ -1194,15 +1194,15 @@ namespace TrainLibrary
             bool isTSRHere = false;
 
             /* Find the indecies of the boundaries of the loop. */
-            double lookBack = targetLocation - TSRwindowBoundary;
-            double lookForward = targetLocation; // + TSRwindowBoundary; // only look forward to the length of the train.
-            /* Add the train length to the forward direction to mimic the fact that 
+            /* Add the train length to the backward direction to mimic the fact that 
              * the train can not start to accelerate until it has cleared the boundary. 
              */
-            if (train.trainDirection == direction.IncreasingKm)
-                lookForward += TrainLength;
-            else
-                lookForward -= TrainLength;
+            double lookBack = targetLocation - TrainLength;
+            double lookForward = targetLocation + TSRwindowBoundary; 
+            //if (train.trainDirection == direction.IncreasingKm)
+            //    lookBack -= TrainLength;
+            //else
+            //    lookBack += TrainLength;
 
             int lookBackIdx = train.indexOfGeometryKm(train.journey, lookBack);
             int lookForwardIdx = train.indexOfGeometryKm(train.journey, lookForward);
