@@ -900,6 +900,9 @@ namespace IOLibrary
             string destination = null;
             double weight = 0;
 
+            int count = 0;
+
+
             /* Create the list of wagon objects. */
             List<wagonDetails> wagon = new List<wagonDetails>();
 
@@ -920,29 +923,33 @@ namespace IOLibrary
             /* Extract the wagon details from the data file. */
             foreach (string line in System.IO.File.ReadLines(filename))
             {
-               
+                count++;
                 if (header)
                 {
                     header = false;
                 }
                 else
                 {
+                    
+                    if (line.Equals("") || line.Contains("rows"))
+                        continue;
+
                     /* Split the line into the fields */
                     fields = line.Split(delimiters);
 
                     /* Extract the train related information. */
-                    string trainID = fields[7];
-                    DateTime.TryParse(fields[8], out trainDate);
-                    trainOperator trainOperator = Processing.getWagonOperator(fields[3]);
-                    trainCommodity commodity = Processing.getWagonCommodity(fields[6]);
+                    string trainID = fields[1];
+                    DateTime.TryParse(fields[0], out trainDate);
+                    trainOperator trainOperator = Processing.getWagonOperator(fields[15]);
+                    trainCommodity commodity = Processing.getWagonCommodity(fields[14]);
 
                     /* Include Intermodal and Steel commodity into the Interstate commodity, when required. */
                     if (combineIntermodalAndSteel)
                         if (commodity.Equals(trainCommodity.Intermodal) || commodity.Equals(trainCommodity.Steel))
                             commodity = trainCommodity.Interstate;
-
+                   
                     /* Extract the wagon Identification. */
-                    wagonID = fields[9] + " " + Regex.Replace(fields[11], ",", "");
+                    wagonID = fields[2] + " " + Regex.Replace(fields[10], ",", "");
 
                     /* Wagon Origin. */
                     origin = fields[4].ToUpper();
@@ -960,7 +967,7 @@ namespace IOLibrary
                     }
 
                     /* Wagon destination. */
-                    destination = fields[1].ToUpper();
+                    destination = fields[13].ToUpper();
                     if (destination.Count() != 3)
                     {   /* If the destination field is empty or set to -1, assume the wagon reaches the planned destination. */
                         if (destination.Equals("") || destination.Equals("-1"))
@@ -970,10 +977,10 @@ namespace IOLibrary
                     }
                    
                     /* Extract remaining wagon details. */
-                    DateTime.TryParse(fields[0], out attachmentTime);
-                    DateTime.TryParse(fields[2], out detachmentTime);
-                    double.TryParse(fields[16], out tareWeight);
-                    double.TryParse(fields[13], out grossWeight);
+                    DateTime.TryParse(fields[6], out attachmentTime);
+                    DateTime.TryParse(fields[7], out detachmentTime);
+                    double.TryParse(fields[12], out tareWeight);
+                    double.TryParse(fields[8], out grossWeight);
 
                     /* Net weight */
                     weight = grossWeight - tareWeight;

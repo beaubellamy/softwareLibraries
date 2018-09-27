@@ -305,7 +305,7 @@ namespace IOLibrary
             bool validGrossWeight = false;
             
             /* Check the number of fields */
-            if (fields.Count() != 17)
+            if (fields.Count() != 16)
             {
                 messageBox("Incorrect number of fields detected in text file.", "Invalid number of fields.");
                 return false;
@@ -323,12 +323,12 @@ namespace IOLibrary
 
                 /* Validate Wagon Number */
                 result = 0;
-                if (double.TryParse(fields[11], out result))
+                if (double.TryParse(fields[10], out result))
                     validWagonNumber = true;
 
                 /* Validate Train Date */
                 DateTime dateResult = DateTime.MinValue;
-                if (DateTime.TryParse(fields[8], out dateResult))
+                if (DateTime.TryParse(fields[0], out dateResult))
                 {
                     if (dateResult == DateTime.MinValue)
                         validTrainDate = false;
@@ -337,7 +337,7 @@ namespace IOLibrary
                 }
 
                 /* Validate Commodity */
-                if (fields[6].Count() > 3)
+                if (fields[14].Count() > 3)
                     validComodity = true;
 
                 /* Validate Origin code */
@@ -347,14 +347,14 @@ namespace IOLibrary
                 /* Validate Planned Destination code */
                 if (fields[5].Count() == 3)
                     validPlannedDestinationCode = true;
-
+              
                 /* Validate Destination code */
-                if (fields[1].Equals("-1") || fields[1].Count() == 3)
+                if (fields[13].Equals("-1") || fields[13].Count() == 3)
                     validActualDestinationCode = true;
 
                 /* Validate Attachment Time. */
                 dateResult = DateTime.MinValue;
-                if (DateTime.TryParse(fields[0], out dateResult))
+                if (DateTime.TryParse(fields[6], out dateResult))
                 {
                     if (dateResult == DateTime.MinValue)
                         validAttachmentTime = false;
@@ -362,18 +362,16 @@ namespace IOLibrary
                         validAttachmentTime = true;
                 }
 
-               
-
                 /* Validate Dettachment Time */
                 dateResult = DateTime.MinValue;
-                if (DateTime.TryParse(fields[2], out dateResult))
+                if (DateTime.TryParse(fields[7], out dateResult))
                 {
                     if (dateResult == DateTime.MinValue)
                         validDetachmentTime = false;
                     else
                         validDetachmentTime = true;
                 }
-                else if (fields[2].Equals(""))
+                else if (fields[7].Equals(""))
                 {
                     dateResult = DateTime.Now;
                     validDetachmentTime = true;
@@ -381,12 +379,12 @@ namespace IOLibrary
 
                 /* Validate Tare Weight */
                 result = 0;
-                if (double.TryParse(fields[16], out result))
+                if (double.TryParse(fields[12], out result))
                     validTareWeight = true;
 
                 /* Validate Gross Weight */
                 result = 0;
-                if (double.TryParse(fields[13], out result))
+                if (double.TryParse(fields[8], out result))
                     validGrossWeight = true;
 
             }
