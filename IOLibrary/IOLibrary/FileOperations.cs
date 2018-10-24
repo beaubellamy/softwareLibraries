@@ -8,11 +8,35 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Office.Interop.Excel;
 
+using System.Data.SqlClient;
+
 using TrainLibrary;
 using Statistics;
 
 namespace IOLibrary
 {
+    /// <summary>
+    /// SQL parameter class to contain the SQL conection and teh SQL command to execute
+    /// </summary>
+    public class SqlParameters
+    {
+        /* SQL parameters */
+        public SqlConnection connection;
+        public SqlCommand command;
+
+        /// <summary>
+        ///  Default Constructor
+        /// </summary>
+        /// <param name="connection">The generated SQL connection object.</param>
+        /// <param name="command">The generated SQL command object.</param>
+        public SqlParameters(SqlConnection connection, SqlCommand command)
+        {
+            this.connection = connection;
+            this.command = command;
+        }
+    }
+
+
     public class FileOperations
     {
         /* ARTC location code file */
@@ -902,24 +926,14 @@ namespace IOLibrary
 
             int count = 0;
 
-
             /* Create the list of wagon objects. */
             List<wagonDetails> wagon = new List<wagonDetails>();
 
-            /* Validate the format of the first line of the file, ignoring the header information */
-            bool validFormat = false;
             string[] fields = null;
 
-            /* Read the first line of data - assum e first line has header information. */
+            /* Read the first line of data - assume first line has header information. */
             fields = System.IO.File.ReadLines(filename).Skip(1).First().Split(delimiters);
-
-            validFormat = Tools.validateAzureFileFormat(fields);
-            if (!validFormat)
-            {
-                /* The file format is invalid, return the empty wagon object. */
-                throw new IOException("Data file has an invalid format.");
-            }
-
+            
             /* Extract the wagon details from the data file. */
             foreach (string line in System.IO.File.ReadLines(filename))
             {
@@ -960,8 +974,8 @@ namespace IOLibrary
                     plannedDestination = fields[5].ToUpper();
                     if (plannedDestination.Count() != 3)
                     {
-                        if (fields[1].Count() == 3)
-                            plannedDestination = fields[1].ToUpper();
+                        if (fields[13].Count() == 3)
+                            plannedDestination = fields[13].ToUpper();
                         else
                             Tools.messageBox("Consigned Destination location code is unknown: Train: " + trainID + ", location " + plannedDestination + " Unknown location code.");
                     }
@@ -990,15 +1004,171 @@ namespace IOLibrary
 
                     /* Construct the wagon object and add to the list. */
                     wagonDetails data = new wagonDetails(trainID, trainDate, trainOperator, commodity, wagonID, origin, plannedDestination, destination, attachmentTime, detachmentTime, weight, grossWeight);
-                    wagon.Add(data);
-                    
+                    wagon.Add(data);                    
 
                 }
             }
             /* Return the completed wagon List. */
             return wagon;
         }
+        
+        /// <summary>
+        /// Read the wagon data directly from the Azure data warehouse using an SQL connection.
+        /// </summary>
+        /// <param name="fromDate">The start date of the analysis period.</param>
+        /// <param name="toDate">The end data of the analysis period.</param>
+        /// <param name="combineIntermodalAndSteel">A flag indicating whether to combine intermodal and steel into a single commodity.</param>
+        /// <returns>A list containing all the wagon data.</returns>
+        public static List<wagonDetails> readSQLWagonData(DateTime fromDate, DateTime toDate, bool combineIntermodalAndSteel = false)
+        {            
+            /* Create the list of wagon objects. */
+            List<wagonDetails> wagon = new List<wagonDetails>();
 
+            string trainID, wagonID, origin, destination, plannedDestination;
+            trainOperator trainOperator;
+            trainCommodity commodity;
+            double tareWeight, grossWeight, weight;
+            DateTime trainDate, attachmentTime, detachmentTime;
+
+            /* Generate the SQL connection and the command to execute. */
+            SqlParameters SQL = generateSQLComand(fromDate, toDate);
+
+            /* Create an SQL environment. */
+            using (SQL.connection)
+            {
+                SQL.connection.Open();
+                /* Process the SQL command. */
+                SqlDataReader reader = SQL.command.ExecuteReader();
+
+                try
+                {
+                    /* Read each line into the desired wagon object. */
+                    while (reader.Read())
+                    {
+
+                        /* Train related information */
+                        trainDate = (DateTime)reader.GetSqlValue(0);
+                        trainID = reader.GetSqlValue(1).ToString();
+                        commodity = Processing.getWagonCommodity(reader.GetSqlValue(14).ToString());
+                        trainOperator = Processing.getWagonOperator(reader.GetSqlValue(15).ToString());
+
+                        /* Include Intermodal and Steel commodity into the Interstate commodity, when required. */
+                        if (combineIntermodalAndSteel)
+                            if (commodity.Equals(trainCommodity.Intermodal) || commodity.Equals(trainCommodity.Steel))
+                                commodity = trainCommodity.Interstate;
+
+                        /* Extract Wagon Identification. */
+                        wagonID = reader.GetSqlValue(2).ToString() + " " + Regex.Replace(reader.GetSqlValue(10).ToString(), ",", "");
+
+                        /* Wagon Origin */
+                        origin = reader.GetSqlValue(4).ToString().ToUpper();
+                        if (origin.Count() != 3)
+                            Tools.messageBox("Origin location code is unknown: " + origin + " Unknown location code.");
+
+                        /* Wagon Destination */
+                        destination = reader.GetSqlValue(13).ToString().ToUpper();
+                        if (destination.Count() != 3)
+                        {   /* If the destination field is empty or set to -1, assume the wagon reaches the planned destination. */
+                            if (destination.Equals("") || destination.Equals("-1"))
+                                destination = reader.GetSqlValue(5).ToString().ToUpper();
+                            else
+                                Tools.messageBox("Destination location code is unknown: " + destination + " Unknown location code.");
+                        }
+
+                        /* Wagon planned destination */
+                        plannedDestination = reader.GetSqlValue(5).ToString().ToUpper();
+                        if (plannedDestination.Count() != 3)
+                        {
+                            if (destination.Count() == 3)
+                                plannedDestination = destination;
+                            else
+                                Tools.messageBox("Consigned Destination location code is unknown: Train: " + trainID + ", location " + plannedDestination + " Unknown location code.");
+                        }
+
+                        double.TryParse(reader.GetSqlValue(12).ToString(), out tareWeight);
+                        double.TryParse(reader.GetSqlValue(8).ToString(), out grossWeight);
+                        weight = grossWeight - tareWeight;
+                        /* Validate the weight. */
+                        if (weight < 0)
+                            weight = 0;
+
+                        DateTime.TryParse(reader.GetSqlValue(6).ToString(), out attachmentTime);
+                        DateTime.TryParse(reader.GetSqlValue(7).ToString(), out detachmentTime);
+
+                        /* Construct the wagon object and add to the list. */
+                        wagonDetails data = new wagonDetails(trainID, trainDate, trainOperator, commodity, wagonID, origin, plannedDestination, destination, attachmentTime, detachmentTime, weight, grossWeight);
+                        wagon.Add(data);
+
+
+                    }
+                    
+                }
+                finally
+                {
+                    /* Close the SQL command */
+                    reader.Close();
+                }
+            }
+
+            /* Return the completed wagon list. */
+            return wagon;
+
+        }
+
+        /// <summary>
+        /// Create the connection and generate teh command to extract the wagon data.
+        /// </summary>
+        /// <param name="fromDate">The start data of the analysis period.</param>
+        /// <param name="toDate">The end date of the analysis period.</param>
+        /// <returns>An SQL object that contains the connection and the command to execute.</returns>
+        private static SqlParameters generateSQLComand(DateTime fromDate, DateTime toDate)
+        {
+            /* Format the date strings to match data database fields. */
+            string from = fromDate.ToString("yyyy-MM-dd");
+            string to = toDate.ToString("yyyy-MM-dd");
+
+            /* Generate the connecton parameters for the Azure data warehouse. */
+            string server = "tcp:artc-dwcp01.database.windows.net,1433;";
+            string Dbase = "DW_PRN;";
+            string authentication = "Active Directory Integrated;";
+            string options = "Encrypt=yes;Connection Timeout=30;";
+            string connectionString = "Server=" + server + "Database=" + Dbase + "Authentication=" + authentication + options;
+
+            /* Generate the SQL wagon data query */
+            string wagonMovementQuery =
+                "SELECT[Consist].[TrainDate] AS [TrainDate]," +
+                "  [Consist].[TrainCode] AS [TrainCode]," +
+                "  [Consist].[VehicleClassCode] AS [VehicleClassCode]," +
+                "  [Consist].[VehicleID] AS [VehicleID]," +
+                "  [Consist].[OriginParentLocationCode] AS [OriginParentLocationCode]," +
+                "  [Consist].[PlannedDestinationParentLocationCode] AS [PlannedDestinationParentLocationCode], " +
+                "  [Consist].[ActualAttachDateTime] AS [ActualAttachDateTime]," +
+                "  [Consist].[ActualDetachDateTime] AS [ActualDetachDateTime], " +
+                "  [Consist].[GrossMass] AS [GrossMass]," +
+                "  [Consist].[Distance] AS [Distance]," +
+                "  [Vehicle].[VehicleNumber] AS [VehicleNumber(Vehicle)]," +
+                "  [Vehicle].[HorsePower] AS [HorsePower]," +
+                "  [Vehicle].[TareMass] AS [TareMass]," +
+                "  [Actual Destination Location].[ParentLocationCode] AS [ParentLocationCode]," +
+                "  [Commodity].[RAMS_CommodityCode] AS [RAMS_CommodityCode]," +
+                "  [Operator].[OperatorCode] AS [OperatorCode(Operator)]" +
+                "FROM[FACT].[Consist] [Consist]" +
+                "  INNER JOIN[FACT].[TrainJourney] [TrainJourney] ON ([Consist].[TrainID] = [TrainJourney].[TrainID])" +
+                "  INNER JOIN[DIM].[Vehicle] [Vehicle] ON([Consist].[VehicleID] = [Vehicle].[VehicleID])" +
+                "  INNER JOIN[REPORT].[ParentLocation] [Actual Destination Location] ON([Consist].[ActualDestinationParentLocationID] = [Actual Destination Location].[ParentLocationID])" +
+                "  INNER JOIN[REPORT].[Commodity] [Commodity] ON([TrainJourney].[CommodityID] = [Commodity].[CommodityID])" +
+                "  INNER JOIN[DIM].[Operator] [Operator] ON([TrainJourney].[OperatorID] = [Operator].[OperatorID])" +
+                "WHERE[Consist].[TrainDate] BETWEEN '" + from + "' AND '" + to + "'";
+
+            /* Create the connection and the command to execute. */
+            SqlConnection connection = new SqlConnection(connectionString);
+            SqlCommand command = new SqlCommand(wagonMovementQuery, connection);
+            
+            SqlParameters sql = new SqlParameters(connection, command);
+            
+            return sql;
+
+        }
 
         /// <summary>
         /// Read the file containing the temporary speed restriction information and 
