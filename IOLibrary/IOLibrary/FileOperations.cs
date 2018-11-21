@@ -1,11 +1,13 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Reflection;
 using Microsoft.Office.Interop.Excel;
 
 using System.Data.SqlClient;
@@ -41,7 +43,7 @@ namespace IOLibrary
     {
         /* ARTC location code file */
         public static string geoLocationFile = @"C:\Users\bbel1\Documents\ARTC GEO Location Details - under construction.csv";
-        
+
         /* Create a dictionary of locations:
          * Key:     Location Code [3 letter code]
          * Values:  Location Code, Name, Location SA4 region, Location State.
@@ -85,7 +87,7 @@ namespace IOLibrary
             double latitude = 0.0;
             double longitude = 0.0;
             DateTime dateTime = DateTime.MinValue;
-            
+
             bool header = true;
             bool includeTrain = true;
 
@@ -216,9 +218,9 @@ namespace IOLibrary
 
             /* List of all valid train data. */
             List<TrainRecord> IceRecord = new List<TrainRecord>();
-            
+
             foreach (string line in System.IO.File.ReadLines(filename))
-            {                
+            {
                 if (header)
                     /* Ignore the header line. */
                     header = false;
@@ -233,7 +235,7 @@ namespace IOLibrary
 
                     TrainID = fields[11];
                     locoID = fields[9];
-                    
+
                     if (fields[24].Count() >= operatorStringLength)
                         subOperator = fields[24].Substring(0, operatorStringLength);
                     else
@@ -242,7 +244,7 @@ namespace IOLibrary
                     trainOperator = getOperator(subOperator);
 
                     commodity = getCommodity(fields[23]);
-                    
+
                     /* Ensure values are valid while reading them out. */
                     double.TryParse(fields[13], out speed);
                     double.TryParse(fields[12], out kmPost);
@@ -252,7 +254,7 @@ namespace IOLibrary
                     double.TryParse(fields[16], out longitude);
                     DateTime.TryParse(fields[8], out dateTime);
                     double.TryParse(fields[19], out powerToWeight);
-                  
+
                     /* Check if the train is in the exclude list */
                     if (excludeListOfTrains)
                         includeTrain = !trainList.Contains(TrainID);
@@ -333,12 +335,12 @@ namespace IOLibrary
 
             bool header = true;
             bool includeTrain = true;
-            
+
             /* List of all valid train data. */
             List<TrainRecord> IceRecord = new List<TrainRecord>();
 
             foreach (string line in System.IO.File.ReadLines(filename))
-            {               
+            {
                 if (header)
                     /* Ignore the header line. */
                     header = false;
@@ -371,7 +373,7 @@ namespace IOLibrary
                     double.TryParse(fields[7], out longitude);
                     DateTime.TryParse(fields[4], out dateTime);
                     double.TryParse(fields[19], out powerToWeight);
-                    
+
                     /* Check if the train is in the exclude list */
                     if (excludeListOfTrains)
                         includeTrain = !trainList.Contains(TrainID);
@@ -423,7 +425,7 @@ namespace IOLibrary
 
             char[] delimeters = { ',', '\t' };
             string[] fields = null;
-            
+
             /* Initialise the fields of interest. */
             double kilometreage = 0;
             double latitude = 0;
@@ -863,7 +865,7 @@ namespace IOLibrary
                         if (fields[5].Count() == 3)
                             plannedDestination = fields[5].ToUpper();
                         else
-                            Tools.messageBox("Consigned Destination location code in unknown: Train: "+ trainID+", location " + plannedDestination + " Unknown location code.");
+                            Tools.messageBox("Consigned Destination location code in unknown: Train: " + trainID + ", location " + plannedDestination + " Unknown location code.");
                     }
 
                     /* Wagon destination. */
@@ -883,7 +885,7 @@ namespace IOLibrary
                     double.TryParse(fields[12], out grossWeight);
 
                     /* Net weight */
-                    weight = grossWeight-tareWeight;
+                    weight = grossWeight - tareWeight;
 
                     if (weight < 0)
                         weight = 0;
@@ -891,7 +893,7 @@ namespace IOLibrary
                     /* Construct the wagon object and add to the list. */
                     wagonDetails data = new wagonDetails(trainID, trainDate, trainOperator, commodity, wagonID, origin, plannedDestination, destination, attachmentTime, detachmentTime, weight, grossWeight);
                     wagon.Add(data);
-                    
+
                 }
             }
             /* Return the completed wagon List. */
@@ -910,7 +912,9 @@ namespace IOLibrary
         public static List<wagonDetails> readAzureWagonDataFile(string filename, bool combineIntermodalAndSteel = false)
         {
             /* Read the all lines of the text file. */
-            char[] delimiters = { '\t' };
+            //char[] delimiters = { ',', '\t,' };
+            char[] delimiters = { ',', '\t' };
+
             bool header = true;
 
             DateTime trainDate = DateTime.MinValue;
@@ -933,7 +937,7 @@ namespace IOLibrary
 
             /* Read the first line of data - assume first line has header information. */
             fields = System.IO.File.ReadLines(filename).Skip(1).First().Split(delimiters);
-            
+
             /* Extract the wagon details from the data file. */
             foreach (string line in System.IO.File.ReadLines(filename))
             {
@@ -944,7 +948,7 @@ namespace IOLibrary
                 }
                 else
                 {
-                    
+
                     if (line.Equals("") || line.Contains("rows"))
                         continue;
 
@@ -961,7 +965,7 @@ namespace IOLibrary
                     if (combineIntermodalAndSteel)
                         if (commodity.Equals(trainCommodity.Intermodal) || commodity.Equals(trainCommodity.Steel))
                             commodity = trainCommodity.Interstate;
-                   
+
                     /* Extract the wagon Identification. */
                     wagonID = fields[2] + " " + Regex.Replace(fields[10], ",", "");
 
@@ -969,7 +973,7 @@ namespace IOLibrary
                     origin = fields[4].ToUpper();
                     if (origin.Count() != 3)
                         Tools.messageBox("Origin location code is unknown: " + origin + " Unknown location code.");
-                    
+
                     /* Wagon planned destination. */
                     plannedDestination = fields[5].ToUpper();
                     if (plannedDestination.Count() != 3)
@@ -989,7 +993,7 @@ namespace IOLibrary
                         else
                             Tools.messageBox("Destination location code is unknown: " + destination + " Unknown location code.");
                     }
-                   
+
                     /* Extract remaining wagon details. */
                     DateTime.TryParse(fields[6], out attachmentTime);
                     DateTime.TryParse(fields[7], out detachmentTime);
@@ -1004,14 +1008,14 @@ namespace IOLibrary
 
                     /* Construct the wagon object and add to the list. */
                     wagonDetails data = new wagonDetails(trainID, trainDate, trainOperator, commodity, wagonID, origin, plannedDestination, destination, attachmentTime, detachmentTime, weight, grossWeight);
-                    wagon.Add(data);                    
+                    wagon.Add(data);
 
                 }
             }
             /* Return the completed wagon List. */
             return wagon;
         }
-        
+
         /// <summary>
         /// Read the wagon data directly from the Azure data warehouse using an SQL connection.
         /// </summary>
@@ -1020,7 +1024,7 @@ namespace IOLibrary
         /// <param name="combineIntermodalAndSteel">A flag indicating whether to combine intermodal and steel into a single commodity.</param>
         /// <returns>A list containing all the wagon data.</returns>
         public static List<wagonDetails> readSQLWagonData(DateTime fromDate, DateTime toDate, bool combineIntermodalAndSteel = false)
-        {            
+        {
             /* Create the list of wagon objects. */
             List<wagonDetails> wagon = new List<wagonDetails>();
 
@@ -1101,7 +1105,7 @@ namespace IOLibrary
 
 
                     }
-                    
+
                 }
                 finally
                 {
@@ -1163,9 +1167,9 @@ namespace IOLibrary
             /* Create the connection and the command to execute. */
             SqlConnection connection = new SqlConnection(connectionString);
             SqlCommand command = new SqlCommand(wagonMovementQuery, connection);
-            
+
             SqlParameters sql = new SqlParameters(connection, command);
-            
+
             return sql;
 
         }
@@ -1303,7 +1307,7 @@ namespace IOLibrary
                     worksheet = workbook.Worksheets.Add();
                 else
                     worksheet = workbook.Sheets[excelPage + 1];
-               
+
                 workbook.Sheets[excelPage + 1].Activate();
                 Range topLeft = worksheet.Cells[1, 1];
                 Range bottomRight = worksheet.Cells[headerRows, headerColumns];
@@ -1413,7 +1417,7 @@ namespace IOLibrary
             int headerRows = headerString.GetLength(0);
             int headerColumns = headerString.GetLength(1);
 
-            int displayColumn = horizontalOffset; 
+            int displayColumn = horizontalOffset;
 
             /* Adjust the excel page size or the number of pages to write. */
             if (trainRecords.Count() < excelPageSize)
@@ -1433,14 +1437,14 @@ namespace IOLibrary
                 DateTime[,] trainDate = new DateTime[1, excelPageSize * columnOffset];
 
                 horizontalOffset = 3;
-                displayColumn = horizontalOffset; 
-                
+                displayColumn = horizontalOffset;
+
                 /* Set the active worksheet. */
                 if (excelPage >= 3)
                     worksheet = workbook.Worksheets.Add();
                 else
                     worksheet = workbook.Sheets[excelPage + 1];
-                
+
                 workbook.Sheets[excelPage + 1].Activate();
                 Range topLeft = worksheet.Cells[1, 1];
                 Range bottomRight = worksheet.Cells[headerRows, headerColumns];
@@ -1628,7 +1632,7 @@ namespace IOLibrary
                 {
                     /* Calucalte the appropriate index for the train. */
                     int offsetIndex = excelPage * excelPageSize + trainIdx;
-                     
+
                     if (offsetIndex < trainRecords.Count())
                     {
                         /* Populate the train properties. */
@@ -1837,7 +1841,204 @@ namespace IOLibrary
             topLeft = worksheet.Cells[headerOffset, 1];
             bottomRight = worksheet.Cells[headerOffset, directionHeader.Count()];
             worksheet.get_Range(topLeft, bottomRight).Value2 = directionHeader.ToArray();
+
+            topLeft = worksheet.Cells[headerOffset + 1, 1];
+            bottomRight = worksheet.Cells[headerOffset + 1, headerString.Count()];
+            worksheet.get_Range(topLeft, bottomRight).Value2 = headerString.ToArray();
+
+            int dataOffset = headerOffset + 2;
+            /* Write the data to the active excel workseet. */
+            worksheet.get_Range("A" + dataOffset, "A" + (dataOffset + numberOfPoints - 1)).Value2 = kilometerage;
+            worksheet.get_Range("B" + dataOffset, "B" + (dataOffset + numberOfPoints - 1)).Value2 = elevation;
+
+            /* Identify range of cells for average speed. */
+            topLeft = worksheet.Cells[dataOffset, column];
+            bottomRight = worksheet.Cells[dataOffset + numberOfPoints - 1, column + averageTrains.Count() - 1];
+            worksheet.get_Range(topLeft, bottomRight).Value2 = averageSpeedArray;
+
+            /* Identify range of cells for impact by loops. */
+            topLeft = worksheet.Cells[dataOffset, column + averageTrains.Count()];
+            bottomRight = worksheet.Cells[dataOffset + numberOfPoints - 1, column + averageTrains.Count()];
+            worksheet.get_Range(topLeft, bottomRight).Value2 = isLoophere;
+
+            /* Identify range of cells for impact by TSR's. */
+            topLeft = worksheet.Cells[dataOffset, column + averageTrains.Count() + 1];
+            bottomRight = worksheet.Cells[dataOffset + numberOfPoints - 1, column + averageTrains.Count() + 1];
+            worksheet.get_Range(topLeft, bottomRight).Value2 = isTSRhere;
+
+            /* Identify range of cells for standard deviation. */
+            topLeft = worksheet.Cells[dataOffset, column + averageTrains.Count() + 4];
+            bottomRight = worksheet.Cells[dataOffset + numberOfPoints - 1, column + averageTrains.Count() * 2 + 3];
+            worksheet.get_Range(topLeft, bottomRight).Value2 = sampleStandarDeviation;
+
+            /* Identify range of cells for sample size. */
+            topLeft = worksheet.Cells[dataOffset, column + averageTrains.Count() * 2 + 6];
+            bottomRight = worksheet.Cells[dataOffset + numberOfPoints - 1, headerString.Count()];
+            worksheet.get_Range(topLeft, bottomRight).Value2 = sampleCountArray;
+                        
+            /* Generate the resulting file name and location to save to. */
+            string saveFilename = aggregatedDestination + @"\AverageSpeed_" + DateTime.Now.ToString("yyyyMMdd_HHmm") + ".xlsx";
+
+            /* Check the file does not exist yet. */
+            if (File.Exists(saveFilename))
+            {
+                Tools.isFileOpen(saveFilename);
+                File.Delete(saveFilename);
+            }
+
+            /* Save the excel file. */
+            excel.UserControl = false;
+            workbook.SaveAs(saveFilename, Microsoft.Office.Interop.Excel.XlFileFormat.xlWorkbookDefault, Type.Missing, Type.Missing,
+                false, false, Microsoft.Office.Interop.Excel.XlSaveAsAccessMode.xlNoChange,
+                Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
+
+            workbook.Close();
+            excel.Quit();
+
+            return;
+
+        }
+
+        /// <summary>
+        /// Write the aggregated data to a file for evaluation.
+        /// </summary>
+        /// <param name="averageTrains">List of aggregated train journies.</param>
+        /// <param name="stats">The statstics generated for each average train</param>
+        /// <param name="aggregatedDestination">The destination directory for the resulting file.</param>
+        /// <param name="settings">Dictionary object contianing the settings used on the application form.</param>
+        public static void writeAverageData(List<AverageTrain> averageTrains, List<TrainStatistics> stats, string aggregatedDestination, Dictionary<FieldInfo, object> settings)
+        {
+            /* Start Excel and get the references to the workbook and worksheet. */
+            Microsoft.Office.Interop.Excel.Application excel = new Microsoft.Office.Interop.Excel.Application();
+            _Workbook workbook = excel.Workbooks.Add("");
+            _Worksheet worksheet;
+
             
+
+
+            /* Extract the statistics */
+            /* Note: there is no check to confimr the order in which the statistics values are listed. */
+            string[,] statisticsHeader = { { "Statistics:" },
+                                         { "Number Of Trains" },
+                                         { "Average Distance Travelled" },
+                                         { "Average Speed" },
+                                         { "Average P/W Ratio" },
+                                         { "P/W standard Deviation" } };
+            string[,] totalStatistics = new string[statisticsHeader.GetLength(0), 0];
+
+            if (stats.Count() > 0)
+            {
+                totalStatistics = new string[statisticsHeader.GetLength(0), stats.Count()];
+
+                /* Extract the statistics for each analysis Category */
+                for (int index = 0; index < stats.Count(); index++)
+                {
+                    totalStatistics[0, index] = stats[index].Category;
+                    totalStatistics[1, index] = stats[index].numberOfTrains.ToString();
+                    totalStatistics[2, index] = stats[index].averageDistanceTravelled.ToString();
+                    totalStatistics[3, index] = stats[index].averageSpeed.ToString();
+                    totalStatistics[4, index] = stats[index].averagePowerToWeightRatio.ToString();
+                    totalStatistics[5, index] = stats[index].standardDeviationP2W.ToString();
+
+                }
+            }
+
+            /* Create the headers for the data. */
+            List<string> directionHeader = new List<string>();      /* Direction of each train. */
+            List<string> headerString = new List<string>();         /* Category of each train. */
+            directionHeader.Add("");
+            headerString.Add("kilometerage");
+            directionHeader.Add("");
+            headerString.Add("Elevation");
+
+            for (int trainIdx = 0; trainIdx < averageTrains.Count(); trainIdx++)
+            {
+                directionHeader.Add(averageTrains[trainIdx].direction.ToString());
+                headerString.Add(averageTrains[trainIdx].trainCategory.ToString());
+            }
+
+            directionHeader.Add("");
+            directionHeader.Add("");
+            headerString.Add("Loops");
+            headerString.Add("TSRs");
+
+            /* Add headers for standard devaitons */
+            directionHeader.AddRange(new List<string>(new string[] { "", "" }));
+            headerString.AddRange(new List<string>(new string[] { "", "" }));
+
+            for (int trainIdx = 0; trainIdx < averageTrains.Count(); trainIdx++)
+            {
+                directionHeader.Add(averageTrains[trainIdx].direction.ToString());
+                headerString.Add(averageTrains[trainIdx].trainCategory.ToString() + " StDev");
+            }
+
+            /* Add headers for sample counts */
+            directionHeader.AddRange(new List<string>(new string[] { "", "" }));
+            headerString.AddRange(new List<string>(new string[] { "", "" }));
+
+            for (int trainIdx = 0; trainIdx < averageTrains.Count(); trainIdx++)
+            {
+                directionHeader.Add(averageTrains[trainIdx].direction.ToString());
+                headerString.Add(averageTrains[trainIdx].trainCategory.ToString() + " sample");
+            }
+
+            /* Pagenate the data for writing to excel. */
+            int numberOfPoints = averageTrains[0].kilometreage.Count();
+            int headerOffset = statisticsHeader.GetLength(0) + 3;
+
+            /* Deconstruct the train details into excel columns. */
+            double[,] kilometerage = new double[numberOfPoints, 1];
+            double[,] elevation = new double[numberOfPoints, 1];
+            string[,] isLoophere = new string[numberOfPoints, 1];
+            string[,] isTSRhere = new string[numberOfPoints, 1];
+
+            double[,] averageSpeedArray = new double[numberOfPoints, averageTrains.Count()];
+            int[,] sampleCountArray = new int[numberOfPoints, averageTrains.Count()];
+            double[,] sampleStandarDeviation = new double[numberOfPoints, averageTrains.Count()];
+
+
+            /* Set the active worksheet. */
+            worksheet = (_Worksheet)workbook.Sheets[1];
+            workbook.Sheets[1].Activate();
+
+            /* Loop through the data for each excel page. */
+            for (int i = 0; i < numberOfPoints; i++)
+            {
+                /* Populate the kilometerage and evlevation. */
+                kilometerage[i, 0] = averageTrains[0].kilometreage[i];
+                elevation[i, 0] = averageTrains[0].elevation[i];
+
+                /* Identify where the loops or signal and TSR are. */
+                if (averageTrains[0].isInLoopBoundary[i])
+                    isLoophere[i, 0] = "Loop Boundary";
+
+                if (averageTrains[0].isInTSRboundary[i])
+                    isTSRhere[i, 0] = "TSR Boundary";
+
+                /* Extract the average speed for each analysis Category */
+                for (int j = 0; j < averageTrains.Count(); j++)
+                {
+                    averageSpeedArray[i, j] = averageTrains[j].averageSpeed[i];
+                    sampleStandarDeviation[i, j] = averageTrains[j].speedStDev[i];
+                    sampleCountArray[i, j] = averageTrains[j].sampleCount[i];
+                }
+
+            }
+
+            /* Display the statistics for each Category. */
+            int column = 3;
+            Range topLeft = worksheet.Cells[statisticsHeader.GetLength(1), column];
+            Range bottomRight = worksheet.Cells[statisticsHeader.GetLength(0), column + totalStatistics.GetLength(1) - 1];
+
+            /* Set statistics. */
+            worksheet.get_Range("A1", "A6").Value2 = statisticsHeader;
+            worksheet.get_Range(topLeft, bottomRight).Value2 = totalStatistics;
+
+            /* Set the data header. */
+            topLeft = worksheet.Cells[headerOffset, 1];
+            bottomRight = worksheet.Cells[headerOffset, directionHeader.Count()];
+            worksheet.get_Range(topLeft, bottomRight).Value2 = directionHeader.ToArray();
+
             topLeft = worksheet.Cells[headerOffset + 1, 1];
             bottomRight = worksheet.Cells[headerOffset + 1, headerString.Count()];
             worksheet.get_Range(topLeft, bottomRight).Value2 = headerString.ToArray();
@@ -1872,6 +2073,10 @@ namespace IOLibrary
             bottomRight = worksheet.Cells[dataOffset + numberOfPoints - 1, headerString.Count()];
             worksheet.get_Range(topLeft, bottomRight).Value2 = sampleCountArray;
 
+            /* Create a new sheet for the settings to be stored. */
+            Worksheet worksheet2 = workbook.Sheets.Add(Type.Missing, Type.Missing, 1, Type.Missing) as Worksheet;
+            /* Write the settings parameters to a new sheet. */
+            writeSettings(worksheet2, settings);
 
             /* Generate the resulting file name and location to save to. */
             string saveFilename = aggregatedDestination + @"\AverageSpeed_" + DateTime.Now.ToString("yyyyMMdd_HHmm") + ".xlsx";
@@ -1895,6 +2100,92 @@ namespace IOLibrary
             return;
 
         }
+
+        /// <summary>
+        /// Write algorithm parameters used to a new sheet in the excel workbook.
+        /// </summary>
+        /// <param name="sheet">The new sheet to write the parameters to.</param>
+        /// <param name="settings">A dictionary of the parameter name and values.</param>
+        public static void writeSettings(_Worksheet sheet, Dictionary<FieldInfo, object> settings)
+        {
+            /* Activate the current sheet. */
+            sheet.Activate();
+            
+            /* Column reference */
+            string namecol, valuecol;
+            int counter = 1;
+
+            foreach (var param in settings)
+            {
+                /* Dynamicaly create the cell references */
+                namecol = "A" + counter.ToString();
+                valuecol = "B" + counter.ToString();
+
+                /* If the field is date time, process the start and end date values */
+                if (param.Key.FieldType.Name.Equals("DateTime[]"))
+                {
+                    DateTime[] dates = (DateTime[])param.Value;
+                    
+                    /* Process start date. */
+                    sheet.get_Range(namecol, namecol).Value2 = "Start Date:";
+                    sheet.get_Range(valuecol, valuecol).Value2 = dates[0].ToShortDateString();
+
+                    /* Increment the cell reference */
+                    counter++;
+                    namecol = "A" + counter.ToString();
+                    valuecol = "B" + counter.ToString();
+
+                    /* Process the end date. */
+                    sheet.get_Range(namecol, namecol).Value2 = "End Date:";
+                    sheet.get_Range(valuecol, valuecol).Value2 = dates[1].ToShortDateString();
+
+
+
+
+                }
+                /* If the object is a list, we assume this is the list of simulation files. */
+                else if (param.Key.FieldType.Name.Equals("List`1"))
+                {
+
+                    List<string> files = (List<string>)param.Value;
+                    foreach (string file in files)
+                    {
+                        /* Update the cell reference */
+                        namecol = "A" + counter.ToString();
+                        valuecol = "B" + counter.ToString();
+
+                        /* Identify the file name. */
+                        sheet.get_Range(namecol, namecol).Value2 = "Simulation file:";
+                        if (param.Value != null)
+                            sheet.get_Range(valuecol, valuecol).Value2 = file;
+                        else
+                            sheet.get_Range(valuecol, valuecol).Value2 = "";
+
+                        /* Increment the counter for the cell reference. */
+                        counter++;
+                        
+                    }
+                }
+                /* Process the remaining parameters. */
+                else
+                {                   
+                    /* Update the cell reference. */
+                    namecol = "A" + counter.ToString();
+                    valuecol = "B" + counter.ToString();
+
+                    /* Process the parameter. */
+                    sheet.get_Range(namecol, namecol).Value2 = param.Key.Name;
+                    if (param.Value != null)
+                        sheet.get_Range(valuecol, valuecol).Value2 = param.Value.ToString();
+                    else
+                        sheet.get_Range(valuecol, valuecol).Value2 = "";
+
+                }
+                counter++;
+            }
+                       
+        }
+
 
         /// <summary>
         /// Write the train pairs data to file. The train speed and timing at each point will be 

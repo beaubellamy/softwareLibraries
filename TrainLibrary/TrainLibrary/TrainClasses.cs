@@ -1032,7 +1032,7 @@ namespace TrainLibrary
             /* Issue 4:
              * The Melbourne Operations Terminal (MOT) is adjacent to South Dynon (SDY). Occaissionally, 
              * the wagon is mioved from MOT to SDY without a train movement. The locations are within 
-             * 1 km, therefore are considered to be the same location. SDY is used as teh reference.
+             * 1 km, therefore are considered to be the same location. SDY is used as the reference.
              */
             if (origin.Equals("MOT"))
                 this.origin = "SDY";
@@ -1062,6 +1062,22 @@ namespace TrainLibrary
             //    this.destination = "DYS";
 
 
+            /* Issue 6:
+             * There is no defined location for the location code 'RHS'. There are 20 different actual 
+             * destinations reached when the planned destination code is 'RHS'. The wagons movement
+             * that do not reach the actual destination account for 8 % of these movements, while
+             * 88% end up reaching 'STM', St Mary's (Mt Druit).
+             * Therefore, we make the assumption that the location code of 'RHS', is intended
+             * to be 'STM'
+             */
+            if (origin.Equals("RHS"))
+                this.origin = "STM";
+
+            if (plannedDestination.Equals("RHS"))
+                this.plannedDestination = "STM";
+
+            if (destination.Equals("RHS"))
+                this.destination = "STM";
         }
 
         /// <summary>
