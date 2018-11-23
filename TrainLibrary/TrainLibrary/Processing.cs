@@ -839,7 +839,9 @@ namespace TrainLibrary
             }
 
             /* Calculate the pro-rata ratio for applying the simulated speeds. */
-            double proRataTSRRatio = actualTime / simulatedTime;
+            double proRataTSRRatio = 1.0;
+            if(actualTime != 0 || simulatedTime != 0)
+                proRataTSRRatio = actualTime / simulatedTime;
 
             /* Make sure the ratio is less than 1. */
             if (proRataTSRRatio > 1)
