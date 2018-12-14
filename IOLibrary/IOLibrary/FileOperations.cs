@@ -353,6 +353,10 @@ namespace IOLibrary
                     if (fields[0].Equals(""))
                         continue;
 
+                    /* Validate the length of the line */
+                    if (fields.Count() != 24)
+                        continue;
+
                     TrainID = fields[15];
                     locoID = fields[6];
 
@@ -2098,6 +2102,191 @@ namespace IOLibrary
             excel.Quit();
 
             return;
+
+        }
+
+
+        public static void writeProcessTrainDataPoints(List<processTrainDataPoint> trainData, string destinationFolder)
+        {
+           
+            /* Maximum number of rows in an excel worksheet is 1,048,576 (round down to a nice number) */
+            int maxExcelRows = 1048500;
+            string loop = "";
+            string tsr = "";
+            string gap = "";
+
+            /* Create the microsfot excel references. */
+            Microsoft.Office.Interop.Excel.Application excel = new Microsoft.Office.Interop.Excel.Application();
+            Workbook workbook;
+            Worksheet worksheet;
+
+            /* Get the reference to the new workbook. */
+            workbook = (Workbook)(excel.Workbooks.Add(""));
+
+            /* Create the header details. */
+            string[] headerString = { "Train Date", "Train ID", "Loco ID", "Power to Weight", "Operator", "Commodity",
+                                      "Direction", "Kilometreage", "Speed", "Time", "Latitude", "Longitude",
+                                      "Elevation", "isLoop", "isTSR", "isGap", "Simulation Speed", "Simualtion Time",
+                                      "Average Speed", "Average Time"};
+
+            /* Get the page size of the excel worksheet. */
+            int header = 2;
+            int excelPageSize = trainData.Count();
+            int excelPages = 1;
+
+            /* Set the number of pages required. */
+            if (trainData.Count() > maxExcelRows)
+            {
+                excelPageSize = 1000000;
+                excelPages = (int)Math.Round((double)trainData.Count() / excelPageSize + 0.5);
+            }
+
+            /* Deconstruct the volume details into excel columns. */
+            string[,] trainID = new string[excelPageSize, 1];
+            string[,] LocoID = new string[excelPageSize, 1];
+            double[,] power = new double[excelPageSize, 1];
+            DateTime[,] trainDate = new DateTime[excelPageSize, 1];
+            string[,] trainOperator = new string[excelPageSize, 1];
+            string[,] commodity = new string[excelPageSize, 1];
+            string[,] direction = new string[excelPageSize, 1];
+            double[,] kilometreage = new double[excelPageSize, 1];
+            double[,] Speed = new double[excelPageSize, 1];
+            double[,] Time = new double[excelPageSize, 1];
+            string[,] isLoop = new string[excelPageSize, 1];
+            string[,] isTSR = new string[excelPageSize, 1];
+            double[,] Latitude = new double[excelPageSize, 1];
+            double[,] Longitude = new double[excelPageSize, 1];
+            double[,] Elevation = new double[excelPageSize, 1];
+            string[,] isGap = new string[excelPageSize, 1];
+            double[,] simualtionSpeed = new double[excelPageSize, 1];
+            double[,] simulationTime = new double[excelPageSize, 1];
+            double[,] averageSpeed = new double[excelPageSize, 1];
+            double[,] averageTime = new double[excelPageSize, 1];
+
+            /* Loop through the excel pages. */
+            for (int excelPage = 0; excelPage < excelPages; excelPage++)
+            {
+                /* Set the active worksheet. */
+                worksheet = workbook.Sheets.Add(Type.Missing, Type.Missing, 1, Type.Missing) as Worksheet;
+                worksheet.Name = "Page " + (excelPage + 1);
+
+                worksheet.get_Range("A1", "T1").Value2 = headerString;
+
+                /* Loop through the data for each excel page. */
+                for (int j = 0; j < excelPageSize; j++)
+                {
+                    loop = "";
+                    tsr = "";
+                    gap = "";
+
+                    /* Check we dont try to read more data than there really is. */
+                    int checkIdx = j + excelPage * excelPageSize;
+                    if (checkIdx < trainData.Count())
+                    {
+
+                        trainID[j, 0] = trainData[checkIdx].TrainID;
+                        LocoID[j, 0] = trainData[checkIdx].locoID;
+                        power[j, 0] = trainData[checkIdx].PW_ratio;
+                        trainDate[j, 0] = trainData[checkIdx].trainDate;
+                        trainOperator[j, 0] = trainData[checkIdx].trainOperator.ToString();
+                        commodity[j, 0] = trainData[checkIdx].commodity.ToString();
+                        direction[j, 0] = trainData[checkIdx].trainDirection.ToString();
+                        kilometreage[j, 0] = trainData[checkIdx].kmMarker;
+                        Speed[j, 0] = trainData[checkIdx].speed;
+                        Time[j, 0] = trainData[checkIdx].transitTime;
+                        Latitude[j, 0] = trainData[checkIdx].location.latitude;
+                        Longitude[j, 0] = trainData[checkIdx].location.longitude;
+                        Elevation[j, 0] = trainData[checkIdx].alignmentElevation;
+                        simualtionSpeed[j, 0] = trainData[checkIdx].simulationSpeed;
+                        simulationTime[j, 0] = trainData[checkIdx].simulationTime;
+                        averageSpeed[j, 0] = trainData[checkIdx].averageSpeed;
+                        averageTime[j, 0] = trainData[checkIdx].averageTime;
+
+                        if (trainData[checkIdx].isLoop)
+                            loop = "Loop";
+
+                        if (trainData[checkIdx].isTSR)
+                            tsr = "TSR";
+
+                        if (!trainData[checkIdx].isLargeGap)
+                            gap = "Gap";
+
+                        isLoop[j, 0] = loop;
+                        isTSR[j, 0] = tsr;
+                        isGap[j, 0] = gap;
+
+                    }
+                    else
+                    {
+                        /* The end of the data has been reached. Populate the remaining elements. */
+                        trainID[j, 0] = "";
+                        LocoID[j, 0] = "";
+                        power[j, 0] = 0;
+                        trainDate[j, 0] = DateTime.MinValue;
+                        trainOperator[j, 0] = "";
+                        commodity[j, 0] = "";
+                        direction[j, 0] = "";
+                        kilometreage[j, 0] = 0;
+                        Speed[j, 0] = 0;
+                        Time[j, 0] = 0;
+                        Latitude[j, 0] = 0;
+                        Longitude[j, 0] = 0;
+                        Elevation[j, 0] = 0;
+                        simualtionSpeed[j, 0] = 0;
+                        simulationTime[j, 0] = 0;
+                        averageSpeed[j, 0] = 0;
+                        averageTime[j, 0] = 0;
+
+                        isLoop[j, 0] = "";
+                        isTSR[j, 0] = "";
+                        isGap[j, 0] = "";
+                    }
+                }
+
+                /* Write the data to the active excel workseet. */
+                worksheet.get_Range("A" + header, "A" + (header + excelPageSize - 1)).Value2 = trainDate;
+                worksheet.get_Range("B" + header, "B" + (header + excelPageSize - 1)).Value2 = trainID;
+                worksheet.get_Range("C" + header, "C" + (header + excelPageSize - 1)).Value2 = LocoID;
+                worksheet.get_Range("D" + header, "D" + (header + excelPageSize - 1)).Value2 = power;
+                worksheet.get_Range("E" + header, "E" + (header + excelPageSize - 1)).Value2 = trainOperator;
+                worksheet.get_Range("F" + header, "F" + (header + excelPageSize - 1)).Value2 = commodity;
+                worksheet.get_Range("G" + header, "G" + (header + excelPageSize - 1)).Value2 = direction;
+                worksheet.get_Range("H" + header, "H" + (header + excelPageSize - 1)).Value2 = kilometreage;
+                worksheet.get_Range("I" + header, "I" + (header + excelPageSize - 1)).Value2 = Speed;
+                worksheet.get_Range("J" + header, "J" + (header + excelPageSize - 1)).Value2 = Time;
+                worksheet.get_Range("K" + header, "K" + (header + excelPageSize - 1)).Value2 = Latitude;
+                worksheet.get_Range("L" + header, "L" + (header + excelPageSize - 1)).Value2 = Longitude;
+                worksheet.get_Range("M" + header, "M" + (header + excelPageSize - 1)).Value2 = Elevation;
+                worksheet.get_Range("N" + header, "N" + (header + excelPageSize - 1)).Value2 = isLoop;
+                worksheet.get_Range("O" + header, "O" + (header + excelPageSize - 1)).Value2 = isTSR;
+                worksheet.get_Range("P" + header, "P" + (header + excelPageSize - 1)).Value2 = isGap;
+                worksheet.get_Range("Q" + header, "Q" + (header + excelPageSize - 1)).Value2 = simualtionSpeed;
+                worksheet.get_Range("R" + header, "R" + (header + excelPageSize - 1)).Value2 = simulationTime;
+                worksheet.get_Range("S" + header, "S" + (header + excelPageSize - 1)).Value2 = averageSpeed;
+                worksheet.get_Range("T" + header, "T" + (header + excelPageSize - 1)).Value2 = averageTime;
+
+            }   // end of excel page loop
+
+
+
+            string saveFilename = destinationFolder + @"\processTrainData_" + DateTime.Now.ToString("yyyyMMdd") + ".xlsx";
+
+            /* Check the file does not exist yet. */
+            if (File.Exists(saveFilename))
+                File.Delete(saveFilename);
+
+            /* Save the excel file. */
+            excel.UserControl = false;
+            workbook.SaveAs(saveFilename, XlFileFormat.xlWorkbookDefault, Type.Missing, Type.Missing,
+                false, false, XlSaveAsAccessMode.xlNoChange,
+                Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
+
+            workbook.Close();
+            excel.Quit();
+
+            return;
+
+
 
         }
 

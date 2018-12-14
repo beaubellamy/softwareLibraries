@@ -640,6 +640,106 @@ namespace TrainLibrary
     }
 
     /// <summary>
+    /// A class to describe each data point in a trains journey.
+    /// </summary>
+    public class processTrainDataPoint
+    {
+        public string TrainID;
+        public string locoID;
+        public double PW_ratio;
+        public DateTime trainDate;
+        public trainOperator trainOperator;
+        public trainCommodity commodity;
+        public direction trainDirection;
+        public double kmMarker;
+        public double speed;
+        public double transitTime;
+        public bool isLoop;
+        public bool isTSR;
+        public GeoLocation location;
+        public double alignmentElevation;
+        public bool isLargeGap;
+        public double simulationSpeed;
+        public double simulationTime;
+        public double averageSpeed;         // useful for validating the resultsin Tableau
+        public double averageTime;          // useful for validating the resultsin Tableau
+
+        /// <summary>
+        /// Default process train data point
+        /// </summary>
+        public processTrainDataPoint()
+        {
+            this.TrainID = "unspecified";
+            this.locoID = "unspecified";
+            this.PW_ratio = 0;
+            this.trainDate = DateTime.MinValue;
+            this.trainOperator = trainOperator.Unknown;
+            this.commodity = trainCommodity.Unknown;
+            this.trainDirection = direction.Unknown;
+            this.kmMarker = 0;
+            this.speed = 0;
+            this.transitTime = 0;
+            this.isLoop = false;
+            this.isTSR = false;
+            this.location = new GeoLocation();
+            this.alignmentElevation = 0;
+            this.isLargeGap = false;
+            this.simulationSpeed = 0;
+            this.simulationTime = 0;
+            this.averageSpeed = 0;
+            this.averageTime = 0;
+        }
+
+        /// <summary>
+        /// Processed train data point built constructor
+        /// </summary>
+        /// <param name="train">Representation of the trainID.</param>
+        /// <param name="loco">Representation of the loco ID.</param>
+        /// <param name="pw">Calculation of the power to weight ratio of the train consist.</param>
+        /// <param name="date">estimated train date.</param>
+        /// <param name="customer">object describing the train operator.</param>
+        /// <param name="commodity">object describing the identified commodity.</param>
+        /// <param name="direction">The direction of travel for the train</param>
+        /// <param name="km">The km marker the train is located at</param>
+        /// <param name="speed">The speed the train is travelling when at current km marker.</param>
+        /// <param name="time">The time spent travelling from the last km marker to the current.</param>
+        /// <param name="loop">A flag indicating if the train is assumed to be approaching or leaving a loop location.</param>
+        /// <param name="tsr">A flag indicating if the train is assumed to be approaching or leaving a TSR location.</param>
+        /// <param name="location">The geographic location of the km marker</param>
+        /// <param name="elev">The estiated elevation of the alignment in metres.</param>
+        /// <param name="gap">A flag indicating if the km marker has been identified as being within a large gap for the origial train data.</param>
+        /// <param name="simSpeed">The value of the simulated speed at this location.</param>
+        /// <param name="simTime">The simulated time spent travelling from the last km marker to the current.</param>
+        /// <param name="aveSpeed">The speed of an average train at this location calculated from the program.</param>
+        /// <param name="aveTime">The time spent travelling from the last km marker to the current for an avearage train.</param>
+        public processTrainDataPoint(string train, string loco, double pw, DateTime date, trainOperator customer, 
+            trainCommodity commodity, direction direction, double km, double speed, double time, bool loop, 
+            bool tsr, GeoLocation location, double elev, bool gap, double simSpeed, double simTime, double aveSpeed, double aveTime)
+        {
+            this.TrainID = train;
+            this.locoID = loco;
+            this.PW_ratio = 0;
+            this.trainDate = date;
+            this.trainOperator = customer;
+            this.commodity = commodity;
+            this.trainDirection = direction;
+            this.kmMarker = km;
+            this.speed = speed;
+            this.transitTime = time;
+            this.isLoop = loop;
+            this.isTSR = tsr;
+            this.location = location;
+            this.alignmentElevation = elev;
+            this.isLargeGap = gap;
+            this.simulationSpeed = simSpeed;
+            this.simulationTime = simTime;
+            this.averageSpeed = aveSpeed;
+            this.averageTime = aveTime;
+        }
+
+    }
+
+    /// <summary>
     /// A class describing the pair of trains that interact in a conflict.
     /// Ie. one train stops and the other goes through.
     /// </summary>

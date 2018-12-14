@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace TrainLibrary
 {
@@ -731,7 +732,7 @@ namespace TrainLibrary
                     {
                         TSRList.Add(false);
                         /* Is the train within a loop boundary */
-                        if (!isTrainInLoopBoundary(train, journey.kilometreage, startKm, endKm, interpolationInterval, loopBoundaryThreshold))
+                        if (!isTrainInLoopBoundary(train, journey.kilometreage, startKm, endKm, loopBoundaryThreshold))
                         {
                             slowTrains.Add(false);
 
@@ -769,7 +770,7 @@ namespace TrainLibrary
                         slowTrains.Add(true);
 
                         /* Keep track of the loop boundary for later inspection, if neccessary. */
-                        if (isTrainInLoopBoundary(train, journey.kilometreage, startKm, endKm, interpolationInterval, loopBoundaryThreshold))
+                        if (isTrainInLoopBoundary(train, journey.kilometreage, startKm, endKm, loopBoundaryThreshold))
                             loopBoundary = true;
 
                     }
@@ -861,6 +862,114 @@ namespace TrainLibrary
 
         }
 
+        //200: processTrainData (interpolatedTrains)
+        // List<TrainJourney> CategorySim, List<TrackGeometry> trackGeometry, 
+
+        public static List<processTrainDataPoint> processTrainData(List<Train> trains, List<TrainJourney> CategorySim, AverageTrain averageTrain, double TSRwindowBoundary, double loopBoundaryThreshold)
+        {
+            double startKm = 0;
+            double endKm = 0;
+            TrainJourney point = new TrainJourney();
+
+            double speed = 0;
+            double time = 0;
+            double simulationTime = 0;
+            double averageTime = 0;
+            bool loop = false;
+            bool tsr = false;
+            //int simKmIdx = 0;
+
+            // Geo location is not determined at the moment.
+            GeoLocation geo = new GeoLocation();
+
+            List<processTrainDataPoint> processDataPoint = new List<processTrainDataPoint>();
+
+            // Confirm the length of the train journeys are the same as teh simualtion journey. We can assume all train journeys are the same length.
+            Debug.Assert(trains[0].journey.Count == CategorySim.Count);
+
+            foreach (Train train in trains)
+            {
+                for (int index = 0; index < train.journey.Count(); index++)
+                {
+                    startKm = train.journey[0].kilometreage;
+                    endKm = train.journey.Last().kilometreage;
+                    point = train.journey[index];
+                    loop = false;
+                    tsr = false;
+
+                    /* Get the index of the current point within the simulation journey. */
+                    //simKmIdx = CategorySim.FindIndex(c => c.kilometreage == point.kilometreage);
+
+                    /* Does a TSR apply */
+                    if (!withinTemporarySpeedRestrictionBoundaries(train, point.kilometreage, startKm, endKm, TSRwindowBoundary))
+                    {
+                        // No TSR
+                        if (!isTrainInLoopBoundary(train, point.kilometreage, startKm, endKm, loopBoundaryThreshold))
+                        {
+                            // Not in LOOP
+                            speed = point.speed;
+                        }
+                        else
+                        {
+                            // in LOOP
+                            if (point.speed > (loopBoundaryThreshold * CategorySim[index].speed))
+                            {
+                                speed = point.speed;
+                            }
+                            else
+                            {
+                                // train is stopping in a loop: use simulator speed
+                                //speed = CategorySim[index].speed;
+                                speed = averageTrain.averageSpeed[index];
+                                loop = true;
+                            }
+
+                        }
+
+                    }
+                    else
+                    {
+                        // Affect by TSR: use simulator speed
+                        //speed = CategorySim[index].speed;
+                        speed = averageTrain.averageSpeed[index];
+                        tsr = true;
+                    }
+
+                    // Calculate time between points
+                    // dont forget bounday cases, start and end points.
+
+                    time = 0;
+                    simulationTime = 0;
+                    averageTime = 0;
+
+                    if (point.kilometreage != startKm)
+                    {
+                        double lastKilometreage = train.journey[index-1].kilometreage;
+
+                        if (speed > 0)
+                            time = (point.kilometreage - lastKilometreage) / speed * secToHours;
+                        
+                        if (CategorySim[index].speed > 0)
+                            simulationTime = (CategorySim[index].kilometreage - CategorySim[index-1].kilometreage) / CategorySim[index].speed * secToHours;
+
+                        if (averageTrain.averageSpeed[index] > 0)
+                            averageTime = (averageTrain.kilometreage[index] - averageTrain.kilometreage[index - 1]) / averageTrain.averageSpeed[index] * secToHours;
+
+                    }
+                    // add processTrainDataPoint to the list for this train
+                    
+
+                    processTrainDataPoint item = new processTrainDataPoint(train.trainID, train.locoID,train.powerToWeight, train.journey[0].dateTime,
+                        train.trainOperator, train.commodity, train.trainDirection, point.kilometreage, speed, time, loop, tsr, geo, 
+                        point.elevation, point.interpolate, CategorySim[index].speed, simulationTime, averageTrain.averageSpeed[index], averageTime);
+                    processDataPoint.Add(item);
+
+                }
+            }
+
+            return processDataPoint;
+        }
+
         /// <summary>
         /// Calculate the aggregated average speed of all trains, while removing the section
         /// of a train journey that is affected by a TSR or those trains that go straight through a loop.
@@ -929,7 +1038,7 @@ namespace TrainLibrary
                     {
                         TSRList.Add(false);
                         /* Is the train within a loop boundary */
-                        if (!isTrainInLoopBoundary(train, journey.kilometreage, startKm, endKm, interpolationInterval, loopBoundaryThreshold))
+                        if (!isTrainInLoopBoundary(train, journey.kilometreage, startKm, endKm, loopBoundaryThreshold))
                         {
                             fastTrains.Add(false);
 
@@ -964,7 +1073,7 @@ namespace TrainLibrary
                         fastTrains.Add(true);
 
                         /* Keep track of the loop boundary for later inspection, if neccessary. */
-                        if (isTrainInLoopBoundary(train, journey.kilometreage, startKm, endKm, interpolationInterval, loopBoundaryThreshold))
+                        if (isTrainInLoopBoundary(train, journey.kilometreage, startKm, endKm, loopBoundaryThreshold))
                             loopBoundary = true;
 
                     }
@@ -1149,8 +1258,11 @@ namespace TrainLibrary
         /// </summary>
         /// <param name="train">The train object containing the journey details.</param>
         /// <param name="targetLocation">The specific location being considered.</param>
+        /// <param name="startKm">The first kilometreage of the train journey..</param>
+        /// <param name="endKm">The last kilometreage of the train journey.</param>
+        /// <param name="loopBoundaryThreshold">The threshold to indicate how far out from a loop to be considered within the boundary for a train.</param>
         /// <returns>True, if the train is within the boundaries of the loop window.</returns>
-        public static bool isTrainInLoopBoundary(Train train, double targetLocation, double startKm, double endKm, double interpolationInterval, double loopBoundaryThreshold)
+        public static bool isTrainInLoopBoundary(Train train, double targetLocation, double startKm, double endKm, double loopBoundaryThreshold)
         {
             /* Find the indecies of the boundaries of the loop. */
             double lookBack = targetLocation - loopBoundaryThreshold;
@@ -1751,7 +1863,7 @@ namespace TrainLibrary
                 /* Calcualte the distance between the points. */
                 distance = calculateGreatCircleDistance(point1, point2);
 
-                /* Assign the interpolate property based on the distance from the prefious point. */
+                /* Assign the interpolate property based on the distance from the previous point. */
                 if (distance > distanceThreshold)
                     journey[index].interpolate = false;
                 else
