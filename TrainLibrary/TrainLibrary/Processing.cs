@@ -534,6 +534,7 @@ namespace TrainLibrary
             return newTrainList;
         }
 
+        /// <summary>
         ///  Interpolate the train speed to a specified interval using a linear interpolation.
         ///  This algorithm does not interpolate through the gaps of data which are identified 
         ///  by the interpolation flag in the Train object.
@@ -862,9 +863,16 @@ namespace TrainLibrary
 
         }
 
-        //200: processTrainData (interpolatedTrains)
-        // List<TrainJourney> CategorySim, List<TrackGeometry> trackGeometry, 
-
+        /// <summary>
+        /// Map the train data to a processedTrainData object, in order to visualise teh data in Tabelau.
+        /// This is aimed to aid in validating the process to automate the interpolation for a larger scale.
+        /// </summary>
+        /// <param name="trains">List of all trains in a specific category.</param>
+        /// <param name="CategorySim">The simualtion corresponding to the train category.</param>
+        /// <param name="averageTrain">The average train for the category.</param>
+        /// <param name="TSRwindowBoundary">The distance threshold to be considered within a TSR.</param>
+        /// <param name="loopBoundaryThreshold">The speed factor used to determine if the train is stopping in a loop.</param>
+        /// <returns></returns>
         public static List<processTrainDataPoint> processTrainData(List<Train> trains, List<TrainJourney> CategorySim, AverageTrain averageTrain, double TSRwindowBoundary, double loopBoundaryThreshold)
         {
             double startKm = 0;
@@ -877,14 +885,16 @@ namespace TrainLibrary
             double averageTime = 0;
             bool loop = false;
             bool tsr = false;
-            //int simKmIdx = 0;
 
-            // Geo location is not determined at the moment.
+            /* Place holder for interpolated Geo location. This value is not determined at the moment. */
             GeoLocation geo = new GeoLocation();
 
             List<processTrainDataPoint> processDataPoint = new List<processTrainDataPoint>();
 
-            // Confirm the length of the train journeys are the same as teh simualtion journey. We can assume all train journeys are the same length.
+            /* Confirm the length of the train journeys are the same as the simualtion journey. 
+             * We can assume all train journeys are the same length because we have redifined 
+             * them in terms on start, end points, and step size.
+             */
             Debug.Assert(trains[0].journey.Count == CategorySim.Count);
 
             foreach (Train train in trains)
@@ -896,10 +906,7 @@ namespace TrainLibrary
                     point = train.journey[index];
                     loop = false;
                     tsr = false;
-
-                    /* Get the index of the current point within the simulation journey. */
-                    //simKmIdx = CategorySim.FindIndex(c => c.kilometreage == point.kilometreage);
-
+                    
                     /* Does a TSR apply */
                     if (!withinTemporarySpeedRestrictionBoundaries(train, point.kilometreage, startKm, endKm, TSRwindowBoundary))
                     {
@@ -918,7 +925,7 @@ namespace TrainLibrary
                             }
                             else
                             {
-                                // train is stopping in a loop: use simulator speed
+                                // train is stopping in a loop: use simulator/average speed
                                 //speed = CategorySim[index].speed;
                                 speed = averageTrain.averageSpeed[index];
                                 loop = true;
@@ -929,15 +936,13 @@ namespace TrainLibrary
                     }
                     else
                     {
-                        // Affect by TSR: use simulator speed
+                        // Affect by TSR: use simulator/average speed
                         //speed = CategorySim[index].speed;
                         speed = averageTrain.averageSpeed[index];
                         tsr = true;
                     }
 
-                    // Calculate time between points
-                    // dont forget bounday cases, start and end points.
-
+                    /* Calculate time between points. */
                     time = 0;
                     simulationTime = 0;
                     averageTime = 0;
@@ -956,9 +961,8 @@ namespace TrainLibrary
                             averageTime = (averageTrain.kilometreage[index] - averageTrain.kilometreage[index - 1]) / averageTrain.averageSpeed[index] * secToHours;
 
                     }
-                    // add processTrainDataPoint to the list for this train
                     
-
+                    /* Map the train data into a processed train object to visualise in Tableau. */
                     processTrainDataPoint item = new processTrainDataPoint(train.trainID, train.locoID,train.powerToWeight, train.journey[0].dateTime,
                         train.trainOperator, train.commodity, train.trainDirection, point.kilometreage, speed, time, loop, tsr, geo, 
                         point.elevation, point.interpolate, CategorySim[index].speed, simulationTime, averageTrain.averageSpeed[index], averageTime);
@@ -1313,11 +1317,7 @@ namespace TrainLibrary
              */
             double lookBack = targetLocation - TrainLength;
             double lookForward = targetLocation + TSRwindowBoundary; 
-            //if (train.trainDirection == direction.IncreasingKm)
-            //    lookBack -= TrainLength;
-            //else
-            //    lookBack += TrainLength;
-
+            
             int lookBackIdx = train.indexOfGeometryKm(train.journey, lookBack);
             int lookForwardIdx = train.indexOfGeometryKm(train.journey, lookForward);
 

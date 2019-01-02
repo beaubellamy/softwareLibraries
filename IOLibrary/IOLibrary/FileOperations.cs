@@ -18,7 +18,7 @@ using Statistics;
 namespace IOLibrary
 {
     /// <summary>
-    /// SQL parameter class to contain the SQL conection and teh SQL command to execute
+    /// SQL parameter class to contain the SQL conection and the SQL command to execute
     /// </summary>
     public class SqlParameters
     {
@@ -916,7 +916,6 @@ namespace IOLibrary
         public static List<wagonDetails> readAzureWagonDataFile(string filename, bool combineIntermodalAndSteel = false)
         {
             /* Read the all lines of the text file. */
-            //char[] delimiters = { ',', '\t,' };
             char[] delimiters = { ',', '\t' };
 
             bool header = true;
@@ -1124,7 +1123,7 @@ namespace IOLibrary
         }
 
         /// <summary>
-        /// Create the connection and generate teh command to extract the wagon data.
+        /// Create the connection and generate the command to extract the wagon data.
         /// </summary>
         /// <param name="fromDate">The start data of the analysis period.</param>
         /// <param name="toDate">The end date of the analysis period.</param>
@@ -1144,7 +1143,7 @@ namespace IOLibrary
 
             /* Generate the SQL wagon data query */
             string wagonMovementQuery =
-                "SELECT[Consist].[TrainDate] AS [TrainDate]," +
+                "SELECT [Consist].[TrainDate] AS [TrainDate]," +
                 "  [Consist].[TrainCode] AS [TrainCode]," +
                 "  [Consist].[VehicleClassCode] AS [VehicleClassCode]," +
                 "  [Consist].[VehicleID] AS [VehicleID]," +
@@ -1159,13 +1158,13 @@ namespace IOLibrary
                 "  [Vehicle].[TareMass] AS [TareMass]," +
                 "  [Actual Destination Location].[ParentLocationCode] AS [ParentLocationCode]," +
                 "  [Commodity].[RAMS_CommodityCode] AS [RAMS_CommodityCode]," +
-                "  [Operator].[OperatorCode] AS [OperatorCode(Operator)]" +
+                "  [Operator].[OperatorCode] AS [OperatorCode(Operator)] " +
                 "FROM[FACT].[Consist] [Consist]" +
-                "  INNER JOIN[FACT].[TrainJourney] [TrainJourney] ON ([Consist].[TrainID] = [TrainJourney].[TrainID])" +
-                "  INNER JOIN[DIM].[Vehicle] [Vehicle] ON([Consist].[VehicleID] = [Vehicle].[VehicleID])" +
-                "  INNER JOIN[REPORT].[ParentLocation] [Actual Destination Location] ON([Consist].[ActualDestinationParentLocationID] = [Actual Destination Location].[ParentLocationID])" +
-                "  INNER JOIN[REPORT].[Commodity] [Commodity] ON([TrainJourney].[CommodityID] = [Commodity].[CommodityID])" +
-                "  INNER JOIN[DIM].[Operator] [Operator] ON([TrainJourney].[OperatorID] = [Operator].[OperatorID])" +
+                "  INNER JOIN [FACT].[TrainJourney] [TrainJourney] ON ([Consist].[TrainID] = [TrainJourney].[TrainID])" +
+                "  INNER JOIN [DIM].[Vehicle] [Vehicle] ON ([Consist].[VehicleID] = [Vehicle].[VehicleID])" +
+                "  INNER JOIN [REPORT].[ParentLocation] [Actual Destination Location] ON ([Consist].[ActualDestinationParentLocationID] = [Actual Destination Location].[ParentLocationID])" +
+                "  INNER JOIN [REPORT].[Commodity] [Commodity] ON ([TrainJourney].[CommodityID] = [Commodity].[CommodityID])" +
+                "  INNER JOIN [DIM].[Operator] [Operator] ON ([TrainJourney].[OperatorID] = [Operator].[OperatorID]) " +
                 "WHERE[Consist].[TrainDate] BETWEEN '" + from + "' AND '" + to + "'";
 
             /* Create the connection and the command to execute. */
@@ -2105,7 +2104,12 @@ namespace IOLibrary
 
         }
 
-
+        /// <summary>
+        /// A preliminary function to write the data to a file in a format 
+        /// that will be condusive to visualisation in Tableau.
+        /// </summary>
+        /// <param name="trainData">The train data in the required format</param>
+        /// <param name="destinationFolder">The destination folder to save the file.</param>
         public static void writeProcessTrainDataPoints(List<processTrainDataPoint> trainData, string destinationFolder)
         {
            
@@ -3172,7 +3176,7 @@ namespace IOLibrary
                 int excelPageSize = currentVolumeList.Count() - 1;
                 int excelPages = 1;
 
-                /* Set teh number of pages for each commodity. */
+                /* Set the number of pages for each commodity. */
                 if (currentVolumeList.Count() > maxExcelRows)
                 {
                     excelPageSize = 1000000;
