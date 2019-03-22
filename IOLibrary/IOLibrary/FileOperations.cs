@@ -1442,13 +1442,15 @@ namespace IOLibrary
                 horizontalOffset = 3;
                 displayColumn = horizontalOffset;
 
-                /* Set the active worksheet. */
-                if (excelPage >= 3)
-                    worksheet = workbook.Worksheets.Add();
-                else
-                    worksheet = workbook.Sheets[excelPage + 1];
+                worksheet = workbook.Sheets.Add(Type.Missing, Type.Missing, 1, Type.Missing) as Worksheet;
 
-                workbook.Sheets[excelPage + 1].Activate();
+                /* Set the active worksheet. */
+                //if (excelPage >= 3)
+                //    worksheet = workbook.Worksheets.Add();
+                //else
+                //    worksheet = workbook.Sheets[excelPage + 1];
+
+                //workbook.Sheets[excelPage + 1].Activate();
                 Range topLeft = worksheet.Cells[1, 1];
                 Range bottomRight = worksheet.Cells[headerRows, headerColumns];
                 worksheet.get_Range(topLeft, bottomRight).Value2 = headerString;
@@ -1456,6 +1458,7 @@ namespace IOLibrary
                 /* Loop through the data for each excel page. */
                 for (int trainIdx = 0; trainIdx < excelPageSize; trainIdx++)
                 {
+                    
                     /* Calucalte the appropriate index for the train. */
                     int offsetIndex = excelPage * excelPageSize + trainIdx;
 

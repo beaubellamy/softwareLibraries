@@ -502,8 +502,9 @@ namespace TrainLibrary
                         loop = trackGeometry[geometryIdx].isLoopHere;
 
                         /* Check if there is a TSR at this location. */
-                        TSR = trackGeometry[geometryIdx].isTSRHere;
-                        TSRspeed = trackGeometry[geometryIdx].temporarySpeedRestriction;
+                        //TSR = trackGeometry[geometryIdx].isTSRHere;
+                        //TSRspeed = trackGeometry[geometryIdx].temporarySpeedRestriction;
+                        // The TSR is associated with the individual train journey and not the track
                     }
 
                     /* Create the interpolated data object and add it to the list. */
@@ -864,7 +865,7 @@ namespace TrainLibrary
         }
 
         /// <summary>
-        /// Map the train data to a processedTrainData object, in order to visualise teh data in Tabelau.
+        /// Map the train data to a processedTrainData object, in order to visualise the data in Tabelau.
         /// This is aimed to aid in validating the process to automate the interpolation for a larger scale.
         /// </summary>
         /// <param name="trains">List of all trains in a specific category.</param>
@@ -891,9 +892,9 @@ namespace TrainLibrary
 
             List<processTrainDataPoint> processDataPoint = new List<processTrainDataPoint>();
 
-            /* Confirm the length of the train journeys are the same as the simualtion journey. 
+            /* Confirm the length of the train journeys are the same as the simulation journey. 
              * We can assume all train journeys are the same length because we have redifined 
-             * them in terms on start, end points, and step size.
+             * them in terms of start, end points, and step size.
              */
             Debug.Assert(trains[0].journey.Count == CategorySim.Count);
 
@@ -901,6 +902,8 @@ namespace TrainLibrary
             {
                 for (int index = 0; index < train.journey.Count(); index++)
                 {
+                    Console.WriteLine(index);
+
                     startKm = train.journey[0].kilometreage;
                     endKm = train.journey.Last().kilometreage;
                     point = train.journey[index];
