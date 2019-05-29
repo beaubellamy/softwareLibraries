@@ -2506,68 +2506,10 @@ namespace TrainLibrary
 
             CorridorSettings corridor = new CorridorSettings(corridorlabel);
 
-            /* Corridor settings "Gunnedah" */
-            //double startKm = 280.0;
-            //double endKm = 540.0;
-            //double interval = 50;
-            //bool IgnoreGaps = false;
-            //string geometryFile = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Gunnedah Basin Geometry.csv";
-            //double timeThreshold = 10;
-            //double distanceThreshold = 4;
-            //double minimumJourneyDistance = 50;
-            //analysisCategory analysisCategory = analysisCategory.TrainOperator;
-            //bool trainsStoppingAtLoops = false;
-            //double loopSpeedThreshold = 0.5;
-            //double loopBoundaryThreshold = 2;
-            //double TSRwindowBoundary = 2;
-
-            //// Not realy used for Hunter Valley region
-            //double Category1LowerBound = 0;
-            //double Category1UpperBound = 100;
-            //double Category2LowerBound = 100;
-            //double Category2UpperBound = 200;
-
-
-            // the data should be accessed using Python and the python program should call the algotihm function to perform the processing
-            // TSR's should be passed in
-
-
             // read geometry file
             List<TrackGeometry> trackGeometry = new List<TrackGeometry>();
             trackGeometry = FileOperations.readGeometryfile(corridor.geometryFile);
-
-            // set analysis category to operators
-            //List<Category> simCategories = new List<Category>();
-            //// set simulation catagories
-
-            //// Need to make the simualtion files and sim categories dynamic for the specific corridor. ???????
-
-            ///* Set the analysis paramteres. */
-            //simCategories.Add(Category.Aurizon);
-            //simCategories.Add(Category.Freightliner);
-            //simCategories.Add(Category.PacificNational);
-
-            //List<string> simulationFiles = new List<string>();
-            //simulationFiles.Add(@"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Aurizon-Increasing-60.csv");
-            //simulationFiles.Add(@"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Aurizon-Decreasing.csv");
-
-            //simulationFiles.Add(@"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Freightliner-Increasing.csv");
-            //simulationFiles.Add(@"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Freightliner-Decreasing.csv");
-
-            //simulationFiles.Add(@"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\PacificNational-Increasing.csv");
-            //simulationFiles.Add(@"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\PacificNational-Decreasing.csv");
-
-            //Dictionary<string, string> simulationFiles = new Dictionary<string, string>();
-            //simulationFiles["Aurizon-IncreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Aurizon-Increasing-60.csv";
-            //simulationFiles["Aurizon-DecreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Aurizon-Decreasing.csv";
-
-            //simulationFiles["Freightliner-IncreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Freightliner-Increasing.csv";
-            //simulationFiles["Freightliner-DecreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Freightliner-Decreasing.csv";
-
-            //simulationFiles["PacificNational-IncreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\PacificNational-Increasing.csv";
-            //simulationFiles["PacificNational-DecreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\PacificNational-Decreasing.csv";
-
-
+            
             // read simualtion files
             /* Create the list of simulated trains. */
             List<Train> simulatedTrains = new List<Train>();
@@ -2679,7 +2621,6 @@ namespace TrainLibrary
             /* This code will not be requierd when the integration with Python in complete */
 
             string destinationDirectory = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin";
-            Console.WriteLine("Writing processed data to file.");
             FileOperations.writeProcessTrainDataPoints(processedTrains, destinationDirectory);
             // return data to python program
             return processedTrains;

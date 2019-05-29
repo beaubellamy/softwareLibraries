@@ -1498,45 +1498,63 @@ namespace TrainLibrary
 
     }
 
+    /// <summary>
+    /// A class describing the corridor settings foe automatef processing of train data.
+    /// </summary>
     public class CorridorSettings
     {
+        /* Corridor geometry file */
+        public string geometryFile;
+
+        /* Interpolation settings*/
         public double startKm;
         public double endKm;
         public double interval;
         public bool IgnoreGaps;
-        public string geometryFile;
-        public double timeThreshold;
-        public double distanceThreshold;
-        public double minimumJourneyDistance;
-        public analysisCategory analysisCategory;
         public bool trainsStoppingAtLoops;
         public double loopSpeedThreshold;
         public double loopBoundaryThreshold;
         public double TSRwindowBoundary;
-        public Dictionary<string, string> simulationFiles;
-        public List<Category> simCategories;
 
+        /* Procesing decision settings */
+        public double timeThreshold;
+        public double distanceThreshold;
+        public double minimumJourneyDistance;
+        public analysisCategory analysisCategory;
+        
+        /* Simulation settings */
+        public Dictionary<string, string> simulationFiles = new Dictionary<string, string>();
+        public List<Category> simCategories = new List<Category>();
+
+        /* Irrelavant for the greater hunter valley area, but usefull for 
+         * future corridor expansion into the interstate network.
+         */
         public double Category1LowerBound;
         public double Category1UpperBound;
         public double Category2LowerBound;
         public double Category2UpperBound;
 
+        /// <summary>
+        /// Default constructor for corridor settings
+        /// </summary>
         public CorridorSettings()
         {
+            this.geometryFile = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Gunnedah Basin Geometry.csv";
+
             this.startKm = 280.0;
             this.endKm = 540.0;
             this.interval = 50;
             this.IgnoreGaps = false;
-            this.geometryFile = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Gunnedah Basin Geometry.csv";
-            this.timeThreshold = 10;
-            this.distanceThreshold = 4;
-            this.minimumJourneyDistance = 50;
-            this.analysisCategory = analysisCategory.TrainOperator;
             this.trainsStoppingAtLoops = false;
             this.loopSpeedThreshold = 0.5;
             this.loopBoundaryThreshold = 2;
             this.TSRwindowBoundary = 2;
 
+            this.timeThreshold = 10;
+            this.distanceThreshold = 4;
+            this.minimumJourneyDistance = 50;
+            this.analysisCategory = analysisCategory.TrainOperator;
+            
             this.simulationFiles["Aurizon-IncreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Aurizon-Increasing-60.csv";
             this.simulationFiles["Aurizon-DecreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Aurizon-Decreasing.csv";
 
@@ -1553,59 +1571,67 @@ namespace TrainLibrary
 
             // Not realy used for Hunter Valley region
             this.Category1LowerBound = 0;
-            this.Category1UpperBound = 100;
-            this.Category2LowerBound = 100;
-            this.Category2UpperBound = 200;
+            this.Category1UpperBound = 0;
+            this.Category2LowerBound = 0;
+            this.Category2UpperBound = 0;
         }
 
+        /// <summary>
+        /// Helper function to construct the corridor settings based on the corridor name.
+        /// </summary>
+        /// <param name="corridor">The name of the corridor</param>
         public CorridorSettings(string corridor)
         {
-            Console.WriteLine(corridor);
             switch (corridor)
             {
+                /* Set the corridor settings for the Gunnedah line.*/
                 case "gunnedah":
                 case "Gunnedah":
                 case "MUS-NBI":
-                    Console.WriteLine("Calling Gunndeah()");
                     gunnedah();
                     break;
 
+                /* Set the corridor settings for the Ulan line.*/
                 case "ulan":
                 case "Ulan":
                 case "MUS-ULN":
-                    Console.WriteLine("Calling Ulan()");
                     ulan();
                     break;
 
+                /* Set the corridor settings for the Hunter line.*/
                 case "hunter":
                 case "Hunter":
                 case "KIY-WCK":
-                    Console.WriteLine("Calling Hunter()");
                     hunter();
                     break;
 
                 default:
-                    Console.WriteLine("Calling Gunndeah(default)");
                     gunnedah();
                     break;
             }
         }
 
+        /// <summary>
+        /// Gunnedah line corridor settings
+        /// </summary>
         private void gunnedah()
         {
+            this.geometryFile = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Gunnedah Basin Geometry.csv";
+
             this.startKm = 280.0;
             this.endKm = 540.0;
             this.interval = 50;
             this.IgnoreGaps = false;
-            this.geometryFile = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Gunnedah Basin Geometry.csv";
-            this.timeThreshold = 10;
-            this.distanceThreshold = 4;
-            this.minimumJourneyDistance = 50;
-            this.analysisCategory = analysisCategory.TrainOperator;
             this.trainsStoppingAtLoops = false;
             this.loopSpeedThreshold = 0.5;
             this.loopBoundaryThreshold = 2;
             this.TSRwindowBoundary = 2;
+
+            this.timeThreshold = 10;
+            this.distanceThreshold = 4;
+            this.minimumJourneyDistance = 50;
+            this.analysisCategory = analysisCategory.TrainOperator;
+
 
             this.simulationFiles["Aurizon-IncreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Aurizon-Increasing-60.csv";
             this.simulationFiles["Aurizon-DecreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Aurizon-Decreasing.csv";
@@ -1615,31 +1641,35 @@ namespace TrainLibrary
 
             this.simCategories.Add(Category.Aurizon);
             this.simCategories.Add(Category.PacificNational);
-
-
+                        
             // Not realy used for Hunter Valley region
             this.Category1LowerBound = 0;
-            this.Category1UpperBound = 100;
-            this.Category2LowerBound = 100;
-            this.Category2UpperBound = 200;
+            this.Category1UpperBound = 0;
+            this.Category2LowerBound = 0;
+            this.Category2UpperBound = 0;
         }
 
+        /// <summary>
+        /// Ulan line corridor settings
+        /// </summary>
         private void ulan()
         {
+            this.geometryFile = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Ulan\Ulan Geometry.csv";
+
             this.startKm = 280.0;
             this.endKm = 460.0;
             this.interval = 50;
             this.IgnoreGaps = false;
-            this.geometryFile = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Ulan\Ulan Geometry.csv";
-            this.timeThreshold = 10;
-            this.distanceThreshold = 4;
-            this.minimumJourneyDistance = 50;
-            this.analysisCategory = analysisCategory.TrainOperator;
             this.trainsStoppingAtLoops = false;
             this.loopSpeedThreshold = 0.5;
             this.loopBoundaryThreshold = 2;
             this.TSRwindowBoundary = 2;
 
+            this.timeThreshold = 10;
+            this.distanceThreshold = 4;
+            this.minimumJourneyDistance = 50;
+            this.analysisCategory = analysisCategory.TrainOperator;
+            
             this.simulationFiles["Aurizon-IncreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Ulan\Aurizon - Increasing.csv";
             this.simulationFiles["Aurizon-DecreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Ulan\Aurizon - Decreasing.csv";
 
@@ -1656,27 +1686,32 @@ namespace TrainLibrary
 
             // Not realy used for Hunter Valley region
             this.Category1LowerBound = 0;
-            this.Category1UpperBound = 100;
-            this.Category2LowerBound = 100;
-            this.Category2UpperBound = 200;
+            this.Category1UpperBound = 0;
+            this.Category2LowerBound = 0;
+            this.Category2UpperBound = 0;
         }
 
+        /// <summary>
+        /// Hunter line corridor settings
+        /// </summary>
         private void hunter()
         {
+            this.geometryFile = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Hunter Region\KIY to WCK.csv";
+
             this.startKm = 160.0;
             this.endKm = 290.0;
             this.interval = 50;
             this.IgnoreGaps = false;
-            this.geometryFile = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Hunter Region\KIY to WCK.csv";
-            this.timeThreshold = 10;
-            this.distanceThreshold = 4;
-            this.minimumJourneyDistance = 50;
-            this.analysisCategory = analysisCategory.TrainOperator;
             this.trainsStoppingAtLoops = false;
             this.loopSpeedThreshold = 0.5;
             this.loopBoundaryThreshold = 1;
             this.TSRwindowBoundary = 1;
 
+            this.timeThreshold = 10;
+            this.distanceThreshold = 4;
+            this.minimumJourneyDistance = 50;
+            this.analysisCategory = analysisCategory.TrainOperator;
+            
             this.simulationFiles["Aurizon-IncreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Hunter Region\Aurizon - Increasing.csv";
             this.simulationFiles["Aurizon-DecreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Hunter Region\Aurizon - Decreasing.csv";
 
@@ -1693,10 +1728,11 @@ namespace TrainLibrary
 
             // Not realy used for Hunter Valley region
             this.Category1LowerBound = 0;
-            this.Category1UpperBound = 100;
-            this.Category2LowerBound = 100;
-            this.Category2UpperBound = 200;
+            this.Category1UpperBound = 0;
+            this.Category2LowerBound = 0;
+            this.Category2UpperBound = 0;
         }
 
     }
+
 }
