@@ -5,6 +5,10 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using RGiesecke.DllExport;
+using System.Runtime.InteropServices;
+
+using IOLibrary;
 
 namespace TrainLibrary
 {
@@ -521,7 +525,8 @@ namespace TrainLibrary
                             timeChange = true;
 
                 }
-                
+                interpolatedJourney.RemoveAt(interpolatedJourney.Count() - 1);
+
                 /* Add the interpolated list to the list of new train objects. */
                 Train trainItem = new Train(trains[trainIdx].Category, trains[trainIdx].trainID, trains[trainIdx].trainType, 
                     trains[trainIdx].locoID, trains[trainIdx].trainOperator, trains[trainIdx].commodity, trains[trainIdx].powerToWeight,
@@ -530,6 +535,7 @@ namespace TrainLibrary
                 newTrainList.Add(trainItem);
 
             }
+
 
             /* Return the completed interpolated train data. */
             return newTrainList;
@@ -653,6 +659,7 @@ namespace TrainLibrary
                     currentKm = currentKm + interpolationInterval * metresToKilometers;
 
                 }
+                interpolatedJourney.RemoveAt(interpolatedJourney.Count() - 1);
 
                 /* Add the interpolated list to the list of new train objects. */
                 Train trainItem = new Train(trains[trainIdx].Category, trains[trainIdx].trainID, trains[trainIdx].trainType, 
@@ -704,15 +711,16 @@ namespace TrainLibrary
             double sum = 0;
             double sumSD = 0;
             double aveSpeed = 0;
-            
+
             /* Determine the number of points in the average train journey. */
-            int size = (int)((endKm - startKm) / (interpolationInterval * metresToKilometers));
+            int size = (int)((endKm - startKm) / (interpolationInterval * metresToKilometers)) -1; // +1 added late, not sure why this didn't cause issues before ???
 
             TrainJourney journey = new TrainJourney();
 
             /* Cycle through each location to average the valid values. */
             for (int journeyIdx = 0; journeyIdx < size; journeyIdx++)
             {
+                
                 /* Determine the current location and elevation of the alignemnt at this point. */
                 kmPost = startKm + interpolationInterval * metresToKilometers * journeyIdx;
                 altitude = trackGeometry[track.findClosestTrackGeometryPoint(trackGeometry, kmPost)].elevation;
@@ -896,14 +904,13 @@ namespace TrainLibrary
              * We can assume all train journeys are the same length because we have redifined 
              * them in terms of start, end points, and step size.
              */
-            Debug.Assert(trains[0].journey.Count == CategorySim.Count);
+            Debug.Assert(trains[0].journey.Count == CategorySim.Count, "The train Journey array and Simualted train journey array are different sizes");
+            Debug.Assert(trains[0].journey.Count == averageTrain.averageSpeed.Count, "The train Journey array and Average train journey array are different sizes");
 
             foreach (Train train in trains)
             {
                 for (int index = 0; index < train.journey.Count(); index++)
                 {
-                    Console.WriteLine(index);
-
                     startKm = train.journey[0].kilometreage;
                     endKm = train.journey.Last().kilometreage;
                     point = train.journey[index];
@@ -975,6 +982,45 @@ namespace TrainLibrary
             }
 
             return processDataPoint;
+        }
+
+        public static List<processTrainDataPoint> processTrainData(List<TrainJourney> CategorySim, AverageTrain averageTrain, direction trainDirection)
+        {
+            double simulationTime = 0;
+            double averageTime = 0;
+
+            /* Place holder for interpolated Geo location. This value is not determined at the moment. */
+            GeoLocation geo = new GeoLocation();
+
+            List<processTrainDataPoint> processDataPoint = new List<processTrainDataPoint>();
+
+            for (int index = 0; index < averageTrain.kilometreage.Count(); index++)
+            {
+                /* Calculate time between points. */
+                simulationTime = 0;
+                averageTime = 0;
+
+                if (index > 0)
+                {
+                    double lastKilometreage = averageTrain.kilometreage[index - 1];
+
+                    if (CategorySim[index].speed > 0)
+                        simulationTime = (CategorySim[index].kilometreage - CategorySim[index - 1].kilometreage) / CategorySim[index].speed * secToHours;
+
+                    if (averageTrain.averageSpeed[index] > 0)
+                        averageTime = (averageTrain.kilometreage[index] - averageTrain.kilometreage[index - 1]) / averageTrain.averageSpeed[index] * secToHours;
+
+                }
+
+                /* Map the train data into a processed train object to visualise in Tableau. */
+                processTrainDataPoint item = new processTrainDataPoint("Empty", "Empty", 0, new DateTime(1900,1,1,0,0,0),
+                    trainOperator.Unknown, trainCommodity.Unknown, trainDirection, averageTrain.kilometreage[index], 0, 0, false, false, geo,
+                    averageTrain.elevation[index], false, CategorySim[index].speed, simulationTime, averageTrain.averageSpeed[index], averageTime);
+                processDataPoint.Add(item);
+
+            }
+            return processDataPoint;
+
         }
 
         /// <summary>
@@ -2436,7 +2482,210 @@ namespace TrainLibrary
 
         }
 
-        
+
+
+        [DllExport("AutomatedProcessing", CallingConvention = CallingConvention.Cdecl)]
+        public static List<processTrainDataPoint> AutomatedProcessing(string filename, string temporarySpeedRestrictionFile, 
+            int fromYear, int fromMonth, int fromDay, int toYear, int toMonth, int toDay, string corridorlabel)
+        {
+            /**************************************************/
+            /* This section emulates collecting the train data and the 
+             * TSR data from the database from within PYTHON.
+             */
+
+            /* Convert the Python dates to C# dates */
+            DateTime[] dateRange = { new DateTime(fromYear, fromMonth, fromDay), new DateTime(toYear, toMonth, toDay) };
+            List<string> excludeTrainList = new List<string>();
+
+            List<TrainRecord> TrainRecords = new List<TrainRecord>();
+            TrainRecords = FileOperations.readAzureExtractICEData(filename, excludeTrainList, false, dateRange);
+
+            List<TSRObject> TSRs = new List<TSRObject>();
+            TSRs = FileOperations.readTSRFile(temporarySpeedRestrictionFile, dateRange);
+            /**************************************************/
+
+            CorridorSettings corridor = new CorridorSettings(corridorlabel);
+
+            /* Corridor settings "Gunnedah" */
+            //double startKm = 280.0;
+            //double endKm = 540.0;
+            //double interval = 50;
+            //bool IgnoreGaps = false;
+            //string geometryFile = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Gunnedah Basin Geometry.csv";
+            //double timeThreshold = 10;
+            //double distanceThreshold = 4;
+            //double minimumJourneyDistance = 50;
+            //analysisCategory analysisCategory = analysisCategory.TrainOperator;
+            //bool trainsStoppingAtLoops = false;
+            //double loopSpeedThreshold = 0.5;
+            //double loopBoundaryThreshold = 2;
+            //double TSRwindowBoundary = 2;
+
+            //// Not realy used for Hunter Valley region
+            //double Category1LowerBound = 0;
+            //double Category1UpperBound = 100;
+            //double Category2LowerBound = 100;
+            //double Category2UpperBound = 200;
+
+
+            // the data should be accessed using Python and the python program should call the algotihm function to perform the processing
+            // TSR's should be passed in
+
+
+            // read geometry file
+            List<TrackGeometry> trackGeometry = new List<TrackGeometry>();
+            trackGeometry = FileOperations.readGeometryfile(corridor.geometryFile);
+
+            // set analysis category to operators
+            //List<Category> simCategories = new List<Category>();
+            //// set simulation catagories
+
+            //// Need to make the simualtion files and sim categories dynamic for the specific corridor. ???????
+
+            ///* Set the analysis paramteres. */
+            //simCategories.Add(Category.Aurizon);
+            //simCategories.Add(Category.Freightliner);
+            //simCategories.Add(Category.PacificNational);
+
+            //List<string> simulationFiles = new List<string>();
+            //simulationFiles.Add(@"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Aurizon-Increasing-60.csv");
+            //simulationFiles.Add(@"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Aurizon-Decreasing.csv");
+
+            //simulationFiles.Add(@"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Freightliner-Increasing.csv");
+            //simulationFiles.Add(@"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Freightliner-Decreasing.csv");
+
+            //simulationFiles.Add(@"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\PacificNational-Increasing.csv");
+            //simulationFiles.Add(@"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\PacificNational-Decreasing.csv");
+
+            //Dictionary<string, string> simulationFiles = new Dictionary<string, string>();
+            //simulationFiles["Aurizon-IncreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Aurizon-Increasing-60.csv";
+            //simulationFiles["Aurizon-DecreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Aurizon-Decreasing.csv";
+
+            //simulationFiles["Freightliner-IncreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Freightliner-Increasing.csv";
+            //simulationFiles["Freightliner-DecreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Freightliner-Decreasing.csv";
+
+            //simulationFiles["PacificNational-IncreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\PacificNational-Increasing.csv";
+            //simulationFiles["PacificNational-DecreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\PacificNational-Decreasing.csv";
+
+
+            // read simualtion files
+            /* Create the list of simulated trains. */
+            List<Train> simulatedTrains = new List<Train>();
+
+            /* Read in the simulation data and interpolate to the desired granularity. */
+            for (int index = 0; index < corridor.simCategories.Count; index++)
+            {
+                simulatedTrains.Add(FileOperations.readSimulationData(corridor.simulationFiles[corridor.simCategories[index]+"-"+direction.IncreasingKm], corridor.simCategories[index], direction.IncreasingKm));
+                simulatedTrains.Add(FileOperations.readSimulationData(corridor.simulationFiles[corridor.simCategories[index]+"-"+direction.DecreasingKm], corridor.simCategories[index], direction.DecreasingKm));
+            }
+
+            // interpoalte simualtion files
+            /* Interpolate the simulations to the same granularity as the ICE data will be. */
+            List<Train> interpolatedSimulations = new List<Train>();
+            interpolatedSimulations = interpolateTrainData(simulatedTrains, trackGeometry, corridor.startKm, corridor.endKm, corridor.interval);
+
+            // clean the raw data
+            /* Sort the data by [trainID, locoID, Date & Time, kmPost]. */
+            List<TrainRecord> OrderdTrainRecords = new List<TrainRecord>();
+            OrderdTrainRecords = TrainRecords.OrderBy(t => t.trainID).ThenBy(t => t.locoID).ThenBy(t => t.dateTime).ThenBy(t => t.kmPost).ToList();
+
+            /* Clean the data */
+            List<Train> CleanTrainRecords = new List<Train>();
+            //CleanTrainRecords = Processing.MakeTrains(OrderdTrainRecords, trackGeometry,
+            CleanTrainRecords = CleanData(OrderdTrainRecords, trackGeometry,
+                corridor.timeThreshold, corridor.distanceThreshold, corridor.minimumJourneyDistance, corridor.analysisCategory,
+                corridor.Category1LowerBound, corridor.Category1UpperBound, corridor.Category2LowerBound, corridor.Category2UpperBound);
+
+            // interpoalte cleaned train data
+            /* Interpolate data */
+            List<Train> interpolatedTrains = new List<Train>();
+            if (!corridor.IgnoreGaps)
+                /* Standard interpolation method */
+                interpolatedTrains = interpolateTrainData(CleanTrainRecords, trackGeometry, corridor.startKm, corridor.endKm, corridor.interval);
+            else
+                /* Interpolation method does not interpolate through the gaps. (typically used with MakeTrains function) */
+                interpolatedTrains = interpolateTrainDataWithGaps(CleanTrainRecords, trackGeometry, corridor.startKm, corridor.endKm, corridor.interval);
+
+
+            // populate TSR's
+            /* Populate the trains TSR values after interpolation to gain more granularity with TSR boundary. */
+            populateAllTrainsTemporarySpeedRestrictions(interpolatedTrains, TSRs);
+
+            /* Create the list of averaged trains */
+            List<AverageTrain> averageTrains = new List<AverageTrain>();
+            /* Create a sublist of trains for each direction. */
+            List<Train> increasingTrainCategory = new List<Train>();
+            List<Train> decreasingTrainCategory = new List<Train>();
+            List<processTrainDataPoint> processedTrains = new List<processTrainDataPoint>();
+
+
+            // for each list of train categories and travelling direction
+            // calucalte the average train, and clean the trian data
+            for (int index = 0; index < corridor.simCategories.Count(); index++)
+            {
+                /* Convert the train category to the train operator. */
+                trainType trainType = convertCategoryToTrainType(corridor.simCategories[index]);
+
+                increasingTrainCategory = interpolatedTrains.Where(t => t.trainType == trainType).Where(t => t.trainDirection == direction.IncreasingKm).ToList();
+                decreasingTrainCategory = interpolatedTrains.Where(t => t.trainType == trainType).Where(t => t.trainDirection == direction.DecreasingKm).ToList();
+
+
+                /* Aggregate the train lists into an average train consistent with the specified Category. */
+                if (increasingTrainCategory.Count() > 0)
+                {
+                    if (corridor.trainsStoppingAtLoops)
+                        averageTrains.Add(averageTrainStoppingAtLoops(increasingTrainCategory, interpolatedSimulations[index * 2].journey, trackGeometry, 
+                            corridor.startKm, corridor.endKm, corridor.interval, corridor.loopSpeedThreshold, corridor.loopBoundaryThreshold, corridor.TSRwindowBoundary));
+                    else
+                        averageTrains.Add(averageTrain(increasingTrainCategory, interpolatedSimulations[index * 2].journey, trackGeometry, 
+                            corridor.startKm, corridor.endKm, corridor.interval, corridor.loopSpeedThreshold, corridor.loopBoundaryThreshold, corridor.TSRwindowBoundary));
+
+                    processedTrains.AddRange(processTrainData(increasingTrainCategory, interpolatedSimulations[index * 2].journey, averageTrains[index * 2], 
+                        corridor.TSRwindowBoundary, corridor.loopBoundaryThreshold));
+
+                }
+                else
+                {
+                    averageTrains.Add(createZeroedAverageTrain(corridor.simCategories[index], direction.IncreasingKm, corridor.startKm, corridor.endKm, corridor.interval));
+                    processedTrains.AddRange(processTrainData(interpolatedSimulations[index * 2].journey, averageTrains[index * 2], direction.IncreasingKm));
+                }
+
+                if (decreasingTrainCategory.Count() > 0)
+                {
+                    if (corridor.trainsStoppingAtLoops)
+                        averageTrains.Add(averageTrainStoppingAtLoops(decreasingTrainCategory, interpolatedSimulations[index * 2 + 1].journey, trackGeometry, 
+                            corridor.startKm, corridor.endKm, corridor.interval, corridor.loopSpeedThreshold, corridor.loopBoundaryThreshold, corridor.TSRwindowBoundary));
+                    else
+                        averageTrains.Add(averageTrain(decreasingTrainCategory, interpolatedSimulations[index * 2 + 1].journey, trackGeometry, 
+                            corridor.startKm, corridor.endKm, corridor.interval, corridor.loopSpeedThreshold, corridor.loopBoundaryThreshold, corridor.TSRwindowBoundary));
+
+                    processedTrains.AddRange(processTrainData(decreasingTrainCategory, interpolatedSimulations[index * 2 + 1].journey, averageTrains[index * 2 + 1], 
+                        corridor.TSRwindowBoundary, corridor.loopBoundaryThreshold));
+
+                }
+                else
+                {
+                    averageTrains.Add(createZeroedAverageTrain(corridor.simCategories[index], direction.DecreasingKm, corridor.startKm, corridor.endKm, corridor.interval));
+                    processedTrains.AddRange(processTrainData(interpolatedSimulations[index * 2 + 1].journey, averageTrains[index * 2 + 1], direction.DecreasingKm));
+                }
+            }
+
+
+
+
+
+
+
+            /* This code will not be requierd when the integration with Python in complete */
+
+            string destinationDirectory = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin";
+            Console.WriteLine("Writing processed data to file.");
+            FileOperations.writeProcessTrainDataPoints(processedTrains, destinationDirectory);
+            // return data to python program
+            return processedTrains;
+
+        }
+
 
     } // Class Processing
 }

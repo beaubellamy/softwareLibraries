@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using RGiesecke.DllExport;
+using System.Runtime.InteropServices;
 
 namespace TrainLibrary
 {
@@ -541,7 +543,7 @@ namespace TrainLibrary
             this.trainID = null;
             this.locoID = null;
             this.dateTime = DateTime.MinValue;
-            this.location = null;
+            this.location = new GeoLocation();
             this.trainOperator = trainOperator.Unknown;
             this.commodity = trainCommodity.Unknown;
             this.kmPost = 0;
@@ -1496,5 +1498,205 @@ namespace TrainLibrary
 
     }
 
+    public class CorridorSettings
+    {
+        public double startKm;
+        public double endKm;
+        public double interval;
+        public bool IgnoreGaps;
+        public string geometryFile;
+        public double timeThreshold;
+        public double distanceThreshold;
+        public double minimumJourneyDistance;
+        public analysisCategory analysisCategory;
+        public bool trainsStoppingAtLoops;
+        public double loopSpeedThreshold;
+        public double loopBoundaryThreshold;
+        public double TSRwindowBoundary;
+        public Dictionary<string, string> simulationFiles;
+        public List<Category> simCategories;
 
+        public double Category1LowerBound;
+        public double Category1UpperBound;
+        public double Category2LowerBound;
+        public double Category2UpperBound;
+
+        public CorridorSettings()
+        {
+            this.startKm = 280.0;
+            this.endKm = 540.0;
+            this.interval = 50;
+            this.IgnoreGaps = false;
+            this.geometryFile = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Gunnedah Basin Geometry.csv";
+            this.timeThreshold = 10;
+            this.distanceThreshold = 4;
+            this.minimumJourneyDistance = 50;
+            this.analysisCategory = analysisCategory.TrainOperator;
+            this.trainsStoppingAtLoops = false;
+            this.loopSpeedThreshold = 0.5;
+            this.loopBoundaryThreshold = 2;
+            this.TSRwindowBoundary = 2;
+
+            this.simulationFiles["Aurizon-IncreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Aurizon-Increasing-60.csv";
+            this.simulationFiles["Aurizon-DecreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Aurizon-Decreasing.csv";
+
+            this.simulationFiles["Freightliner-IncreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Freightliner-Increasing.csv";
+            this.simulationFiles["Freightliner-DecreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Freightliner-Decreasing.csv";
+
+            this.simulationFiles["PacificNational-IncreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\PacificNational-Increasing.csv";
+            this.simulationFiles["PacificNational-DecreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\PacificNational-Decreasing.csv";
+
+            this.simCategories.Add(Category.Aurizon);
+            this.simCategories.Add(Category.Freightliner);
+            this.simCategories.Add(Category.PacificNational);
+
+
+            // Not realy used for Hunter Valley region
+            this.Category1LowerBound = 0;
+            this.Category1UpperBound = 100;
+            this.Category2LowerBound = 100;
+            this.Category2UpperBound = 200;
+        }
+
+        public CorridorSettings(string corridor)
+        {
+            Console.WriteLine(corridor);
+            switch (corridor)
+            {
+                case "gunnedah":
+                case "Gunnedah":
+                case "MUS-NBI":
+                    Console.WriteLine("Calling Gunndeah()");
+                    gunnedah();
+                    break;
+
+                case "ulan":
+                case "Ulan":
+                case "MUS-ULN":
+                    Console.WriteLine("Calling Ulan()");
+                    ulan();
+                    break;
+
+                case "hunter":
+                case "Hunter":
+                case "KIY-WCK":
+                    Console.WriteLine("Calling Hunter()");
+                    hunter();
+                    break;
+
+                default:
+                    Console.WriteLine("Calling Gunndeah(default)");
+                    gunnedah();
+                    break;
+            }
+        }
+
+        private void gunnedah()
+        {
+            this.startKm = 280.0;
+            this.endKm = 540.0;
+            this.interval = 50;
+            this.IgnoreGaps = false;
+            this.geometryFile = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Gunnedah Basin Geometry.csv";
+            this.timeThreshold = 10;
+            this.distanceThreshold = 4;
+            this.minimumJourneyDistance = 50;
+            this.analysisCategory = analysisCategory.TrainOperator;
+            this.trainsStoppingAtLoops = false;
+            this.loopSpeedThreshold = 0.5;
+            this.loopBoundaryThreshold = 2;
+            this.TSRwindowBoundary = 2;
+
+            this.simulationFiles["Aurizon-IncreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Aurizon-Increasing-60.csv";
+            this.simulationFiles["Aurizon-DecreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Aurizon-Decreasing.csv";
+
+            this.simulationFiles["PacificNational-IncreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\PacificNational-Increasing.csv";
+            this.simulationFiles["PacificNational-DecreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\PacificNational-Decreasing.csv";
+
+            this.simCategories.Add(Category.Aurizon);
+            this.simCategories.Add(Category.PacificNational);
+
+
+            // Not realy used for Hunter Valley region
+            this.Category1LowerBound = 0;
+            this.Category1UpperBound = 100;
+            this.Category2LowerBound = 100;
+            this.Category2UpperBound = 200;
+        }
+
+        private void ulan()
+        {
+            this.startKm = 280.0;
+            this.endKm = 460.0;
+            this.interval = 50;
+            this.IgnoreGaps = false;
+            this.geometryFile = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Ulan\Ulan Geometry.csv";
+            this.timeThreshold = 10;
+            this.distanceThreshold = 4;
+            this.minimumJourneyDistance = 50;
+            this.analysisCategory = analysisCategory.TrainOperator;
+            this.trainsStoppingAtLoops = false;
+            this.loopSpeedThreshold = 0.5;
+            this.loopBoundaryThreshold = 2;
+            this.TSRwindowBoundary = 2;
+
+            this.simulationFiles["Aurizon-IncreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Ulan\Aurizon - Increasing.csv";
+            this.simulationFiles["Aurizon-DecreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Ulan\Aurizon - Decreasing.csv";
+
+            this.simulationFiles["Freightliner-IncreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Ulan\Freightliner - Increasing.csv";
+            this.simulationFiles["Freightliner-DecreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Ulan\Freightliner - Decreasing.csv";
+
+            this.simulationFiles["PacificNational-IncreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Ulan\PacificNational - Increasing.csv";
+            this.simulationFiles["PacificNational-DecreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Ulan\PacificNational - Decreasing.csv";
+
+            this.simCategories.Add(Category.Aurizon);
+            this.simCategories.Add(Category.Freightliner);
+            this.simCategories.Add(Category.PacificNational);
+
+
+            // Not realy used for Hunter Valley region
+            this.Category1LowerBound = 0;
+            this.Category1UpperBound = 100;
+            this.Category2LowerBound = 100;
+            this.Category2UpperBound = 200;
+        }
+
+        private void hunter()
+        {
+            this.startKm = 160.0;
+            this.endKm = 290.0;
+            this.interval = 50;
+            this.IgnoreGaps = false;
+            this.geometryFile = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Hunter Region\KIY to WCK.csv";
+            this.timeThreshold = 10;
+            this.distanceThreshold = 4;
+            this.minimumJourneyDistance = 50;
+            this.analysisCategory = analysisCategory.TrainOperator;
+            this.trainsStoppingAtLoops = false;
+            this.loopSpeedThreshold = 0.5;
+            this.loopBoundaryThreshold = 1;
+            this.TSRwindowBoundary = 1;
+
+            this.simulationFiles["Aurizon-IncreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Hunter Region\Aurizon - Increasing.csv";
+            this.simulationFiles["Aurizon-DecreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Hunter Region\Aurizon - Decreasing.csv";
+
+            this.simulationFiles["Freightliner-IncreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Hunter Region\Freightliner - Increasing.csv";
+            this.simulationFiles["Freightliner-DecreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Hunter Region\Freightliner - Decreasing.csv";
+
+            this.simulationFiles["PacificNational-IncreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Hunter Region\PacificNational - Increasing.csv";
+            this.simulationFiles["PacificNational-DecreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Hunter Region\PacificNational - Decreasing.csv";
+
+            this.simCategories.Add(Category.Aurizon);
+            this.simCategories.Add(Category.Freightliner);
+            this.simCategories.Add(Category.PacificNational);
+
+
+            // Not realy used for Hunter Valley region
+            this.Category1LowerBound = 0;
+            this.Category1UpperBound = 100;
+            this.Category2LowerBound = 100;
+            this.Category2UpperBound = 200;
+        }
+
+    }
 }

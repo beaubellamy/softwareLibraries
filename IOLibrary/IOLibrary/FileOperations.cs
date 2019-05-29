@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Reflection;
 using Microsoft.Office.Interop.Excel;
+using RGiesecke.DllExport;
+using System.Runtime.InteropServices;
 
 using System.Data.SqlClient;
 
@@ -41,6 +43,70 @@ namespace IOLibrary
 
     public class FileOperations
     {
+        
+        [DllExport("stringtest", CallingConvention = CallingConvention.Cdecl)]
+        public static string stringtest()
+        {
+            return "test function";
+        }
+
+        [DllExport("listtest", CallingConvention = CallingConvention.Cdecl)]
+        public static List<string> listtest()
+        {
+            return new List<string> { "item 1", "item2", "item3" };
+        }
+
+        [DllExport("datetest", CallingConvention = CallingConvention.Cdecl)]
+        public static DateTime datetest()
+        {
+            return new DateTime(2018, 7, 1);
+        }
+
+        [DllExport("datetest2", CallingConvention = CallingConvention.Cdecl)]
+        public static void datetest2(DateTime date)
+        {
+            Console.WriteLine(date);
+        }
+
+
+        [DllExport("directiontest", CallingConvention = CallingConvention.Cdecl)]
+        public static direction directiontest()
+        {
+            return direction.Unknown;
+        }
+
+        [DllExport("LoopLocationtest", CallingConvention = CallingConvention.Cdecl)]
+        public static LoopLocation LoopLocationtest()
+        {
+            return new LoopLocation();
+        }
+
+        [DllExport("parametertest", CallingConvention = CallingConvention.Cdecl)]
+        public static void parametertest(string filename, List<string> trainList, bool excludeListOfTrains)
+        {
+            Console.WriteLine(filename);
+            Console.WriteLine(trainList[0]);
+            Console.WriteLine(excludeListOfTrains);
+        }
+
+        [DllExport("geolocationtest", CallingConvention = CallingConvention.Cdecl)]
+        public static GeoLocation geolocationtest()
+        {
+            return new GeoLocation();
+        }
+
+        [DllExport("recordtest", CallingConvention = CallingConvention.Cdecl)]
+        public static TrainRecord recordtest()
+        {
+            return new TrainRecord();
+        }
+
+        [DllExport("recordcounttest", CallingConvention = CallingConvention.Cdecl)]
+        public static void recordcounttest(List<TrainRecord> records)
+        {
+            Console.WriteLine(records.Count());
+        }
+
         /* ARTC location code file */
         public static string geoLocationFile = @"C:\Users\bbel1\Documents\ARTC GEO Location Details - under construction.csv";
 
@@ -183,6 +249,7 @@ namespace IOLibrary
         /// <param name="excludeListOfTrains">Boolean flag to indicate if the list of trains should be excluded or exclusively included.</param>
         /// <param name="dateRange">The dates between which to keep the data</param>
         /// <returns>List of train records describing each point in a trains journey.</returns>
+        [DllExport("readAzureICEData", CallingConvention = CallingConvention.Cdecl)]
         public static List<TrainRecord> readAzureICEData(string filename, List<string> trainList, bool excludeListOfTrains, DateTime[] dateRange)
         {
 
@@ -292,6 +359,7 @@ namespace IOLibrary
             return IceRecord;
         }
 
+        
         /// <summary>
         /// Read the Azure data file and extract the neccessary information into a train record class.
         /// The data file is assumed to be created accessing the data through Azure datawarehouse, and then filtering out neccessary data points in Tableau.
@@ -303,6 +371,7 @@ namespace IOLibrary
         /// <param name="excludeListOfTrains">Boolean flag to indicate if the list of trains should be excluded or exclusively included.</param>
         /// <param name="dateRange">The dates between which to keep the data</param>
         /// <returns>List of train records describing each point in a trains journey.</returns>
+        [DllExport("readAzureExtractICEData", CallingConvention = CallingConvention.Cdecl)]
         public static List<TrainRecord> readAzureExtractICEData(string filename, List<string> trainList, bool excludeListOfTrains, DateTime[] dateRange)
         {
 
@@ -388,6 +457,112 @@ namespace IOLibrary
                         else
                             includeTrain = true;
                     }
+
+                    /* Validate the speed data */
+                    if (commodity.Equals(trainCommodity.Passenger))
+                    {
+                        if (speed < 0 || speed > maxPassengerSpeed)
+                            includeTrain = false;
+                    }
+                    else
+                    {
+                        if (speed < 0 || speed > maxFreightSpeed)
+                            includeTrain = false;
+                    }
+
+                    if (dateTime >= dateRange[0] && dateTime < dateRange[1] &&
+                        includeTrain)
+                    {
+                        TrainRecord record = new TrainRecord(TrainID, locoID, dateTime, new GeoLocation(latitude, longitude), trainOperator, commodity, kmPost, speed, powerToWeight);
+                        IceRecord.Add(record);
+                    }
+
+                }
+            }
+
+            /* Return the list of records. */
+            return IceRecord;
+        }
+
+        [DllExport("readAzureExtractICEData2", CallingConvention = CallingConvention.Cdecl)]
+        public static List<TrainRecord> readAzureExtractICEData2(string filename, int formYear, int fromMonth, int fromDay, int toYear, int toMonth, int toDay)
+        {
+            DateTime[] dateRange = { new DateTime(formYear, fromMonth, fromDay), new DateTime(toYear, toMonth, toDay) };
+
+            //DateTime[] getDateRange() { return new DateTime[2] { fromDate.Value, toDate.Value }; }
+
+            /* Read all the lines of the data file. */
+            Tools.isFileOpen(filename);
+
+            char[] delimeters = { '\t' };
+            string[] fields = null; 
+
+            /* Minimum length of the operator string to distinguisg between them. */
+            int operatorStringLength = 6;
+            /* Set maximum speed values
+             * There are occasionally datapoints that indicate the train is going faster than phyically possible 
+             */
+            double maxPassengerSpeed = 170;
+            double maxFreightSpeed = 120;
+
+            /* Initialise the fields of interest. */
+            string TrainID = "none";
+            string locoID = "none";
+            string subOperator = "";
+            trainOperator trainOperator = trainOperator.Unknown;
+            trainCommodity commodity = trainCommodity.Unknown;
+            double powerToWeight = 0.0;
+            double speed = 0.0;
+            double kmPost = 0.0;
+            double latitude = 0.0;
+            double longitude = 0.0;
+            DateTime dateTime = DateTime.MinValue;
+
+            bool header = true;
+            bool includeTrain = true;
+
+            /* List of all valid train data. */
+            List<TrainRecord> IceRecord = new List<TrainRecord>();
+
+            foreach (string line in System.IO.File.ReadLines(filename))
+            {
+                if (header)
+                    /* Ignore the header line. */
+                    header = false;
+                else
+                {
+                    /* Seperate each record into each field */
+                    fields = line.Split(delimeters);
+
+                    /* Empty line reached */
+                    if (fields[0].Equals(""))
+                        continue;
+
+                    /* Validate the length of the line */
+                    if (fields.Count() != 24)
+                        continue;
+
+                    TrainID = fields[15];
+                    locoID = fields[6];
+
+                    if (fields[8].Count() >= operatorStringLength)
+                        subOperator = fields[8].Substring(0, operatorStringLength);
+                    else
+                        subOperator = fields[8].PadRight(operatorStringLength);
+
+                    trainOperator = getOperator(subOperator);
+
+                    commodity = getCommodity(fields[9]);
+
+                    /* Ensure values are valid while reading them out. */
+                    double.TryParse(fields[22], out speed);
+                    double.TryParse(fields[20], out kmPost);
+                    kmPost /= 1000;
+                    double.TryParse(fields[5], out latitude);
+                    double.TryParse(fields[7], out longitude);
+                    DateTime.TryParse(fields[4], out dateTime);
+                    double.TryParse(fields[19], out powerToWeight);
+                                      
 
                     /* Validate the speed data */
                     if (commodity.Equals(trainCommodity.Passenger))
