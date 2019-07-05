@@ -650,9 +650,9 @@ namespace TrainLibrary
         public string locoID;
         public double PW_ratio;
         public DateTime trainDate;
-        public trainOperator trainOperator;
-        public trainCommodity commodity;
-        public direction trainDirection;
+        public string trainOperator;
+        public string commodity;
+        public string trainDirection;
         public double kmMarker;
         public double speed;
         public double transitTime;
@@ -663,21 +663,22 @@ namespace TrainLibrary
         public bool isLargeGap;
         public double simulationSpeed;
         public double simulationTime;
-        public double averageSpeed;         // useful for validating the resultsin Tableau
-        public double averageTime;          // useful for validating the resultsin Tableau
+        public double averageSpeed;         // useful for validating the results in Tableau
+        public double averageTime;          // useful for validating the results in Tableau
 
         /// <summary>
         /// Default process train data point
         /// </summary>
         public processTrainDataPoint()
         {
+            
             this.TrainID = "unspecified";
             this.locoID = "unspecified";
             this.PW_ratio = 0;
             this.trainDate = DateTime.MinValue;
-            this.trainOperator = trainOperator.Unknown;
-            this.commodity = trainCommodity.Unknown;
-            this.trainDirection = direction.Unknown;
+            this.trainOperator = trainCommodity.Unknown.ToString();
+            this.commodity = trainCommodity.Unknown.ToString();
+            this.trainDirection = direction.Unknown.ToString();
             this.kmMarker = 0;
             this.speed = 0;
             this.transitTime = 0;
@@ -722,9 +723,9 @@ namespace TrainLibrary
             this.locoID = loco;
             this.PW_ratio = 0;
             this.trainDate = date;
-            this.trainOperator = customer;
-            this.commodity = commodity;
-            this.trainDirection = direction;
+            this.trainOperator = customer.ToString();
+            this.commodity = commodity.ToString();
+            this.trainDirection = direction.ToString();
             this.kmMarker = km;
             this.speed = speed;
             this.transitTime = time;
@@ -1499,7 +1500,7 @@ namespace TrainLibrary
     }
 
     /// <summary>
-    /// A class describing the corridor settings foe automatef processing of train data.
+    /// A class describing the corridor settings for automated processing of train data.
     /// </summary>
     public class CorridorSettings
     {
@@ -1526,6 +1527,10 @@ namespace TrainLibrary
         public Dictionary<string, string> simulationFiles = new Dictionary<string, string>();
         public List<Category> simCategories = new List<Category>();
 
+        /* TSR related information */
+        public string TSR_file = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\TSR_report.csv";
+        public List<int> basecodeList;
+
         /* Irrelavant for the greater hunter valley area, but usefull for 
          * future corridor expansion into the interstate network.
          */
@@ -1539,41 +1544,8 @@ namespace TrainLibrary
         /// </summary>
         public CorridorSettings()
         {
-            this.geometryFile = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Gunnedah Basin Geometry.csv";
-
-            this.startKm = 280.0;
-            this.endKm = 540.0;
-            this.interval = 50;
-            this.IgnoreGaps = false;
-            this.trainsStoppingAtLoops = false;
-            this.loopSpeedThreshold = 0.5;
-            this.loopBoundaryThreshold = 2;
-            this.TSRwindowBoundary = 2;
-
-            this.timeThreshold = 10;
-            this.distanceThreshold = 4;
-            this.minimumJourneyDistance = 50;
-            this.analysisCategory = analysisCategory.TrainOperator;
-            
-            this.simulationFiles["Aurizon-IncreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Aurizon-Increasing-60.csv";
-            this.simulationFiles["Aurizon-DecreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Aurizon-Decreasing.csv";
-
-            this.simulationFiles["Freightliner-IncreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Freightliner-Increasing.csv";
-            this.simulationFiles["Freightliner-DecreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\Freightliner-Decreasing.csv";
-
-            this.simulationFiles["PacificNational-IncreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\PacificNational-Increasing.csv";
-            this.simulationFiles["PacificNational-DecreasingKm"] = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin\PacificNational-Decreasing.csv";
-
-            this.simCategories.Add(Category.Aurizon);
-            this.simCategories.Add(Category.Freightliner);
-            this.simCategories.Add(Category.PacificNational);
-
-
-            // Not realy used for Hunter Valley region
-            this.Category1LowerBound = 0;
-            this.Category1UpperBound = 0;
-            this.Category2LowerBound = 0;
-            this.Category2UpperBound = 0;
+            /* Default to Gunnedah settings */
+            gunnedah();
         }
 
         /// <summary>
@@ -1641,7 +1613,11 @@ namespace TrainLibrary
 
             this.simCategories.Add(Category.Aurizon);
             this.simCategories.Add(Category.PacificNational);
-                        
+
+            int[] basecodes = { 10003,      /* Main North Single Line Muswellbrook to Werris Creek */
+                                10018};     /* Werris Creek to The Gap Single Line + The Gap to Narrabri Jct Single Line */
+            this.basecodeList = new List<int>(basecodes);
+            
             // Not realy used for Hunter Valley region
             this.Category1LowerBound = 0;
             this.Category1UpperBound = 0;
@@ -1682,6 +1658,10 @@ namespace TrainLibrary
             this.simCategories.Add(Category.Aurizon);
             this.simCategories.Add(Category.Freightliner);
             this.simCategories.Add(Category.PacificNational);
+
+            int[] basecodes = { 10026 };      /* Ulan Line Single Line to Muswellbrook Ulan */
+                                
+            this.basecodeList = new List<int>(basecodes);
 
 
             // Not realy used for Hunter Valley region
@@ -1725,6 +1705,11 @@ namespace TrainLibrary
             this.simCategories.Add(Category.Freightliner);
             this.simCategories.Add(Category.PacificNational);
 
+            int[] basecodes = { 10001,      /* Main North Up Whittingham to Maitland + Main North Up Muswellbrook to Whittingham */
+                                10002,      /* Main North Down Maitland to Whittingham + Main North Down Whittingham to Muswellbrook */
+                                10212,      /* Coal Road Down */
+                                10213};     /* coal Road Up */
+            this.basecodeList = new List<int>(basecodes);
 
             // Not realy used for Hunter Valley region
             this.Category1LowerBound = 0;

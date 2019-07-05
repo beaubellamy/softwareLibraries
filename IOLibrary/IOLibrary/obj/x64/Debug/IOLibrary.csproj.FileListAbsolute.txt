@@ -2,9 +2,9 @@ S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\I
 S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\IOLibrary\IOLibrary\bin\x64\Debug\IOLibrary.pdb
 S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\IOLibrary\IOLibrary\bin\x64\Debug\Statistics.dll
 S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\IOLibrary\IOLibrary\bin\x64\Debug\TrainLibrary.dll
-S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\IOLibrary\IOLibrary\bin\x64\Debug\Statistics.pdb
-S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\IOLibrary\IOLibrary\bin\x64\Debug\TrainLibrary.pdb
 S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\IOLibrary\IOLibrary\obj\x64\Debug\IOLibrary.csproj.ResolveComReference.cache
 S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\IOLibrary\IOLibrary\obj\x64\Debug\IOLibrary.dll
 S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\IOLibrary\IOLibrary\obj\x64\Debug\IOLibrary.pdb
-S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\IOLibrary\IOLibrary\obj\x64\Debug\IOLibrary.csprojResolveAssemblyReference.cache
+S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\IOLibrary\IOLibrary\obj\x64\Debug\IOLibrary.csproj.CoreCompileInputs.cache
+S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\IOLibrary\IOLibrary\obj\x64\Debug\IOLibrary.csproj.CopyComplete
+S:\Corporate Strategy\Infrastructure Strategies\Simulations\Software Libraries\IOLibrary\IOLibrary\bin\x64\Debug\Statistics.pdb

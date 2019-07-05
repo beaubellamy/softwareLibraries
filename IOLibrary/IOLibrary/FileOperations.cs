@@ -1,18 +1,20 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Diagnostics;
+//using System.Diagnostics;
 using System.Linq;
-using System.Text;
+//using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Windows.Forms;
+//using System.Threading.Tasks;
+//using System.Windows.Forms;
 using System.Reflection;
 using Microsoft.Office.Interop.Excel;
 using RGiesecke.DllExport;
 using System.Runtime.InteropServices;
 
 using System.Data.SqlClient;
+using System.Data.OleDb;
+using System.Data;
 
 using TrainLibrary;
 using Statistics;
@@ -44,69 +46,6 @@ namespace IOLibrary
     public class FileOperations
     {
         
-        [DllExport("stringtest", CallingConvention = CallingConvention.Cdecl)]
-        public static string stringtest()
-        {
-            return "test function";
-        }
-
-        [DllExport("listtest", CallingConvention = CallingConvention.Cdecl)]
-        public static List<string> listtest()
-        {
-            return new List<string> { "item 1", "item2", "item3" };
-        }
-
-        [DllExport("datetest", CallingConvention = CallingConvention.Cdecl)]
-        public static DateTime datetest()
-        {
-            return new DateTime(2018, 7, 1);
-        }
-
-        [DllExport("datetest2", CallingConvention = CallingConvention.Cdecl)]
-        public static void datetest2(DateTime date)
-        {
-            Console.WriteLine(date);
-        }
-
-
-        [DllExport("directiontest", CallingConvention = CallingConvention.Cdecl)]
-        public static direction directiontest()
-        {
-            return direction.Unknown;
-        }
-
-        [DllExport("LoopLocationtest", CallingConvention = CallingConvention.Cdecl)]
-        public static LoopLocation LoopLocationtest()
-        {
-            return new LoopLocation();
-        }
-
-        [DllExport("parametertest", CallingConvention = CallingConvention.Cdecl)]
-        public static void parametertest(string filename, List<string> trainList, bool excludeListOfTrains)
-        {
-            Console.WriteLine(filename);
-            Console.WriteLine(trainList[0]);
-            Console.WriteLine(excludeListOfTrains);
-        }
-
-        [DllExport("geolocationtest", CallingConvention = CallingConvention.Cdecl)]
-        public static GeoLocation geolocationtest()
-        {
-            return new GeoLocation();
-        }
-
-        [DllExport("recordtest", CallingConvention = CallingConvention.Cdecl)]
-        public static TrainRecord recordtest()
-        {
-            return new TrainRecord();
-        }
-
-        [DllExport("recordcounttest", CallingConvention = CallingConvention.Cdecl)]
-        public static void recordcounttest(List<TrainRecord> records)
-        {
-            Console.WriteLine(records.Count());
-        }
-
         /* ARTC location code file */
         public static string geoLocationFile = @"C:\Users\bbel1\Documents\ARTC GEO Location Details - under construction.csv";
 
@@ -249,7 +188,6 @@ namespace IOLibrary
         /// <param name="excludeListOfTrains">Boolean flag to indicate if the list of trains should be excluded or exclusively included.</param>
         /// <param name="dateRange">The dates between which to keep the data</param>
         /// <returns>List of train records describing each point in a trains journey.</returns>
-        [DllExport("readAzureICEData", CallingConvention = CallingConvention.Cdecl)]
         public static List<TrainRecord> readAzureICEData(string filename, List<string> trainList, bool excludeListOfTrains, DateTime[] dateRange)
         {
 
@@ -371,7 +309,6 @@ namespace IOLibrary
         /// <param name="excludeListOfTrains">Boolean flag to indicate if the list of trains should be excluded or exclusively included.</param>
         /// <param name="dateRange">The dates between which to keep the data</param>
         /// <returns>List of train records describing each point in a trains journey.</returns>
-        [DllExport("readAzureExtractICEData", CallingConvention = CallingConvention.Cdecl)]
         public static List<TrainRecord> readAzureExtractICEData(string filename, List<string> trainList, bool excludeListOfTrains, DateTime[] dateRange)
         {
 
@@ -484,7 +421,6 @@ namespace IOLibrary
             return IceRecord;
         }
 
-        [DllExport("readAzureExtractICEData2", CallingConvention = CallingConvention.Cdecl)]
         public static List<TrainRecord> readAzureExtractICEData2(string filename, int formYear, int fromMonth, int fromDay, int toYear, int toMonth, int toDay)
         {
             DateTime[] dateRange = { new DateTime(formYear, fromMonth, fromDay), new DateTime(toYear, toMonth, toDay) };
@@ -595,6 +531,8 @@ namespace IOLibrary
         /// data for comparison to the averaged ICE data.
         /// </summary>
         /// <param name="filename">The simulation filename.</param>
+        /// <param name="simulationCategory">The simulation category.</param>
+        /// <param name="direction">the direction of travel for teh simualted train.</param>
         /// <returns>The list of data for the simualted train.</returns>
         public static Train readSimulationData(string filename, Category simulationCategory, direction direction)
         {
@@ -807,6 +745,7 @@ namespace IOLibrary
             return actualAverageTrains;
         }
 
+        
         /// <summary>
         /// This function reads the file with the list of trains to exclude from the 
         /// data and stores the list in a managable list object.
@@ -1020,7 +959,7 @@ namespace IOLibrary
                     DateTime.TryParse(fields[9], out trainDate);
                     trainOperator trainOperator = Processing.getWagonOperator(fields[8]);
                     trainCommodity commodity = Processing.getWagonCommodity(fields[4]);
-
+                    
                     /* Include Intermodal and Steel commodity into the Interstate commodity, when required. */
                     if (combineIntermodalAndSteel)
                         if (commodity.Equals(trainCommodity.Intermodal) || commodity.Equals(trainCommodity.Steel))
@@ -1136,8 +1075,8 @@ namespace IOLibrary
                     /* Extract the train related information. */
                     string trainID = fields[1];
                     DateTime.TryParse(fields[0], out trainDate);
-                    trainOperator trainOperator = Processing.getWagonOperator(fields[15]);
-                    trainCommodity commodity = Processing.getWagonCommodity(fields[14]);
+                    trainOperator trainOperator = Processing.getWagonOperator(fields[16]);
+                    trainCommodity commodity = Processing.getWagonCommodity(fields[15]);
 
                     /* Include Intermodal and Steel commodity into the Interstate commodity, when required. */
                     if (combineIntermodalAndSteel)
@@ -1145,7 +1084,7 @@ namespace IOLibrary
                             commodity = trainCommodity.Interstate;
 
                     /* Extract the wagon Identification. */
-                    wagonID = fields[2] + " " + Regex.Replace(fields[10], ",", "");
+                    wagonID = fields[2] + " " + Regex.Replace(fields[3], ",", "");
 
                     /* Wagon Origin. */
                     origin = fields[4].ToUpper();
@@ -1156,14 +1095,14 @@ namespace IOLibrary
                     plannedDestination = fields[5].ToUpper();
                     if (plannedDestination.Count() != 3)
                     {
-                        if (fields[13].Count() == 3)
-                            plannedDestination = fields[13].ToUpper();
+                        if (fields[14].Count() == 3)
+                            plannedDestination = fields[14].ToUpper();
                         else
                             Tools.messageBox("Consigned Destination location code is unknown: Train: " + trainID + ", location " + plannedDestination + " Unknown location code.");
                     }
 
                     /* Wagon destination. */
-                    destination = fields[13].ToUpper();
+                    destination = fields[14].ToUpper();
                     if (destination.Count() != 3)
                     {   /* If the destination field is empty or set to -1, assume the wagon reaches the planned destination. */
                         if (destination.Equals("") || destination.Equals("-1"))
@@ -1213,7 +1152,122 @@ namespace IOLibrary
             DateTime trainDate, attachmentTime, detachmentTime;
 
             /* Generate the SQL connection and the command to execute. */
-            SqlParameters SQL = generateSQLComand(fromDate, toDate);
+            SqlParameters SQL = generateWagonSQLComand(fromDate, toDate);
+
+            try
+            {
+                /* Create an SQL environment. */
+                using (SQL.connection)
+                {
+                    SQL.connection.Open();
+                    /* Process the SQL command. */
+                    SqlDataReader reader = SQL.command.ExecuteReader();
+
+                    try
+                    {
+                        /* Read each line into the desired wagon object. */
+                        while (reader.Read())
+                        {
+
+                            /* Train related information */
+                            trainDate = (DateTime)reader.GetSqlValue(0);
+                            trainID = reader.GetSqlValue(1).ToString();
+                            commodity = Processing.getWagonCommodity(reader.GetSqlValue(14).ToString());
+                            trainOperator = Processing.getWagonOperator(reader.GetSqlValue(15).ToString());
+
+                            /* Include Intermodal and Steel commodity into the Interstate commodity, when required. */
+                            if (combineIntermodalAndSteel)
+                                if (commodity.Equals(trainCommodity.Intermodal) || commodity.Equals(trainCommodity.Steel))
+                                    commodity = trainCommodity.Interstate;
+
+                            /* Extract Wagon Identification. */
+                            wagonID = reader.GetSqlValue(2).ToString() + " " + Regex.Replace(reader.GetSqlValue(10).ToString(), ",", "");
+
+                            /* Wagon Origin */
+                            origin = reader.GetSqlValue(4).ToString().ToUpper();
+                            if (origin.Count() != 3)
+                                Tools.messageBox("Origin location code is unknown: " + origin + " Unknown location code.");
+
+                            /* Wagon Destination */
+                            destination = reader.GetSqlValue(13).ToString().ToUpper();
+                            if (destination.Count() != 3)
+                            {   /* If the destination field is empty or set to -1, assume the wagon reaches the planned destination. */
+                                if (destination.Equals("") || destination.Equals("-1"))
+                                    destination = reader.GetSqlValue(5).ToString().ToUpper();
+                                else
+                                    Tools.messageBox("Destination location code is unknown: " + destination + " Unknown location code.");
+                            }
+
+                            /* Wagon planned destination */
+                            plannedDestination = reader.GetSqlValue(5).ToString().ToUpper();
+                            if (plannedDestination.Count() != 3)
+                            {
+                                if (destination.Count() == 3)
+                                    plannedDestination = destination;
+                                else
+                                    Tools.messageBox("Consigned Destination location code is unknown: Train: " + trainID + ", location " + plannedDestination + " Unknown location code.");
+                            }
+
+                            double.TryParse(reader.GetSqlValue(12).ToString(), out tareWeight);
+                            double.TryParse(reader.GetSqlValue(8).ToString(), out grossWeight);
+                            weight = grossWeight - tareWeight;
+                            /* Validate the weight. */
+                            if (weight < 0)
+                                weight = 0;
+
+                            DateTime.TryParse(reader.GetSqlValue(6).ToString(), out attachmentTime);
+                            DateTime.TryParse(reader.GetSqlValue(7).ToString(), out detachmentTime);
+
+                            /* Construct the wagon object and add to the list. */
+                            wagonDetails data = new wagonDetails(trainID, trainDate, trainOperator, commodity, wagonID, origin, plannedDestination, destination, attachmentTime, detachmentTime, weight, grossWeight);
+                            wagon.Add(data);
+
+
+                        }
+
+                    }
+                    finally
+                    {
+                        /* Close the SQL command */
+                        reader.Close();
+                    }
+                }
+            }
+            catch (System.Exception e)
+            {
+                Tools.messageBox(e.Message, "Error Connecting to Database");
+            }
+
+            /* Return the completed wagon list. */
+            return wagon;
+
+        }
+
+        /// <summary>
+        /// Generate an SQL command and read the results into the TrainRecord class.
+        /// </summary>
+        /// <param name="corridor">The corridor label to filter.</param>
+        /// <param name="fromDate">The start date to filter.</param>
+        /// <param name="toDate">the end date to filter.</param>
+        /// <returns></returns>
+        public static List<TrainRecord> readSQLTrainData(string corridor, DateTime fromDate, DateTime toDate)
+        {
+            /* Create the list of train records. */
+            List<TrainRecord> trainRecord = new List<TrainRecord>();
+            
+            string trainID, locoID;
+            GeoLocation location;
+            trainOperator trainOperator;
+            trainCommodity commodity;
+            string subOperator;
+            double kmPost, speed, powerToWeight;
+            double latitude, longitude;
+            DateTime trainDate;
+
+            int operatorStringLength = 6;
+
+            /* Generate the SQL connection and the command to execute. */
+            SqlParameters SQL = generateTrainSQLComand(corridor, fromDate, toDate);
 
             /* Create an SQL environment. */
             using (SQL.connection)
@@ -1224,63 +1278,112 @@ namespace IOLibrary
 
                 try
                 {
-                    /* Read each line into the desired wagon object. */
+                    /* Read each line into the desired train record. */
                     while (reader.Read())
                     {
 
                         /* Train related information */
-                        trainDate = (DateTime)reader.GetSqlValue(0);
-                        trainID = reader.GetSqlValue(1).ToString();
-                        commodity = Processing.getWagonCommodity(reader.GetSqlValue(14).ToString());
-                        trainOperator = Processing.getWagonOperator(reader.GetSqlValue(15).ToString());
 
-                        /* Include Intermodal and Steel commodity into the Interstate commodity, when required. */
-                        if (combineIntermodalAndSteel)
-                            if (commodity.Equals(trainCommodity.Intermodal) || commodity.Equals(trainCommodity.Steel))
-                                commodity = trainCommodity.Interstate;
+                        trainDate = (DateTime)reader.GetSqlValue(10);
+                        trainID = reader.GetSqlValue(11).ToString();
+                        locoID = reader.GetSqlValue(9).ToString();
 
-                        /* Extract Wagon Identification. */
-                        wagonID = reader.GetSqlValue(2).ToString() + " " + Regex.Replace(reader.GetSqlValue(10).ToString(), ",", "");
+                        if (reader.GetSqlValue(24).ToString().Count() >= operatorStringLength)
+                            subOperator = reader.GetSqlValue(24).ToString().Substring(0, operatorStringLength);
+                        else
+                            subOperator = reader.GetSqlValue(24).ToString().PadRight(operatorStringLength);
 
-                        /* Wagon Origin */
-                        origin = reader.GetSqlValue(4).ToString().ToUpper();
-                        if (origin.Count() != 3)
-                            Tools.messageBox("Origin location code is unknown: " + origin + " Unknown location code.");
+                        trainOperator = getOperator(subOperator);
 
-                        /* Wagon Destination */
-                        destination = reader.GetSqlValue(13).ToString().ToUpper();
-                        if (destination.Count() != 3)
-                        {   /* If the destination field is empty or set to -1, assume the wagon reaches the planned destination. */
-                            if (destination.Equals("") || destination.Equals("-1"))
-                                destination = reader.GetSqlValue(5).ToString().ToUpper();
-                            else
-                                Tools.messageBox("Destination location code is unknown: " + destination + " Unknown location code.");
-                        }
+                        commodity = getCommodity(reader.GetSqlValue(23).ToString());
+                        trainOperator = getOperator(subOperator);
 
-                        /* Wagon planned destination */
-                        plannedDestination = reader.GetSqlValue(5).ToString().ToUpper();
-                        if (plannedDestination.Count() != 3)
+                        double.TryParse(reader.GetSqlValue(15).ToString(), out latitude);
+                        double.TryParse(reader.GetSqlValue(16).ToString(), out longitude);
+
+                        location = new GeoLocation(latitude, longitude);
+                        double.TryParse(reader.GetSqlValue(12).ToString(), out kmPost);
+                        double.TryParse(reader.GetSqlValue(13).ToString(), out speed);
+                        double.TryParse(reader.GetSqlValue(19).ToString(), out powerToWeight);
+
+
+                        /* Construct the train record object and add to the list. */
+                        if (trainDate > fromDate & trainDate <= toDate)
                         {
-                            if (destination.Count() == 3)
-                                plannedDestination = destination;
-                            else
-                                Tools.messageBox("Consigned Destination location code is unknown: Train: " + trainID + ", location " + plannedDestination + " Unknown location code.");
+                            TrainRecord record = new TrainRecord(trainID, locoID, trainDate, location, trainOperator, commodity, kmPost, speed, powerToWeight);
+                            trainRecord.Add(record);
                         }
+                    }
 
-                        double.TryParse(reader.GetSqlValue(12).ToString(), out tareWeight);
-                        double.TryParse(reader.GetSqlValue(8).ToString(), out grossWeight);
-                        weight = grossWeight - tareWeight;
-                        /* Validate the weight. */
-                        if (weight < 0)
-                            weight = 0;
+                }
+                finally
+                {
+                    /* Close the SQL command */
+                    reader.Close();
+                }
+            }
+            SQL.connection.Close();
 
-                        DateTime.TryParse(reader.GetSqlValue(6).ToString(), out attachmentTime);
-                        DateTime.TryParse(reader.GetSqlValue(7).ToString(), out detachmentTime);
+            /* Return the completed wagon list. */
+            return trainRecord;
 
-                        /* Construct the wagon object and add to the list. */
-                        wagonDetails data = new wagonDetails(trainID, trainDate, trainOperator, commodity, wagonID, origin, plannedDestination, destination, attachmentTime, detachmentTime, weight, grossWeight);
-                        wagon.Add(data);
+        }
 
+        public static List<TSRObject> readSQLSpeedRestrictions(string corridor, DateTime fromDate, DateTime toDate)
+        {
+            /* Create the list of TSR records. */
+            List<TSRObject> TSRList = new List<TSRObject>();
+
+            string region;
+            string from, to;
+            string from1, to1;
+            DateTime issueDate, liftedDate;
+            double startKm, endKm, speed;
+
+
+            /* Generate the SQL connection and the command to execute. */
+            SqlParameters SQL = generateSpeedRestrictionSQLComand(corridor, fromDate, toDate);
+                       
+            /* Create an SQL environment. */
+            using (SQL.connection)
+            {
+                SQL.connection.Open();
+                /* Process the SQL command. */
+                SqlDataReader reader = SQL.command.ExecuteReader();
+
+                try
+                {
+                    /* Read each line into the desired train record. */
+                    while (reader.Read())
+                    {
+                        region = reader.GetSqlValue(19).ToString();
+                        /* needs to perform tests */
+
+                        from = (String)reader.GetSqlValue(1).ToString();
+                        from1 = from.Substring(0, 4) + "-" + from.Substring(4, 2) + "-" + from.Substring(6, 2);
+                        issueDate = DateTime.Parse(from1);
+
+                        to = (String)reader.GetSqlValue(2).ToString();
+                        /* Check against TSRs that have not been lifted yet. */
+                        if (to.Count() > 2)
+                        {
+                            to1 = to.Substring(0, 4) + "-" + to.Substring(4, 2) + "-" + to.Substring(6, 2);
+                            liftedDate = DateTime.Parse(to1);
+                        }
+                        else
+                            liftedDate = DateTime.MinValue;
+
+                        double.TryParse(reader.GetSqlValue(3).ToString(), out startKm);
+                        double.TryParse(reader.GetSqlValue(4).ToString(), out endKm);
+                        double.TryParse(reader.GetSqlValue(5).ToString(), out speed); // maximum Freight Speed
+
+                        /* Set the lift date if the TSR applies the full time period. */
+                        if (liftedDate == DateTime.MinValue)
+                            liftedDate = toDate;
+
+                        /* Construct the train record object and add to the list. */
+                        TSRObject record = new TSRObject(region, issueDate, liftedDate, startKm, endKm, speed);
+                        TSRList.Add(record);
 
                     }
 
@@ -1291,9 +1394,10 @@ namespace IOLibrary
                     reader.Close();
                 }
             }
+            SQL.connection.Close();
 
-            /* Return the completed wagon list. */
-            return wagon;
+            /* Return the completed TSR list. */
+            return TSRList;
 
         }
 
@@ -1303,7 +1407,7 @@ namespace IOLibrary
         /// <param name="fromDate">The start data of the analysis period.</param>
         /// <param name="toDate">The end date of the analysis period.</param>
         /// <returns>An SQL object that contains the connection and the command to execute.</returns>
-        private static SqlParameters generateSQLComand(DateTime fromDate, DateTime toDate)
+        private static SqlParameters generateWagonSQLComand(DateTime fromDate, DateTime toDate)
         {
             /* Format the date strings to match data database fields. */
             string from = fromDate.ToString("yyyy-MM-dd");
@@ -1352,9 +1456,156 @@ namespace IOLibrary
 
         }
 
+        private static SqlParameters generateTrainSQLComand(string corridor, DateTime fromDate, DateTime toDate)
+        {
+            /* Format the date strings to match data database fields. */
+            string from = fromDate.ToString("yyyyMMdd");
+            string to = toDate.ToString("yyyyMMdd");
+
+            /* Generate the connecton parameters for the Azure data warehouse. */
+            string server = "tcp:artc-dwcp01.database.windows.net,1433;";
+            string Dbase = "DW_PRN;";
+            string authentication = "Active Directory Integrated;";
+            string options = "Encrypt=yes;Connection Timeout=30;";
+            string connectionString = "Server=" + server + "Database=" + Dbase + "Authentication=" + authentication + options;
+            string trackFilter = "";
+
+            /* Set track filter */
+            switch (corridor)
+            {
+                case "Gunnedah":
+                    trackFilter = "[TrackNumber] = 36 OR [TrackNumber] = 38";
+                    break;
+                case "Ulan":
+                    trackFilter = "[TrackNumber] = 35";
+                    break;
+                case "Hunter":
+                    trackFilter = "[TrackNumber] BETWEEN 46 AND 48";
+                    break;
+
+            }
+
+            /* Generate the SQL wagon data query */
+            string trainQuery = "SELECT "+
+                "  [TrainJourney].[ActualDepartureDateID] AS [ActualDepartureDateID]," +
+                "  [TrainJourney].[ActualDepartureTimeID] AS [ActualDepartureTimeID]," +
+                "  [TrainJourney].[ActualArrivalDateID] AS [ActualArrivalDateID]," +
+                "  [TrainJourney].[ActualArrivalTimeID] AS [ActualArrivalTimeID]," +
+                "  [TrainJourney].[ScheduledDepartureDateID] AS [ScheduledDepartureDateID]," +
+                "  [TrainJourney].[ScheduledDepartureTimeID] AS [ScheduledDepartureTimeID]," +
+                "  [TrainJourney].[ScheduledArrivalDateID] AS [ScheduledArrivalDateID]," +
+                "  [TrainJourney].[ScheduledArrivalTimeID] AS [ScheduledArrivalTimeID]," +
+                "  [PollMovement].[EventDateTime_SA] AS [EventDateTime_SA]," +
+                "  [PollMovement].[LocomotiveCode] AS [LocomotiveCode]," +
+                "  [PollMovement].[TrainDate] AS [TrainDate]," +
+                "  [PollMovement].[TrainCode] AS [TrainCode]," +
+                "  [PollMovement].[KMPost] AS [KMPost]," +
+                "  [PollMovement].[Speed] AS [Speed]," +
+                "  [PollMovement].[TrackNumber] AS [TrackNumber]," +
+                "  [PollMovement].[Latitude] AS [Latitude]," +
+                "  [PollMovement].[Longitude] AS [Longitude]," +
+                "  [Train].[FuelSaverFlag] AS [FuelSaverFlag]," +
+                "  [Train].[GrossMass] AS [GrossMass]," +
+                "  [Train].[HorsePower] AS [HorsePower]," +
+                "  [Train].[Length] AS [Length]," +
+                "  [Train].[TrainNumber] AS [TrainNumber]," +
+                "  [Train].[UnhealthyTrainFlag] AS [UnhealthyTrainFlag]," +
+                "  [Commodity].[RAMS_CommodityDesc] AS [RAMS_CommodityDesc]," +
+                "  [Operator].[OperatorName] AS [OperatorName]" +
+                "FROM [REPORT].[TrainJourney] [TrainJourney]" +
+                "  INNER JOIN[REPORT].[PollMovement] [PollMovement] ON ([TrainJourney].[TrainID] = [PollMovement].[TrainID])" +
+                "  INNER JOIN[REPORT].[Train]        [Train]        ON ([TrainJourney].[TrainID] = [Train].[TrainID])" +
+                "  INNER JOIN[REPORT].[Commodity]    [Commodity]    ON ([TrainJourney].[CommodityID] = [Commodity].[CommodityID])" +
+                "  INNER JOIN[REPORT].[Operator]     [Operator]     ON ([TrainJourney].[OperatorID] = [Operator].[OperatorID])" +
+                "WHERE [TrainJourney].[TrainDate] BETWEEN '" + from + "' AND '" + to + "' AND (" + trackFilter + ")";
+            
+            /* Create the connection and the command to execute. */
+            SqlConnection connection = new SqlConnection(connectionString);
+            SqlCommand command = new SqlCommand(trainQuery, connection);
+
+            SqlParameters sql = new SqlParameters(connection, command);
+
+            return sql;
+
+        }
+
+        private static SqlParameters generateSpeedRestrictionSQLComand(string corridor, DateTime fromDate, DateTime toDate)
+        {
+            /* Format the date strings to match data database fields. */
+            string from = fromDate.ToString("yyyyMMdd");
+            string to = toDate.ToString("yyyyMMdd");
+
+            /* Generate the connecton parameters for the Azure data warehouse. */
+            string server = "tcp:artc-dwcp01.database.windows.net,1433;";
+            string Dbase = "DW_PRN;";
+            string authentication = "Active Directory Integrated;";
+            string options = "Encrypt=yes;Connection Timeout=30;";
+            string connectionString = "Server=" + server + "Database=" + Dbase + "Authentication=" + authentication + options;
+            string corridorFilter = "";
+
+            /* Set track filter */
+            switch (corridor)
+            {
+                case "Gunnedah":
+                    corridorFilter = "'Pricing Zone 3'";
+                    break;
+                case "Ulan":
+                    corridorFilter = "'Pricing Zone 2'";
+                    break;
+                case "Hunter":
+                    corridorFilter = "'Pricing Zone 1'";
+                    break;
+
+            }
+
+            /* Generate the SQL wagon data query */
+            string trainQuery = "SELECT " +
+                "   [SpeedRestriction].[SpeedRestrictionNumber] AS [SpeedRestrictionNumber]" +
+                "  ,[SpeedRestriction].[EffectiveFromDateID] AS [FromDate]" +
+                "  ,[SpeedRestriction].[EffectiveToDateID] AS [ToDate]" +
+                "  ,[SpeedRestriction].[KMFrom] AS [FromKm]" +
+                "  ,[SpeedRestriction].[KMTo] AS [ToKm]" +
+                "  ,[SpeedRestriction].[MaxSpeed_Other] AS [Freight_MaxSpeed]" +
+                "  ,[SpeedRestriction].[MaxSpeed_Passenger] AS [Passenger_MaxSpeed]" +
+                "  ,[SpeedRestriction].[TrackSpeed_Other] AS [Freight_TrackSpeed]" +
+                "  ,[SpeedRestriction].[TrackSpeed_Passenger] AS [Pasenger_TrackSpeed]" +
+                "  ,[Location].[SubLocationCode] AS [SubLocationCode]" +
+                "  ,[Location].[SubLocationDesc] AS [SibLocation]" +
+                "  ,[Location].[Latitude] AS [Latitude]" +
+                "  ,[Location].[Longitude] AS [Longitude]" +
+                "  ,[Location].[RAMS_LocationCode] AS [LocationCode]" +
+                "  ,[Location].[RAMS_LocationDesc] AS [Location]" +
+                "  ,[Location].[KMPost] AS [Location_Km]" +
+                "  ,[Location].[ControlBoard] AS [ControlBoard]" +
+                "  ,[Location].[CorridorCode] AS [CorridorCode]" +
+                "  ,[Location].[CorridorDesc] AS [CorridorDescription]" +
+                "  ,[Location].[RegionDesc] AS [Region]" +
+                "  ,[Location].[LocationTypeDesc] AS [LocationType]" +
+                "  ,[Location].[PricingZone] AS [PriceingZone] " +
+                "FROM [REPORT].[SpeedRestriction]" +
+                "   INNER JOIN[REPORT].[Location] [Location]" +
+                "        ON ([Location].[SubLocationID] = [SpeedRestriction].[FromParentLocationID]) " +
+                "WHERE [PricingZone] = " + corridorFilter + " AND" +
+                "  [EffectiveFromDateID] < "+ to + " AND" +      /* End date */
+                "  ([EffectiveToDateID] > " + from + " OR " +     /* Start date */
+                "  [EffectiveToDateID] = -1) " +                     /* Speed restriction still active*/
+                "ORDER BY[FromDate]";
+            
+            
+            /* Create the connection and the command to execute. */
+            SqlConnection connection = new SqlConnection(connectionString);
+            SqlCommand command = new SqlCommand(trainQuery, connection);
+
+            SqlParameters sql = new SqlParameters(connection, command);
+
+            return sql;
+
+        }
+
+
         /// <summary>
         /// Read the file containing the temporary speed restriction information and 
-        /// store in a manalgable list of TSR objects, which contain all neccessary 
+        /// store in a managable list of TSR objects, which contain all neccessary 
         /// information for each TSR.
         /// </summary>
         /// <param name="filename">TSR file</param>
@@ -1416,6 +1667,75 @@ namespace IOLibrary
             }
 
             /* Return the list of TSR records. */
+            return TSRList;
+        }
+
+        /// <summary>
+        /// Read the TSR report file supplied by Transport4NSW via an autoamted email. Store 
+        /// the relevant details for the desired corridor in the TSR list objects.
+        /// </summary>
+        /// <param name="settings">The settins related to the specified corridor.</param>
+        /// <param name="corridor">The corridor label.</param>
+        /// <param name="dateRange">The date ranges to filter.</param>
+        /// <returns></returns>
+        public static List<TSRObject> readTSR_ReportFile(CorridorSettings settings, string corridor, DateTime[] dateRange)
+        {
+            /* Read all the lines of the data file. */
+            Tools.isFileOpen(settings.TSR_file);
+
+            string[] lines = System.IO.File.ReadAllLines(settings.TSR_file);
+            char[] delimeters = { ',', '\t' };
+
+            /* Seperate the fields. */
+            string[] fields = lines[0].Split(delimeters);
+
+            /* Initialise the fields of interest. */
+            int regionCode = 0;
+            string region = "None";
+            DateTime issueDate = DateTime.MinValue;
+            DateTime liftedDate = DateTime.MinValue;
+            double startKm = 0.0;
+            double endKm = 0.0;
+            double speed = 0.0;
+
+            bool header = true;
+
+            /* List of all TSR details. */
+            List<TSRObject> TSRList = new List<TSRObject>();
+
+            foreach (string line in lines)
+            {
+                if (header)
+                    /* Ignore the header line. */
+                    header = false;
+                else
+                {
+                    /* Seperate each record into each field */
+                    fields = line.Split(delimeters);
+
+                    int.TryParse(fields[3], out regionCode);
+                    region = fields[4];
+                    DateTime.TryParse(fields[1], out issueDate);
+                    DateTime.TryParse(fields[9], out liftedDate);
+                    double.TryParse(fields[6], out startKm);
+                    double.TryParse(fields[7], out endKm);
+                    double.TryParse(fields[10], out speed);
+
+                    /* Set the lift date if the TSR applies the full time period. */
+                    if (liftedDate == DateTime.MinValue)
+                        liftedDate = dateRange[1];
+
+                    /* Add the TSR properties that are within the corridor and period of analysis. */
+                    if (settings.basecodeList.Contains(regionCode))
+                    {
+                        if (issueDate < dateRange[1] && liftedDate >= dateRange[0])
+                        {
+                            TSRObject record = new TSRObject(region, issueDate, liftedDate, startKm, endKm, speed);
+                            TSRList.Add(record);
+                        }
+                    }
+                }
+            }
             return TSRList;
         }
 

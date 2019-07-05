@@ -873,8 +873,8 @@ namespace TrainLibrary
         }
 
         /// <summary>
-        /// Map the train data to a processedTrainData object, in order to visualise the data in Tabelau.
-        /// This is aimed to aid in validating the process to automate the interpolation for a larger scale.
+        /// Clean the individaul train data of TSR's and the effect of loops. Where the train is affected by a 
+        /// TSR or loop, the average train performance will be used at this location.
         /// </summary>
         /// <param name="trains">List of all trains in a specific category.</param>
         /// <param name="CategorySim">The simualtion corresponding to the train category.</param>
@@ -882,7 +882,8 @@ namespace TrainLibrary
         /// <param name="TSRwindowBoundary">The distance threshold to be considered within a TSR.</param>
         /// <param name="loopBoundaryThreshold">The speed factor used to determine if the train is stopping in a loop.</param>
         /// <returns></returns>
-        public static List<processTrainDataPoint> processTrainData(List<Train> trains, List<TrainJourney> CategorySim, AverageTrain averageTrain, double TSRwindowBoundary, double loopBoundaryThreshold)
+        public static List<processTrainDataPoint> processTrainData(List<Train> trains, List<TrainJourney> CategorySim, 
+            AverageTrain averageTrain, double TSRwindowBoundary, double loopBoundaryThreshold)
         {
             double startKm = 0;
             double endKm = 0;
@@ -904,8 +905,8 @@ namespace TrainLibrary
              * We can assume all train journeys are the same length because we have redifined 
              * them in terms of start, end points, and step size.
              */
-            Debug.Assert(trains[0].journey.Count == CategorySim.Count, "The train Journey array and Simualted train journey array are different sizes");
-            Debug.Assert(trains[0].journey.Count == averageTrain.averageSpeed.Count, "The train Journey array and Average train journey array are different sizes");
+            Debug.Assert(trains[0].journey.Count == CategorySim.Count, "The train Journey array and Simualted train journey array's are different sizes");
+            Debug.Assert(trains[0].journey.Count == averageTrain.averageSpeed.Count, "The train Journey array and Average train journey array's are different sizes");
 
             foreach (Train train in trains)
             {
@@ -984,6 +985,13 @@ namespace TrainLibrary
             return processDataPoint;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="CategorySim"></param>
+        /// <param name="averageTrain"></param>
+        /// <param name="trainDirection"></param>
+        /// <returns></returns>
         public static List<processTrainDataPoint> processTrainData(List<TrainJourney> CategorySim, AverageTrain averageTrain, direction trainDirection)
         {
             double simulationTime = 0;
@@ -994,7 +1002,7 @@ namespace TrainLibrary
 
             List<processTrainDataPoint> processDataPoint = new List<processTrainDataPoint>();
 
-            for (int index = 0; index < averageTrain.kilometreage.Count(); index++)
+            for (int index = 0; index < averageTrain.kilometreage.Count()-1; index++)
             {
                 /* Calculate time between points. */
                 simulationTime = 0;
@@ -2345,7 +2353,7 @@ namespace TrainLibrary
             string[] LauchlanValleyRailSociety = { "LVR", "LVF"};
             string[] Limited3801 = { "380" };
             string[] MetroTrainsMelbourne = { "MTM" };
-            string[] PacificNational = { "FAL", "FAB", "GCP", "NRC", "PAG", "PAT", "PNB", "PNC", "PND", "PNG", "PNH", "PNL", "PNT" }; 
+            string[] PacificNational = { "FAL", "FAB", "GCP", "NRC", "PAG", "PAT", "PNB", "PNC", "PND", "PNG", "PNH", "PNL", "PNT"}; 
             string[] QUBE = { "QUB", "QUG", "SPS", "ST"};
             string[] QueenslandRail = { "QRN" };
             string[] RailTransportMuseum = { "RTM" }; 
@@ -2483,33 +2491,51 @@ namespace TrainLibrary
         }
 
 
-
+        /// <summary>
+        /// The entry point from Python to process the train data.
+        /// The core algorithm tha cleans and filters the train data from TSR's and Loop 
+        /// interactions. The algorithm is called from Python in order to facilitate 
+        /// automated processing from the data warehouse. 
+        /// The algorithm can be called from C# is required.
+        /// </summary>
+        /// <param name="fromYear">Start of analysis period, year.</param>
+        /// <param name="fromMonth">Start of analysis period, month.</param>
+        /// <param name="fromDay">Start of analysis period, day.</param>
+        /// <param name="toYear">End of analysis period, year.</param>
+        /// <param name="toMonth">End of analysis period, month.</param>
+        /// <param name="toDay">End of analysis period, day.</param>
+        /// <param name="corridorlabel">String definding the corridor being analsyed ("Gunnedah", "Ulan", "Hunter").</param>
+        /// <returns>List of clean train points.</returns>
         [DllExport("AutomatedProcessing", CallingConvention = CallingConvention.Cdecl)]
-        public static List<processTrainDataPoint> AutomatedProcessing(string filename, string temporarySpeedRestrictionFile, 
-            int fromYear, int fromMonth, int fromDay, int toYear, int toMonth, int toDay, string corridorlabel)
+        public static List<processTrainDataPoint> AutomatedProcessing(int fromYear, int fromMonth, int fromDay, 
+            int toYear, int toMonth, int toDay, string corridorlabel)
         {
+
             /**************************************************/
-            /* This section emulates collecting the train data and the 
+            /* This section emulates collecting the data and the 
              * TSR data from the database from within PYTHON.
              */
 
             /* Convert the Python dates to C# dates */
             DateTime[] dateRange = { new DateTime(fromYear, fromMonth, fromDay), new DateTime(toYear, toMonth, toDay) };
-            List<string> excludeTrainList = new List<string>();
+
+            /* Set the corridor settings. */
+            CorridorSettings corridor = new CorridorSettings(corridorlabel);
 
             List<TrainRecord> TrainRecords = new List<TrainRecord>();
-            TrainRecords = FileOperations.readAzureExtractICEData(filename, excludeTrainList, false, dateRange);
+            //TrainRecords = FileOperations.readAzureExtractICEData(filename, null, false, dateRange);
+            TrainRecords = FileOperations.readSQLTrainData(corridorlabel, dateRange[0], dateRange[1]);
 
             List<TSRObject> TSRs = new List<TSRObject>();
-            TSRs = FileOperations.readTSRFile(temporarySpeedRestrictionFile, dateRange);
+            //TSRs = FileOperations.readTSRFile(temporarySpeedRestrictionFile, dateRange);
+            //TSRs = FileOperations.readSQLSpeedRestrictions(corridorLabel, dateRange[0], dateRange[1]);
+            TSRs = FileOperations.readTSR_ReportFile(corridor, corridorlabel, dateRange);
             /**************************************************/
-
-            CorridorSettings corridor = new CorridorSettings(corridorlabel);
 
             // read geometry file
             List<TrackGeometry> trackGeometry = new List<TrackGeometry>();
             trackGeometry = FileOperations.readGeometryfile(corridor.geometryFile);
-            
+
             // read simualtion files
             /* Create the list of simulated trains. */
             List<Train> simulatedTrains = new List<Train>();
@@ -2517,14 +2543,12 @@ namespace TrainLibrary
             /* Read in the simulation data and interpolate to the desired granularity. */
             for (int index = 0; index < corridor.simCategories.Count; index++)
             {
-                simulatedTrains.Add(FileOperations.readSimulationData(corridor.simulationFiles[corridor.simCategories[index]+"-"+direction.IncreasingKm], corridor.simCategories[index], direction.IncreasingKm));
-                simulatedTrains.Add(FileOperations.readSimulationData(corridor.simulationFiles[corridor.simCategories[index]+"-"+direction.DecreasingKm], corridor.simCategories[index], direction.DecreasingKm));
+                string key = corridor.simCategories[index].ToString() + "-" + direction.IncreasingKm.ToString();
+                simulatedTrains.Add(FileOperations.readSimulationData(corridor.simulationFiles[key], corridor.simCategories[index], direction.IncreasingKm));
+                key = corridor.simCategories[index].ToString() + "-" + direction.DecreasingKm.ToString();
+                simulatedTrains.Add(FileOperations.readSimulationData(corridor.simulationFiles[key], corridor.simCategories[index], direction.DecreasingKm));
             }
 
-            // interpoalte simualtion files
-            /* Interpolate the simulations to the same granularity as the ICE data will be. */
-            List<Train> interpolatedSimulations = new List<Train>();
-            interpolatedSimulations = interpolateTrainData(simulatedTrains, trackGeometry, corridor.startKm, corridor.endKm, corridor.interval);
 
             // clean the raw data
             /* Sort the data by [trainID, locoID, Date & Time, kmPost]. */
@@ -2534,24 +2558,29 @@ namespace TrainLibrary
             /* Clean the data */
             List<Train> CleanTrainRecords = new List<Train>();
             //CleanTrainRecords = Processing.MakeTrains(OrderdTrainRecords, trackGeometry,
-            CleanTrainRecords = CleanData(OrderdTrainRecords, trackGeometry,
+            CleanTrainRecords = Processing.CleanData(OrderdTrainRecords, trackGeometry,
                 corridor.timeThreshold, corridor.distanceThreshold, corridor.minimumJourneyDistance, corridor.analysisCategory,
                 corridor.Category1LowerBound, corridor.Category1UpperBound, corridor.Category2LowerBound, corridor.Category2UpperBound);
+
+            // interpoalte simualtion files
+            /* Interpolate the simulations to the same granularity as the ICE data will be. */
+            List<Train> interpolatedSimulations = new List<Train>();
+            interpolatedSimulations = Processing.interpolateTrainData(simulatedTrains, trackGeometry, corridor.startKm, corridor.endKm, corridor.interval);
 
             // interpoalte cleaned train data
             /* Interpolate data */
             List<Train> interpolatedTrains = new List<Train>();
             if (!corridor.IgnoreGaps)
                 /* Standard interpolation method */
-                interpolatedTrains = interpolateTrainData(CleanTrainRecords, trackGeometry, corridor.startKm, corridor.endKm, corridor.interval);
+                interpolatedTrains = Processing.interpolateTrainData(CleanTrainRecords, trackGeometry, corridor.startKm, corridor.endKm, corridor.interval);
             else
                 /* Interpolation method does not interpolate through the gaps. (typically used with MakeTrains function) */
-                interpolatedTrains = interpolateTrainDataWithGaps(CleanTrainRecords, trackGeometry, corridor.startKm, corridor.endKm, corridor.interval);
+                interpolatedTrains = Processing.interpolateTrainDataWithGaps(CleanTrainRecords, trackGeometry, corridor.startKm, corridor.endKm, corridor.interval);
 
 
             // populate TSR's
             /* Populate the trains TSR values after interpolation to gain more granularity with TSR boundary. */
-            populateAllTrainsTemporarySpeedRestrictions(interpolatedTrains, TSRs);
+            Processing.populateAllTrainsTemporarySpeedRestrictions(interpolatedTrains, TSRs);
 
             /* Create the list of averaged trains */
             List<AverageTrain> averageTrains = new List<AverageTrain>();
@@ -2566,7 +2595,7 @@ namespace TrainLibrary
             for (int index = 0; index < corridor.simCategories.Count(); index++)
             {
                 /* Convert the train category to the train operator. */
-                trainType trainType = convertCategoryToTrainType(corridor.simCategories[index]);
+                trainType trainType = Processing.convertCategoryToTrainType(corridor.simCategories[index]);
 
                 increasingTrainCategory = interpolatedTrains.Where(t => t.trainType == trainType).Where(t => t.trainDirection == direction.IncreasingKm).ToList();
                 decreasingTrainCategory = interpolatedTrains.Where(t => t.trainType == trainType).Where(t => t.trainDirection == direction.DecreasingKm).ToList();
@@ -2576,54 +2605,46 @@ namespace TrainLibrary
                 if (increasingTrainCategory.Count() > 0)
                 {
                     if (corridor.trainsStoppingAtLoops)
-                        averageTrains.Add(averageTrainStoppingAtLoops(increasingTrainCategory, interpolatedSimulations[index * 2].journey, trackGeometry, 
-                            corridor.startKm, corridor.endKm, corridor.interval, corridor.loopSpeedThreshold, corridor.loopBoundaryThreshold, corridor.TSRwindowBoundary));
+                        averageTrains.Add(Processing.averageTrainStoppingAtLoops(increasingTrainCategory, interpolatedSimulations[index * 2].journey, trackGeometry, corridor.startKm, corridor.endKm, corridor.interval, corridor.loopSpeedThreshold, corridor.loopBoundaryThreshold, corridor.TSRwindowBoundary));
                     else
-                        averageTrains.Add(averageTrain(increasingTrainCategory, interpolatedSimulations[index * 2].journey, trackGeometry, 
-                            corridor.startKm, corridor.endKm, corridor.interval, corridor.loopSpeedThreshold, corridor.loopBoundaryThreshold, corridor.TSRwindowBoundary));
+                        averageTrains.Add(Processing.averageTrain(increasingTrainCategory, interpolatedSimulations[index * 2].journey, trackGeometry, corridor.startKm, corridor.endKm, corridor.interval, corridor.loopSpeedThreshold, corridor.loopBoundaryThreshold, corridor.TSRwindowBoundary));
 
-                    processedTrains.AddRange(processTrainData(increasingTrainCategory, interpolatedSimulations[index * 2].journey, averageTrains[index * 2], 
-                        corridor.TSRwindowBoundary, corridor.loopBoundaryThreshold));
+                    processedTrains.AddRange(Processing.processTrainData(increasingTrainCategory, interpolatedSimulations[index * 2].journey, averageTrains[index * 2], corridor.TSRwindowBoundary, corridor.loopBoundaryThreshold));
 
                 }
                 else
                 {
-                    averageTrains.Add(createZeroedAverageTrain(corridor.simCategories[index], direction.IncreasingKm, corridor.startKm, corridor.endKm, corridor.interval));
-                    processedTrains.AddRange(processTrainData(interpolatedSimulations[index * 2].journey, averageTrains[index * 2], direction.IncreasingKm));
+                    averageTrains.Add(Processing.createZeroedAverageTrain(corridor.simCategories[index], direction.IncreasingKm, corridor.startKm, corridor.endKm, corridor.interval));
+                    processedTrains.AddRange(Processing.processTrainData(interpolatedSimulations[index * 2].journey, averageTrains[index * 2], direction.IncreasingKm));
                 }
 
                 if (decreasingTrainCategory.Count() > 0)
                 {
                     if (corridor.trainsStoppingAtLoops)
-                        averageTrains.Add(averageTrainStoppingAtLoops(decreasingTrainCategory, interpolatedSimulations[index * 2 + 1].journey, trackGeometry, 
-                            corridor.startKm, corridor.endKm, corridor.interval, corridor.loopSpeedThreshold, corridor.loopBoundaryThreshold, corridor.TSRwindowBoundary));
+                        averageTrains.Add(Processing.averageTrainStoppingAtLoops(decreasingTrainCategory, interpolatedSimulations[index * 2 + 1].journey, trackGeometry, corridor.startKm, corridor.endKm, corridor.interval, corridor.loopSpeedThreshold, corridor.loopBoundaryThreshold, corridor.TSRwindowBoundary));
                     else
-                        averageTrains.Add(averageTrain(decreasingTrainCategory, interpolatedSimulations[index * 2 + 1].journey, trackGeometry, 
-                            corridor.startKm, corridor.endKm, corridor.interval, corridor.loopSpeedThreshold, corridor.loopBoundaryThreshold, corridor.TSRwindowBoundary));
+                        averageTrains.Add(Processing.averageTrain(decreasingTrainCategory, interpolatedSimulations[index * 2 + 1].journey, trackGeometry, corridor.startKm, corridor.endKm, corridor.interval, corridor.loopSpeedThreshold, corridor.loopBoundaryThreshold, corridor.TSRwindowBoundary));
 
-                    processedTrains.AddRange(processTrainData(decreasingTrainCategory, interpolatedSimulations[index * 2 + 1].journey, averageTrains[index * 2 + 1], 
-                        corridor.TSRwindowBoundary, corridor.loopBoundaryThreshold));
+                    processedTrains.AddRange(Processing.processTrainData(decreasingTrainCategory, interpolatedSimulations[index * 2 + 1].journey, averageTrains[index * 2 + 1], corridor.TSRwindowBoundary, corridor.loopBoundaryThreshold));
 
                 }
                 else
                 {
-                    averageTrains.Add(createZeroedAverageTrain(corridor.simCategories[index], direction.DecreasingKm, corridor.startKm, corridor.endKm, corridor.interval));
-                    processedTrains.AddRange(processTrainData(interpolatedSimulations[index * 2 + 1].journey, averageTrains[index * 2 + 1], direction.DecreasingKm));
+                    averageTrains.Add(Processing.createZeroedAverageTrain(corridor.simCategories[index], direction.DecreasingKm, corridor.startKm, corridor.endKm, corridor.interval));
+                    processedTrains.AddRange(Processing.processTrainData(interpolatedSimulations[index * 2 + 1].journey, averageTrains[index * 2 + 1], direction.DecreasingKm));
                 }
             }
 
-
-
-
-
-
-
+            
+            
             /* This code will not be requierd when the integration with Python in complete */
+            //string destinationDirectory = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\AutomatedTrainProcessing";
+            //FileOperations.writeProcessTrainDataPoints(processedTrains, destinationDirectory);
 
-            string destinationDirectory = @"S:\Corporate Strategy\Infrastructure Strategies\Simulations\Train Performance Analysis\Gunnedah Basin";
-            FileOperations.writeProcessTrainDataPoints(processedTrains, destinationDirectory);
+
             // return data to python program
             return processedTrains;
+            
 
         }
 
